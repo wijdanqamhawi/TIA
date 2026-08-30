@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/*
+ * ELORA JEWELLERY design tokens — Burgundy + Gold + Cream/Ivory/Soft Beige.
+ * Fixed brand palette (spec: Constitution Principle 2). Do not introduce
+ * additional brand colors outside this token set.
+ */
+:root {
+  --brand-burgundy: #6d1b34;
+  --brand-burgundy-dark: #4a1123;
+  --brand-burgundy-light: #8a2a47;
+
+  --brand-gold: #c9a227;
+  --brand-gold-muted: #d8c08f;
+
+  --brand-cream: #fdf6ec;
+  --brand-ivory: #faf7f2;
+  --brand-beige: #f1e7d8;
+
+  --brand-text-primary: #2a1a20;
+  --brand-text-on-dark: #faf7f2;
+
+  --brand-border-luxury: #e3d3ac;
+
+  /* Typography — set by next/font in the [locale] layout; Arabic pairs
+     swap in automatically under dir="rtl" below. */
+  --brand-font-display: var(--font-playfair, ui-serif, Georgia, serif);
+  --brand-font-body: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+}
+
+[dir="rtl"] {
+  --brand-font-display: var(--font-noto-kufi-arabic, var(--font-playfair, ui-serif, serif));
+  --brand-font-body: var(--font-noto-sans-arabic, var(--font-inter, ui-sans-serif, sans-serif));
+  --icon-flip: -1;
+}
+
+:root {
+  --icon-flip: 1;
+}
+
+@theme inline {
+  --color-brand-burgundy: var(--brand-burgundy);
+  --color-brand-burgundy-dark: var(--brand-burgundy-dark);
+  --color-brand-burgundy-light: var(--brand-burgundy-light);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-muted: var(--brand-gold-muted);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-ivory: var(--brand-ivory);
+  --color-brand-beige: var(--brand-beige);
+  --color-text-primary: var(--brand-text-primary);
+  --color-text-on-dark: var(--brand-text-on-dark);
+  --color-border-luxury: var(--brand-border-luxury);
+
+  --font-display: var(--brand-font-display);
+  --font-body: var(--brand-font-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  /* Mobile-first responsive foundation (research.md §18a). Breakpoints are
+     Tailwind's defaults (sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1536),
+     mapped to phone / large phone-tablet / tablet-small laptop / laptop /
+     large desktop. Use logical utilities (ms-/me-/ps-/pe-/start-/end-)
+     everywhere instead of physical ml-/mr-/left-/right- so layout mirrors
+     correctly under RTL without per-locale overrides. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-brand-ivory);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+}
+
+.container-luxury {
+  width: 100%;
+  max-width: 1536px; /* capped at 2xl per research.md §18a */
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-luxury {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-luxury {
+    padding-inline: 2rem;
+  }
+}
+
+/*
+ * `<WelcomeSplash>` entrance animation (first-visit-per-session only).
+ * Automatically neutralized by the `prefers-reduced-motion: reduce` rule
+ * above (it forces every `animation-duration` to ~0), so the splash still
+ * appears instantly with its final, settled layout for a shopper who has
+ * asked for reduced motion — no separate reduced-motion branch needed here.
+ */
+@keyframes elora-splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes elora-splash-line {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 4rem;
+    opacity: 1;
+  }
+}
+
+.animate-elora-splash-rise {
+  animation: elora-splash-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-elora-splash-line {
+  animation: elora-splash-line 600ms ease-out 500ms both;
+}

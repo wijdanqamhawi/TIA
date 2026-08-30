@@ -1285,3 +1285,141 @@ are updated.
   already-approved bilingual-search pattern keeps the codebase consistent (Constitution Principle
   11) rather than introducing a second, differently-shaped search implementation for one more
   bilingual collection.
+
+## 45. Excel export library & generation strategy (new — spec FR-099–FR-112)
+
+- **Decision**: Use **ExcelJS** (`exceljs`, TypeScript-friendly, actively maintained) to generate
+  real `.xlsx` (Office Open XML) files entirely server-side, inside a Route Handler, from data read
+  via the Firebase Admin SDK at request time. For the Orders/Sales report types — the ones most
+  likely to grow large as the store's order history accumulates — the handler uses ExcelJS's
+  **streaming workbook writer** (`ExcelJS.stream.xlsx.WorkbookWriter`) over Firestore's cursor-
+  based pagination (research.md §17), writing rows as they are read rather than materializing the
+  entire dataset in memory before generating the file. Smaller, bounded report types (Products,
+  Categories/Delivery Locations, SOLD OUT Products — all naturally capped by the store's actual
+  catalog/location size) use the simpler in-memory `ExcelJS.Workbook` API. Every export is
+  generated fresh on each request; nothing is cached or pre-generated, since Constitution
+  Principle 7 requires every admin-facing figure to reflect live Firestore data.
+- **Rationale**: ExcelJS produces a genuinely valid `.xlsx` file (not a CSV/HTML file wearing an
+  `.xlsx` extension, spec FR-109), supports column headers/widths/number formats needed for a
+  professional report, and its streaming writer directly addresses the "very large Orders/Sales
+  export" edge case (spec Edge Cases) without introducing a background job queue or separate
+  worker infrastructure — appropriate for this project's launch scale (plan.md "Scale/Scope": low
+  hundreds of products, low thousands of orders/month), where even an unbounded Orders export
+  comfortably fits a single Route Handler request/response cycle when streamed rather than
+  buffered.
+- **Alternatives considered**: `xlsx` (SheetJS community edition) — lacks a first-class streaming
+  writer for large datasets and its community build has had past security-advisory history around
+  parsing untrusted input (irrelevant here, since this feature never parses/imports a spreadsheet,
+  but ExcelJS's more actively maintained release cadence was preferred regardless); a CSV export
+  — rejected because the user explicitly asked for real `.xlsx` files with the formatting/multiple-
+  report-type expectations a raw CSV can't express well (e.g., the Orders report's per-order,
+  multi-line "products" detail); a background job/queue (e.g., generate the file async, notify the
+  admin, store it in Firebase Storage for later download) — rejected as unnecessary complexity at
+  this scale per Constitution Principle 20 ("incremental implementation," no speculative
+  infrastructure); synchronous generation with a clear loading/progress indicator (spec FR-112)
+  is simpler and sufficient.
+
+## 46. Excel export access, routing, and no-import guarantee (new — spec FR-099–FR-112)
+
+- **Decision**: Every export is served by a **Route Handler** (contracts/route-handlers.md), not a
+  Server Action, because a Server Action cannot cleanly return a binary file with a
+  `Content-Disposition: attachment` header for a browser-triggered download — this is exactly the
+  "non-form client / conventional HTTP endpoint" case route-handlers.md already reserves Route
+  Handlers for. Handlers live at `src/app/admin/api/export/[reportType]/route.ts` — inside the
+  `/admin` segment (not locale-prefixed, research.md §32) — so `middleware.ts`'s existing
+  `/admin/*` cookie-presence pre-filter (layer 1 of 3) already covers them "for free," and each
+  handler additionally performs its own independent `requireAdmin()` check (layer 2 of 3, research
+  .md §9) before touching Firestore or generating any file — a Route Handler is not wrapped by
+  `admin/layout.tsx`'s guard (layouts don't wrap Route Handlers in the App Router), so this
+  independent check is not optional. Report-specific server-validated filters (spec FR-108) are
+  read from the request's query string and applied to the Firestore query itself, never used to
+  post-filter an already-fetched full dataset. There is no corresponding upload/import endpoint
+  anywhere in the application, and no code path reads an uploaded spreadsheet back into Firestore
+  — the "no Excel import" requirement (spec FR-110) is satisfied structurally, by the simple
+  absence of that capability, rather than by a runtime check that could be bypassed.
+- **Rationale**: Reuses the existing three-layer authorization model and existing Route Handler
+  convention rather than inventing a new transport or auth mechanism (Constitution Principle 11).
+  Placing export routes under `/admin/api/**` rather than the general `/api/**` used by SEO/health
+  endpoints keeps every admin-only HTTP surface physically grouped and covered by the same
+  middleware pre-filter, reducing the chance a future admin-only Route Handler is added outside
+  that pre-filter's matcher by mistake.
+- **Alternatives considered**: A Server Action returning a base64-encoded file string for the
+  client to decode and save — rejected as needlessly inflating response payload size (~33%
+  overhead) and fighting against the platform's native file-download mechanics for no benefit;
+  placing export routes under the general `/api/**` namespace — viable, but grouping them under
+  `/admin/api/**` was preferred so they inherit the existing `/admin/*` middleware pre-filter
+  automatically rather than needing their own matcher entry.
+
+## 47. Special Offers data model & derivation (new — spec FR-113–FR-125)
+
+- **Decision**: Extend `products/{productId}` (data-model.md) with four fields — `isOnSale`
+  (boolean, admin-set), `salePrice` (integer minor units, nullable, required `< price` whenever
+  set), `saleStartAt`/`saleEndAt` (nullable Timestamps). "Sale price" and the schedule are the only
+  stored facts; the actual **offer status** — `DISABLED | SCHEDULED | ACTIVE | EXPIRED` — is never
+  stored, always derived at read time from those four fields plus the current server time
+  (`getOfferStatus(product, now)`), exactly mirroring the existing Sold Out derivation
+  (`isSoldOut`, research.md/data-model.md "Sold Out derivation"). A second derived helper,
+  `getEffectivePrice(product, now)`, returns `salePrice` only when the derived status is `ACTIVE`,
+  otherwise `price` — this is the single function every price-displaying or price-charging code
+  path calls, so it is structurally impossible for two surfaces to disagree about which price
+  currently applies.
+- **Rationale**: Directed by the same principle already established for Sold Out (Constitution
+  Principle 10's spirit extended to pricing): a derived value can never drift out of sync with the
+  facts it's derived from, whereas a separately-set "isCurrentlyOnSale" flag could be forgotten
+  when a schedule boundary passes. Reusing the exact `isSoldOut` pattern (a small, pure,
+  server-safe function reusable from both server code and Client Components) keeps the codebase
+  consistent (Constitution Principle 11) rather than inventing a second derivation style.
+- **Alternatives considered**: A scheduled Cloud Function that flips a stored `isOnSale` boolean at
+  the exact start/end instant — rejected: this project deliberately has no serverless
+  function/cron infrastructure beyond the Next.js app itself (plan.md's stack directive), and a
+  purely time-derived read-time computation needs no such infrastructure at all, with zero
+  propagation delay at the schedule boundary (a stored-and-flipped flag could lag by however often
+  the function runs); a separate `offers/{offerId}` collection referencing a product — rejected as
+  unnecessary indirection for a "one active offer per product" model (spec Assumptions) with no
+  offer-specific fields beyond what fits naturally on the product itself.
+
+## 48. Special Offers querying & Firestore query-shape limitation (new — spec FR-117)
+
+- **Decision**: The homepage Special Offers section queries `products` filtered to
+  `isOnSale == true AND availability == true`, ordered by `createdAt DESC` (reusing the existing
+  `isOnSale ASC, availability ASC, createdAt DESC` composite index, the same pattern as
+  `isNewArrival`/`isBestSeller`, data-model.md), then narrows the result to only those whose
+  derived status (research.md §47) is actually `ACTIVE` in application code before rendering,
+  capped to a small display count. This mirrors the existing, already-documented `searchTerms`
+  query-shape workaround (research.md §17a) rather than introducing a new kind of exception.
+- **Rationale**: Firestore permits range/inequality comparisons on at most one field per query
+  (`saleStartAt <= now` and `saleEndAt >= now` are range comparisons on two *different* fields, so
+  they cannot both be expressed as Firestore `where` clauses in the same query alongside the
+  `isOnSale`/`availability` equality filters). Fetching the (small, `isOnSale`-scoped) candidate
+  set and finishing the date-window check server-side, in the same request, is simple, correct, and
+  entirely adequate at this project's launch scale (plan.md "Scale/Scope") — an admin is expected
+  to have a handful of concurrently-enabled offers at most, not hundreds.
+- **Alternatives considered**: Splitting `saleStartAt`/`saleEndAt` into a single derived
+  `offerActiveFrom`/`offerActiveUntil` range pair recomputed on every admin save specifically to
+  fit one Firestore range filter — rejected as needless duplication of the same two dates under a
+  different name, adding a second place to keep in sync for zero real query-capability gain at this
+  scale; denormalizing a boolean "currently active" flag maintained by a scheduled function —
+  rejected for the same reason a Cloud Function was rejected in research.md §47.
+
+## 49. Special Offers pricing consistency & authoritative re-validation (new — spec FR-118–FR-121)
+
+- **Decision**: Every surface that displays a price for a product — `ProductCard`, `QuickView`,
+  the product detail page, the Shop/category listing grids, the homepage sections, the cart, and
+  checkout — calls the same `getEffectivePrice` (research.md §47) against a live-read `Product`,
+  never a value cached from an earlier render or an earlier point in the shopper's session. The
+  cart's server-side subtotal/total calculation (already established, Phase 6, spec "Price
+  Security") and the order-creation transaction's server-side price recalculation (Phase 8) both
+  call `getEffectivePrice` at their own read time — an offer that is removed or expires between a
+  shopper adding an item to her cart and completing checkout is priced at whatever
+  `getEffectivePrice` currently returns, never at a stale value, exactly like a stock or
+  availability change already is (research.md §3, data-model.md "Stock integrity").
+- **Rationale**: This is a direct, natural extension of the pricing-authority model this project
+  already committed to for regular prices (Constitution Principle 9/10, spec FR-026) — a sale price
+  is still just "the current authoritative price," so it is re-validated by exactly the same
+  mechanism, not a parallel one.
+- **Alternatives considered**: Snapshotting the effective price onto the `CartItem` at add-to-cart
+  time and only re-validating it at checkout — rejected because it would let the *cart display*
+  show a stale price between add-to-cart and checkout (spec FR-119 explicitly requires the cart
+  view itself, not just the final order, to reflect the current price); this project already
+  computes the cart's displayed subtotal/total live on every read (Phase 6) rather than storing it,
+  so extending that same live computation to use `getEffectivePrice` costs nothing extra.

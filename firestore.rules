@@ -1,0 +1,101 @@
+rules_version = '2';
+
+// Least-privilege Firestore Security Rules (T227, research.md §22).
+//
+// The Firebase Admin SDK (every server-side read/write in this app — Server
+// Actions, Route Handlers, `src/lib/firebase/firestore.ts`) runs in a
+// trusted service-account context and bypasses these rules entirely. They
+// exist as a defense-in-depth backstop against any *direct client SDK*
+// access, and as a documented extensibility seam — not as the primary
+// authorization mechanism. Server-side `requireAdmin()`/`requireAuth()`
+// checks (T229) and server-side Zod validation are the actual enforcement
+// for every write; a bug in these rules can only ever narrow what a
+// misused client SDK could read, never grant a write the server-side code
+// doesn't already perform.
+//
+// No collection in this table grants a client write — every business
+// mutation (catalog, cart, wishlist, checkout/orders, admin actions) is
+// exclusively a Server Action using the Admin SDK, per Constitution
+// Principle 7/9/10.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Public catalog data — no reason to gate it (research.md §22 table).
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /categoryShowcases/{showcaseId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /deliveryRegions/{regionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /deliveryLocations/{locationId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Owner-only personal data. Doc ID is the Firebase Auth `uid` for all
+    // three (`users/{uid}`, `wishlists/{uid}`, `carts/{uid}`).
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /wishlists/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /carts/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // A customer may read her own orders; admin listing/search goes
+    // through the Admin SDK, which this rule cannot affect either way.
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    // No legitimate client-side reason to read these directly: guest-cart
+    // access is mediated entirely by the server via the signed cookie;
+    // counters/stats are internal-only.
+    match /guestCarts/{guestCartId} {
+      allow read, write: if false;
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if false;
+    }
+
+    match /stats/{statId} {
+      allow read, write: if false;
+    }
+
+    // Default-deny everything else — any future collection is unreadable
+    // and unwritable via the client SDK until an explicit rule is added.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

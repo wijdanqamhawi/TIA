@@ -33,7 +33,8 @@ Firebase Authentication sign-in/sign-up UI and direct-to-Storage admin image upl
 `firebase-admin` (server-side SDK for Firestore, Auth session verification, and Storage), Zod,
 Vitest, Playwright, `serwist`/`@serwist/next` (production service worker generation for PWA
 installability, research.md §24), `next-intl` (Arabic/English locale routing, message catalogs,
-RTL/LTR support, research.md §32–§39)
+RTL/LTR support, research.md §32–§39), `exceljs` (server-only, admin-only `.xlsx` report
+generation — including streaming output for large Orders/Sales exports — research.md §45–§46)
 
 **Storage**: Cloud Firestore (Native mode), accessed only server-side via the Firebase Admin SDK;
 Firebase Storage for product images; no separate database server or connection string to manage —
@@ -193,8 +194,13 @@ elora/
 │   │   │   │   └── page.tsx          # Category management: view, edit bilingual name/description, activate/deactivate, reorder (spec FR-046a, FR-076; remediation finding F3) — never creates/deletes a category, only mutates the seeded Bracelets/Rings/Earrings/Watches (+ any future) records
 │   │   │   ├── showcases/
 │   │   │   │   └── page.tsx          # Homepage category showcase management: bilingual title/subtitle/CTA, desktop/mobile image upload, display order, active toggle, per showcase (spec FR-001d)
-│   │   │   └── locations/
-│   │   │       └── page.tsx          # Delivery-location management: two fixed regions (relabel/reorder only), add/edit/activate/deactivate/reorder cities within each region (spec FR-094, research.md §40)
+│   │   │   ├── locations/
+│   │   │   │   └── page.tsx          # Delivery-location management: two fixed regions (relabel/reorder only), add/edit/activate/deactivate/reorder cities within each region (spec FR-094, research.md §40)
+│   │   │   ├── exports/
+│   │   │   │   └── page.tsx          # Export to Excel screen: report-type picker (Orders/Products/Inventory/Customers/Sales/Best Sellers/SOLD OUT/Delivery Locations) + per-report filter controls, admin-only (spec FR-099–FR-112)
+│   │   │   └── api/
+│   │   │       └── export/
+│   │   │           └── [reportType]/route.ts   # Admin-only `.xlsx` generation (GET), one handler per report type via `reportType`; re-verifies `requireAdmin()` independently (Route Handlers aren't wrapped by admin/layout.tsx) — contracts/route-handlers.md, research.md §45–§46
 │   │   ├── api/
 │   │   │   └── health/route.ts
 │   │   ├── sitemap.ts                # Emits both /en/... and /ar/... entries with hreflang alternates (research.md §35)
@@ -235,7 +241,7 @@ elora/
 │   │   │   ├── checkout/
 │   │   │   │   └── payment/          # Payment method abstraction (research.md §10)
 │   │   │   ├── orders/
-│   │   │   └── admin/
+│   │   │   └── admin/                # Includes export.service.ts — per-report-type Firestore reads shared by the /admin/api/export/[reportType] Route Handler; reuses the exact dashboard-stats/Sold-Out-derivation logic already in this folder rather than recomputing figures a second, differently way (spec FR-105–FR-106, research.md §45)
 │   │   ├── validation/               # Zod schemas, one file per domain area; localizedString.schema.ts shared by product/category/showcase/delivery-location schemas (data-model.md); deliveryLocation.schema.ts (regionId restricted to the two fixed values)
 │   │   ├── config/
 │   │   │   └── social.ts             # getSocialConfig(), buildInstagramHref(), buildWhatsAppHref(locale, message?) — the ONLY source every Instagram/WhatsApp control reads (spec FR-006a, FR-080, research.md §28, §37)
@@ -313,7 +319,12 @@ Each phase ends with its own quickstart-style verification before the next begin
    displayOrder, remediation finding F3), homepage category showcase management (bilingual title/
    subtitle/CTA + desktop/mobile image upload, spec FR-001d), **delivery-location management**
    (relabel/reorder the two fixed regions; add/edit/activate/deactivate/reorder cities within each
-   — spec FR-094, research.md §40), order management + status transitions, customer management.
+   — spec FR-094, research.md §40), order management + status transitions, customer management,
+   and **admin-only Excel (`.xlsx`) export/reporting** for Orders, Products, Inventory/Stock,
+   Customers, Sales, Best-Selling Products, SOLD OUT Products, and Delivery Locations, each
+   generated server-side from live Firestore data with server-validated filters (spec
+   FR-099–FR-112, research.md §45–§46) — a read-only reporting layer on top of data this phase's
+   other admin surfaces already manage, never a second data store.
 6. **Phase 6 — Content, SEO, accessibility, performance, PWA, and social-contact pass**:
    About/Contact/footer content wiring, metadata/sitemap/robots/JSON-LD sourced from Firestore,
    accessibility audit against `research.md` §18, caching/revalidation tuning, responsive audit
@@ -341,7 +352,11 @@ Each phase ends with its own quickstart-style verification before the next begin
    responsive/RTL behavior — rate limiting on auth/checkout, Firestore/Storage Security Rules
    review, production documentation (Constitution Principle 22, including PWA setup, platform
    installation instructions, and bilingual/RTL notes), Vercel + Firebase (Firestore/Auth/Storage)
-   production deployment.
+   production deployment. Also includes Excel export test coverage (spec FR-099–FR-112,
+   research.md §45–§46): admin-only enforcement (a non-admin/unauthenticated request is rejected
+   server-side and produces no file), generated-file validity and column/figure correctness against
+   live Firestore data, each report-type filter, the empty-result-set case, and an explicit
+   assertion that no Excel import/upload code path exists anywhere in the application.
 
 ## Post-Design Constitution Check
 
@@ -514,6 +529,31 @@ affects identity") — switching language never changes the underlying selected 
 indexable per-location page is introduced (spec FR-098), so this feature adds no new SEO surface.
 No existing Firebase service, route, business rule, PWA safeguard, or the Burgundy + Gold + Cream
 identity changed. All 23 gates remain **PASS**. No entries are required in Complexity Tracking.
+
+**Tenth pass (this revision — admin-only Excel export/reporting)**: an admin-only reporting layer
+was added on top of the approved architecture — Orders, Products, Inventory/Stock, Customers,
+Sales, Best-Selling Products, SOLD OUT Products, and Delivery Locations can each be downloaded as
+a real `.xlsx` file (spec FR-099–FR-112). **Cloud Firestore remains the sole authoritative
+production database** for every entity this feature touches; an export is generated fresh, on
+demand, by reading current Firestore data via the Firebase Admin SDK (unaffected by, and never
+itself a substitute for, the storage architecture in research.md §2, §22) and is never persisted,
+cached, or read back into the system — there is no Excel **import** feature anywhere in this
+application, so editing or re-uploading a downloaded report has zero effect on Firestore
+(research.md §46, data-model.md "Excel export is derived, not stored"). Export is gated by the
+exact same three-layer admin authorization already required of every other admin operation (spec
+FR-101, Constitution Principle 6) — a Route Handler under `/admin/api/export/**`
+(contracts/route-handlers.md) that independently re-verifies `requireAdmin()`, inheriting
+`middleware.ts`'s existing `/admin/*` pre-filter for free — and never exposes Firebase Admin SDK
+credentials to the client (spec FR-111, Constitution Principle 15). Sales and Best-Selling-Products
+exports reuse the dashboard's existing statistics logic (research.md §17b) rather than recomputing
+those figures a second, potentially-divergent way; the SOLD OUT export reuses the existing
+`stock === 0` derivation (data-model.md) rather than introducing a second notion of "sold out."
+`.xlsx` generation uses ExcelJS, including a streaming writer for the Orders/Sales report types so
+a large order history doesn't require unbounded in-memory buffering (research.md §45) — no
+background job queue or new infrastructure is introduced. No existing Firebase architecture,
+commerce/inventory/Sold-Out/category/checkout/order logic, responsive/PWA/bilingual requirement, or
+the Burgundy + Gold + Cream identity changed. All 23 gates remain **PASS**. No entries are required
+in Complexity Tracking.
 
 ## Complexity Tracking
 

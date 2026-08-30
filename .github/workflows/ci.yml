@@ -1,0 +1,101 @@
+name: CI
+
+# T235 (research.md §14, §22): gates every merge on typecheck, lint,
+# production build, the full Vitest suite (unit + Firebase-Emulator-backed
+# integration, including the Phase 16 security-rules tests), and the full
+# Playwright e2e suite across the mobile/tablet/desktop device matrix, in
+# both locales where a spec parameterizes on locale.
+#
+# Lighthouse CI (also named in T235) is deliberately NOT included here: a
+# meaningful Lighthouse run needs a real deployed preview URL, which this
+# project has no deployment target for yet (the same honest gap documented
+# for T201 and T228). Wiring it in is a small addition once a preview
+# deployment exists — a `lhci autorun --collect.url=<preview-url>` step
+# added to this workflow, gated on the same triggers below.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FIREBASE_PROJECT_ID: demo-elora
+  GCLOUD_PROJECT: demo-elora
+  FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+  FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+  FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
+  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true"
+  NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDEMO0000000000000000000000000
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-elora.firebaseapp.com
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-elora
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-elora.appspot.com
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+  NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  ADMIN_BOOTSTRAP_EMAIL: admin@elora.local
+  ADMIN_BOOTSTRAP_PASSWORD: DevAdminPass123CI
+
+jobs:
+  static-checks:
+    name: Typecheck, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx eslint src tests playwright.config.ts --max-warnings=0
+      - run: npm run build
+
+  unit-and-integration:
+    name: Vitest (unit + Firebase Emulator integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - run: npm install -g firebase-tools
+      - run: npm run test:unit
+      - name: Integration tests against the Firebase Local Emulator Suite
+        run: firebase emulators:exec --project demo-elora "npm run test:integration"
+
+  e2e:
+    name: Playwright (mobile/tablet/desktop, EN/AR)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm install -g firebase-tools
+      - name: Seed the emulator and run the full Playwright suite
+        run: |
+          firebase emulators:start --project demo-elora &
+          npx wait-on tcp:8080 tcp:9099 tcp:9199
+          npm run seed
+          npm run create-admin
+          npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

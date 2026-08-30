@@ -334,6 +334,124 @@ servicing, and finds her selection still in place after a refresh or reopening t
 
 ---
 
+### User Story 9 - Export Store Data as Administrator (Priority: P9)
+
+The store owner, from the Admin Dashboard, downloads real Excel (.xlsx) reports of her store's
+current data — orders, products/inventory, customers, sales, best-sellers, SOLD OUT products, and
+delivery locations — for offline review, accounting, or sharing, without Excel ever becoming a
+place any of that data actually lives.
+
+**Why this priority**: The store is fully functional without this — every figure it reports is
+already visible somewhere in the Admin Dashboard (Stories 4–5, 8) — so it is correctly the lowest
+priority, an operational convenience layered on top of a store that already works end-to-end, not
+a capability anything else depends on.
+
+**Independent Test**: An authenticated administrator opens an export control in the Admin
+Dashboard, chooses a report type (and, where offered, a filter), downloads a real .xlsx file, and
+confirms it opens correctly in a standard spreadsheet application with the expected columns and
+current data; a non-administrator attempting the same request — through the interface or directly
+— is rejected before any file is produced; editing the downloaded file and "re-uploading" it
+nowhere in the product has no effect on the store's live data, because no such upload path exists.
+
+**Acceptance Scenarios**:
+
+1. **Given** the Admin Dashboard, **When** an authenticated administrator opens the Export to
+   Excel feature, **Then** she sees the available report types: Orders, Products, Inventory/Stock,
+   Customers, Sales, Best-Selling Products, SOLD OUT Products, and Delivery Locations.
+2. **Given** she chooses to export Orders, **When** the file downloads, **Then** it is a real
+   .xlsx file containing, per order, the order number, date, customer name, phone, email, region,
+   city/area, address, ordered products with quantities and prices, total, payment method, order
+   status, and whether the order was placed as a guest or by a registered customer.
+3. **Given** she chooses to export Products or Inventory/Stock, **When** the file downloads,
+   **Then** it contains, per product, the product identifier, English name, Arabic name (or blank
+   if not yet provided), category, price, current stock, derived SOLD OUT status, availability,
+   New Arrival flag, and Best Seller flag.
+4. **Given** she chooses to export Customers, Sales, Best-Selling Products, SOLD OUT Products, or
+   Delivery Locations, **When** the file downloads, **Then** each contains the fields relevant to
+   that report, computed the same way the equivalent Admin Dashboard screen already computes them
+   (e.g., Sales/Best-Sellers exclude cancelled orders, SOLD OUT reflects live derived stock state).
+5. **Given** a report that supports it, **When** she applies a filter (Orders by date range,
+   status, or region; Products by category; low-stock products; SOLD OUT products) before
+   exporting, **Then** the downloaded file contains only the matching records, verified
+   server-side rather than trusting a client-side selection.
+6. **Given** she is not an administrator, **When** she attempts to reach an export control or
+   call an export request directly (e.g., by guessing a URL), **Then** the request is rejected
+   server-side and no file is produced, exactly like every other admin-only operation.
+7. **Given** an exported file with no matching records for the chosen report/filter combination,
+   **When** it downloads, **Then** it is still a valid, correctly-headered .xlsx file rather than
+   an error or a broken download.
+8. **Given** she downloads and edits a report (e.g., changes a price or stock number in the
+   spreadsheet), **When** she looks at the live storefront or Admin Dashboard afterward, **Then**
+   nothing has changed — the edited file was never read back into the system, because no import
+   path exists.
+
+---
+
+### User Story 10 - Discover and Manage Special Offers (Priority: P10)
+
+An administrator puts a product on sale — setting a sale price below its regular price, optionally
+scheduled to start and/or end on specific dates — and removes it from sale at any time. Shoppers
+see a genuine, live "Special Offers / عروض خاصة" homepage section, and the crossed-out regular
+price alongside the prominent sale price everywhere that product appears — Home, Shop, its
+category page, its product detail page, Quick View, the cart, and her order — computed the exact
+same way, every time, from the same live Firestore data.
+
+**Why this priority**: The store is fully functional without this — every other story already
+works with regular pricing alone — so it is correctly the lowest priority, a merchandising
+capability layered on top of a store that already handles pricing, inventory, and checkout
+correctly. It closes the "Special Offers" gap the homepage's merchandising sequence (spec FR-001)
+already reserved a place for.
+
+**Independent Test**: An administrator opens a product's edit form, sets a sale price below its
+regular price (with or without start/end dates), and saves. A shopper visiting Home sees that
+product in a real Special Offers section; opening it from Home, Shop, its category page, or its
+product detail/Quick View all show the same crossed-out regular price and sale price; adding it to
+her cart and reaching checkout both show and charge the sale price, recalculated authoritatively
+server-side, never a price cached from an earlier page. The administrator removes the offer (or an
+end date passes); every one of those surfaces reverts to the regular price on next load, with no
+manual per-surface fix-up required.
+
+**Acceptance Scenarios**:
+
+1. **Given** the admin product edit form, **When** the administrator enters a sale price lower
+   than the regular price and saves — with no dates, i.e. an immediately-active, open-ended offer
+   — **Then** the product is on sale immediately.
+2. **Given** the same form, **When** the administrator enters a sale price that is equal to or
+   higher than the regular price, **Then** the system rejects the input with a clear validation
+   message and does not save an invalid offer.
+3. **Given** an offer with a future start date, **When** an administrator or shopper views the
+   product before that date, **Then** it displays at its regular price only — the offer is
+   scheduled, not yet active, and is never shown as on sale early.
+4. **Given** an offer with a past end date, **When** anyone views the product afterward, **Then**
+   it displays at its regular price only — an expired offer never continues to apply.
+5. **Given** a product currently on an active offer, **When** a shopper visits the homepage,
+   **Then** she sees a real "Special Offers" section containing it (and any other currently-active
+   offers), sourced live from Firestore — never a hardcoded or fabricated list.
+6. **Given** that same product, **When** she views it on the Shop page, its category page, its own
+   product detail page, or opens its Quick View, **Then** every one of those surfaces shows the
+   identical crossed-out regular price and sale price — never a different price on one page than
+   another.
+7. **Given** she adds it to her cart, **When** she views the cart or proceeds toward checkout,
+   **Then** the price charged is the current sale price, recalculated authoritatively from
+   Firestore at cart-display and order-creation time — never a price captured once and reused, and
+   never a client-submitted total.
+8. **Given** the product is in her cart, **When** the administrator removes the offer (or its end
+   date passes) before she completes checkout, **Then** her cart clearly reflects the current
+   regular price rather than silently continuing to honor the expired/removed offer, consistent
+   with the existing stale-cart handling for stock/availability changes.
+9. **Given** a completed order that included a then-active sale price, **When** the administrator
+   or the customer views that order afterward, **Then** it still shows the price actually paid at
+   purchase time, unaffected by the offer's later removal or expiry — consistent with the existing
+   historical order-snapshot guarantee.
+10. **Given** a product that is both Sold Out and on sale, **When** anyone views it, **Then** it
+    still shows SOLD OUT and remains non-purchasable exactly as any other Sold Out product would —
+    an active offer never overrides or bypasses inventory rules.
+11. **Given** a non-administrator, **When** she attempts to set or remove a product's sale price —
+    through the interface or a direct request — **Then** it is rejected server-side exactly like
+    every other admin-only product-management operation.
+
+---
+
 ### Edge Cases
 
 - What happens when a shopper's cart contains a product whose stock drops below the cart quantity,
@@ -453,6 +571,50 @@ servicing, and finds her selection still in place after a refresh or reopening t
   underlying selected region/city identity MUST remain exactly the same — only its displayed
   label changes — so switching language never silently changes, clears, or invalidates her
   delivery-location choice.
+- What happens when an administrator requests an export for a report type/filter combination with
+  zero matching records (e.g., no SOLD OUT products right now, or no orders in a selected date
+  range)? The system MUST produce a valid, correctly-headered but empty .xlsx file rather than an
+  error or a broken/missing download.
+- What happens when an administrator requests an Orders or Sales export covering a very large date
+  range or the store's entire history? The export MUST complete reliably rather than exhausting
+  server memory or silently timing out — the underlying data read MUST be capable of handling the
+  store's full order volume without loading an unbounded result set into memory all at once — and
+  the administrator MUST see clear progress/completion feedback rather than an unexplained delay.
+- What happens if a non-administrator (or an unauthenticated caller) invokes an export request
+  directly, bypassing the Admin Dashboard UI entirely (e.g., a direct request to the export
+  endpoint)? It MUST be rejected server-side exactly like any other admin-only operation — hidden
+  navigation is never the enforcement mechanism (Constitution Principle 6).
+- What happens after an administrator downloads an exported .xlsx file and edits it (e.g., changes
+  a price, a stock number, or an order status directly in the spreadsheet)? That edit MUST have
+  zero effect on Firestore or any other persisted store state — there is no Excel import or
+  re-upload path anywhere in the system that could feed an edited spreadsheet back in; Excel is a
+  read-only reporting output, never a database.
+- What happens when an administrator attempts to set a sale price equal to or higher than a
+  product's regular price? The system MUST reject the input with a clear validation message and
+  MUST NOT save an invalid offer — a "sale" that isn't actually a discount is never allowed.
+- What happens when an offer's scheduled start date hasn't arrived yet, or its end date has already
+  passed? The product MUST display and be purchasable at its regular price only — a scheduled
+  offer MUST NOT apply early, and an expired offer MUST NOT continue to apply, with no
+  administrator action required to "turn it off" at the boundary.
+- What happens when a shopper has a product in her cart or has reached checkout, and its offer is
+  removed, expires, or its schedule otherwise changes before she completes the purchase? She MUST
+  see and be charged the current authoritative price (regular or sale, whichever currently
+  applies), recalculated live from Firestore — never a price captured earlier in her session,
+  consistent with the existing stale-cart handling for stock/availability changes.
+- What happens when a product is simultaneously Sold Out and on an active sale? It MUST still show
+  SOLD OUT and remain non-purchasable exactly as any other Sold Out product would — an active offer
+  MUST NEVER override, hide, or bypass inventory/Sold-Out rules.
+- What happens to a completed order's recorded price when the product's offer is later removed,
+  modified, or expires? The order MUST continue to show the price actually paid at purchase time,
+  unaffected by any later change to the product's offer — consistent with the existing historical
+  order-snapshot guarantee (spec FR-047).
+- What happens when a non-administrator (or an unauthenticated caller) attempts to set or remove a
+  product's sale price, directly or through the interface? It MUST be rejected server-side exactly
+  like every other admin-only product-management operation.
+- What happens when there are currently no products with an active offer? The homepage's Special
+  Offers section MUST simply not render (or render an appropriate empty/graceful state) rather than
+  showing an empty, broken, or placeholder section — consistent with how the homepage already
+  degrades gracefully when a showcase or collection has no matching data yet.
 
 ## Requirements *(mandatory)*
 
@@ -1097,6 +1259,128 @@ servicing, and finds her selection still in place after a refresh or reopening t
   introduce additional public, separately-indexed SEO pages (e.g., a page per city) unless that is
   a distinct, separately-approved requirement in the future.
 
+**Admin — Data Export (Excel/.xlsx Reporting)**
+
+- **FR-099**: The Admin Dashboard MUST provide an "Export to Excel" feature offering, at minimum,
+  the following report types: Orders, Products, Inventory/Stock, Customers, Sales, Best-Selling
+  Products, SOLD OUT Products, and Delivery Locations.
+- **FR-100**: Every export MUST be generated server-side, on demand, by reading current data
+  directly from Cloud Firestore via the Firebase Admin SDK — never from a client-cached, client-
+  computed, or previously-exported dataset — and returned to the administrator as a downloadable
+  file. Cloud Firestore remains the sole authoritative store for every entity it already holds
+  (users, products, inventory, carts, wishlists, orders, customers, delivery locations); an export
+  is a read-only, point-in-time report **derived from** that data, never a second data store, and
+  never a system any other part of the store reads from.
+- **FR-101**: Every export request MUST be restricted to authenticated administrators only,
+  enforced server-side with the same defense-in-depth authorization already required of every
+  other admin-only operation (spec FR-034, Constitution Principle 6): a non-administrator's
+  attempt — whether through the Admin Dashboard UI or a direct request — MUST be rejected before
+  any file is produced, and hidden navigation MUST NOT be relied upon as the enforcement
+  mechanism.
+- **FR-102**: The Orders export MUST include, per order: order number, order date, customer name,
+  phone, email, delivery region, delivery city/area, delivery address, the ordered products with
+  their quantities and per-line prices, order subtotal/total, payment method, current order
+  status, and whether the order was placed by a guest or a registered customer.
+- **FR-103**: The Products/Inventory export MUST include, per product: product identifier, product
+  name in English, product name in Arabic (left blank if not yet provided, consistent with spec
+  FR-074's fallback rule), category, price, current stock, derived SOLD OUT status, availability
+  (storefront visibility), New Arrival flag, and Best Seller flag.
+- **FR-104**: The Customers export MUST include registered-customer profile and summary order-
+  history information (e.g., name, email, phone, number of orders, lifetime order total) sourced
+  from Firestore, and MUST NEVER include a password, credential, or authentication-token value —
+  none of which the system stores in the first place, since Firebase Authentication owns
+  credential storage entirely.
+- **FR-105**: The Sales export and the Best-Selling Products export MUST be computed using the
+  same rules as the Admin Dashboard's own statistics (spec FR-045) — excluding cancelled orders,
+  ranking best-sellers by cumulative quantity sold — so an exported figure always matches what an
+  administrator already sees on-screen.
+- **FR-106**: The SOLD OUT Products export MUST list exactly the products whose derived Sold Out
+  state (`stock === 0`) is true at the moment of export — never a separately-maintained,
+  independently-set, or potentially-stale list (spec FR-015a).
+- **FR-107**: The Delivery Locations export MUST list every delivery region and city/area, its
+  bilingual name, its active/inactive state, and its display order.
+- **FR-108**: Where meaningful for that report, an export MUST support administrator-chosen,
+  server-validated filters — at minimum: Orders by date range, Orders by status, Orders by region;
+  Products by category; low-stock products (below an administrator-specified stock threshold); and
+  SOLD OUT products. Each filter MUST be applied server-side before the report is generated —
+  never by downloading an unfiltered file and hiding rows client-side.
+- **FR-109**: Every export MUST be a real, valid .xlsx file (Office Open XML spreadsheet), openable
+  in standard spreadsheet applications, produced using a production-suitable spreadsheet-generation
+  library — never a mislabeled CSV/HTML file renamed to `.xlsx`, and never a workflow where Excel
+  or Google Sheets itself acts as an application data store.
+- **FR-110**: The system MUST NOT provide any Excel/spreadsheet **import** feature. Editing,
+  re-uploading, or otherwise modifying a previously downloaded export file MUST have zero effect
+  on Cloud Firestore or any other persisted store state — exports are a one-way, read-only
+  reporting output, never a write path back into the system.
+- **FR-111**: Generating or downloading an export MUST NOT expose Firebase Admin SDK credentials,
+  service-account keys, or any other server secret to the client at any point — the client
+  receives only the finished file, never the mechanism or credentials that produced it
+  (Constitution Principle 15).
+- **FR-112**: The Export to Excel controls in the Admin Dashboard MUST be clearly labeled,
+  keyboard-accessible, and MUST indicate export progress/completion for larger reports, rather
+  than appearing to hang with no feedback (Constitution Principle 16).
+
+**Admin — Special Offers / Promotional Pricing**
+
+- **FR-113**: The Admin Dashboard MUST let an administrator put any product on sale (set a sale
+  price) and remove it from sale at any time, from the same product-management surface used for
+  every other product field.
+- **FR-114**: A product's sale price MUST always be strictly lower than its regular price — the
+  system MUST reject any attempt to save a sale price that is equal to or greater than the regular
+  price, with a clear validation message, both client-side (for immediate feedback) and
+  server-side (authoritatively, Constitution Principle 13).
+- **FR-115**: An offer MAY optionally have a start date, an end date, both, or neither. With
+  neither, an enabled offer is immediately active and open-ended. The system MUST derive exactly
+  one of the following states at any moment, from the offer's enabled/disabled flag and its
+  optional dates compared against the current server time — never a separately-set, independently
+  maintained status field that could drift out of sync (mirroring spec FR-015a's Sold Out
+  derivation): **Disabled** (no offer configured, or explicitly removed), **Scheduled** (enabled,
+  start date not yet reached), **Active** (enabled, within its date window if any), **Expired**
+  (enabled, end date has passed).
+- **FR-116**: Only a product whose derived offer state is Active MUST be treated, displayed, or
+  charged as "on sale" anywhere in the system. A Scheduled or Expired offer MUST behave identically
+  to no offer at all from every shopper-facing and checkout perspective.
+- **FR-117**: The homepage MUST include a real "Special Offers / عروض خاصة" section listing
+  products whose derived offer state is currently Active, sourced live from Firestore — never a
+  hardcoded, fabricated, or manually-curated-outside-the-offer-mechanism list. This section MUST
+  render nothing (or an appropriate graceful empty state) when no product currently has an active
+  offer, consistent with how the existing homepage sections already degrade gracefully (spec Edge
+  Cases).
+- **FR-118**: Wherever a product with an Active offer is shown — the homepage (including its
+  Special Offers section and any other section it also appears in, e.g. New Arrivals), the Shop
+  page, its category page, its product detail page, and its Quick View — the system MUST display
+  its original regular price with a visual strikethrough alongside its prominent current sale
+  price, computed identically every time from the same derivation (spec FR-116).
+- **FR-119**: The price used in the cart display, the checkout summary, and the final
+  authoritative order-creation calculation MUST always be the product's current effective price —
+  its sale price while its offer is Active, otherwise its regular price — recalculated live from
+  Firestore at each of those moments. Neither the cart nor checkout MUST ever reuse a price
+  captured at an earlier point in the shopper's session, and neither MUST ever trust a
+  client-submitted price or total (spec FR-026, extends the existing Price Security requirement).
+- **FR-120**: If a product's offer is removed, or its schedule causes its derived state to change,
+  while it sits in a shopper's cart or between cart-viewing and checkout, the affected line MUST
+  reflect the current authoritative price the next time it is displayed or validated — the system
+  MUST NOT continue silently honoring a price that no longer applies (spec Edge Cases, consistent
+  with existing stale-cart stock/availability handling, spec FR-026).
+- **FR-121**: A historical order's recorded per-item price MUST remain exactly what was charged at
+  purchase time, permanently unaffected by any later change to that product's offer — consistent
+  with the existing historical order-snapshot guarantee (spec FR-047).
+- **FR-122**: An active offer MUST NEVER override, hide, or bypass Sold Out or availability rules
+  (spec FR-015a) — a Sold Out product on sale still shows SOLD OUT and remains non-purchasable.
+- **FR-123**: Setting, changing, or removing a product's sale price/offer schedule MUST be
+  restricted to authenticated administrators, enforced server-side with the same defense-in-depth
+  authorization already required of every other admin-only product-management operation (spec
+  FR-034), never merely hidden from a non-administrator's navigation.
+- **FR-124**: Special-offer fields (sale price, on-sale status, and/or derived offer state) MUST be
+  included in the relevant Excel export report(s) (Products and/or Inventory/Stock, spec
+  FR-099–FR-112) so an administrator can review promotional pricing offline exactly as she can
+  review every other product attribute.
+- **FR-125**: All Special Offers UI — pricing labels, the homepage section heading, offer-state-
+  dependent messaging, and admin controls for setting/removing an offer — MUST support both Arabic
+  and English, render correctly under RTL and LTR, remain fully responsive across the supported
+  device range, and behave correctly in installed PWA mode, consistent with every other storefront
+  and admin surface (spec FR-050–FR-065, FR-066–FR-085).
+
 ### Key Entities
 
 - **User**: A person who can authenticate with the store; has a role of registered customer or
@@ -1105,10 +1389,15 @@ servicing, and finds her selection still in place after a refresh or reopening t
 - **Product**: A jewelry item offered for sale; has bilingual (English/Arabic) name, description,
   material, and option/color labels, price, category, image(s), available colors/options, a
   non-negative admin-managed stock quantity, an admin-controlled visibility/availability flag, New
-  Arrival and Best Seller designations, and creation date. **Sold Out** is not a stored attribute
-  of a Product — it is always the derived state `stock === 0`, automatically true or false, never
-  manually set. The product's identifier, slug/URL, category relationship, price, and stock remain
-  language-independent; only its customer-facing display text is bilingual.
+  Arrival and Best Seller designations, an optional promotional offer (sale price, enabled/disabled
+  flag, optional start/end dates), and creation date. **Sold Out** is not a stored attribute of a
+  Product — it is always the derived state `stock === 0`, automatically true or false, never
+  manually set. Likewise, a product's **offer state** (Disabled/Scheduled/Active/Expired) is never
+  stored directly — it is always derived from the offer's enabled flag and optional dates compared
+  against the current time (spec FR-115), and its **effective price** (the price actually charged)
+  is always derived as the sale price while Active, otherwise the regular price (spec FR-119). The
+  product's identifier, slug/URL, category relationship, regular price, sale price, and stock
+  remain language-independent; only its customer-facing display text is bilingual.
 - **Category**: A taxonomy grouping every product belongs to, each with its own dedicated,
   bilingual storefront page (e.g., Bracelets/أساور, Rings/خواتم, Earrings/أقراط, Watches/ساعات).
   The category's identifier and slug/URL remain language-independent; only its display name/
@@ -1117,8 +1406,13 @@ servicing, and finds her selection still in place after a refresh or reopening t
   for one core category — bilingual title/subtitle/CTA text, desktop and mobile imagery, a
   reference to the category it promotes, a display order, and an active/visible state. Distinct
   from the Featured Categories quick-entry cards and from a Collection.
-- **Collection**: A curated grouping of products for merchandising purposes (e.g., New Arrivals,
-  Best Sellers, Special Offers), which may span multiple categories.
+- **Collection**: A curated grouping of products for merchandising purposes, which may span
+  multiple categories. New Arrivals, Best Sellers, and Special Offers are each realized directly as
+  a derived query over `Product` fields (`isNewArrival`, `isBestSeller`, and the offer-state
+  derivation respectively, spec FR-115) rather than requiring a separate curated-membership
+  mechanism — a generic, admin-curated Collection (explicit product membership, for a future
+  merchandising grouping not already covered by a Product-level flag) remains a possible future
+  extension but is not required by any of these three.
 - **Cart**: A customer's (guest or registered) in-progress set of selected products and quantities,
   prior to order placement.
 - **Cart Item**: A single product/quantity line within a Cart, valid only within current stock
@@ -1140,6 +1434,11 @@ servicing, and finds her selection still in place after a refresh or reopening t
   specification.
 - **Administrator Authorization**: The designation that grants a User access to admin-only
   operations, enforced by the system on every admin request.
+- **Export Report**: A read-only, point-in-time `.xlsx` snapshot of a portion of Firestore data —
+  Orders, Products/Inventory, Customers, Sales, Best-Selling Products, SOLD OUT Products, or
+  Delivery Locations — generated on demand for an administrator. It is never persisted as its own
+  stored entity within the system and is never a source of truth: Cloud Firestore remains
+  authoritative regardless of any export ever taken, downloaded, or subsequently edited.
 
 ## Success Criteria *(mandatory)*
 
@@ -1223,6 +1522,26 @@ servicing, and finds her selection still in place after a refresh or reopening t
   checkout without being re-asked.
 - **SC-023**: 0% of orders are created for a delivery city/area that is not active/supported at
   the moment of order submission, even if it was previously selected, cached, or shown offline.
+- **SC-024**: 100% of Excel export attempts by a non-administrator — whether through the Admin
+  Dashboard UI or a direct request — are rejected server-side, and 0% of them ever produce a
+  downloadable file.
+- **SC-025**: 100% of generated export files are valid, openable `.xlsx` files whose row counts and
+  figures match the underlying Firestore data at the moment of export — spot-checkable against the
+  Admin Dashboard's own Sales/Best-Sellers statistics, live stock values, and derived SOLD OUT
+  state.
+- **SC-026**: 0% of edits made to a downloaded export file are ever reflected back into Firestore
+  or any other persisted store state — verified by the simple absence of any Excel/spreadsheet
+  import code path in the system.
+- **SC-027**: 0% of attempts to save a sale price equal to or greater than a product's regular
+  price succeed, whether attempted through the admin interface or a direct request.
+- **SC-028**: 100% of products whose derived offer state is Active at the moment of viewing show
+  the identical crossed-out regular price and sale price on every surface that displays them (Home,
+  Shop, category page, product detail, Quick View) — 0% instances of one surface showing a
+  different price than another for the same product at the same moment.
+- **SC-029**: 100% of cart/checkout price calculations for a product use its current effective
+  price (live from Firestore) at the moment of calculation — 0% of completed orders are ever priced
+  using a value that does not match what the product's authoritative offer state actually was at
+  order-creation time.
 
 ## Assumptions
 
@@ -1304,3 +1623,14 @@ servicing, and finds her selection still in place after a refresh or reopening t
 - Delivery fees and delivery-time estimates are out of scope for this requirement unless
   separately configured elsewhere — the location selector and checkout validation confirm *that*
   a city/area is serviced, not a specific price or timeframe for delivering there (spec FR-093).
+- Excel export is a reporting/download feature only, generated synchronously on request at the
+  store's initial launch scale (plan.md "Scale/Scope" — low hundreds of products, low thousands of
+  orders/month); it is not assumed to require a background job queue or asynchronous processing
+  pipeline. Exported column headers and report labels are in English, consistent with the Admin
+  Dashboard's own English-only chrome (research.md §32), while bilingual data fields (e.g. a
+  product's English/Arabic name) are exported as separate columns rather than combined or
+  translated.
+- Special Offers applies to a single product's own regular/sale price; it does not introduce
+  cart-level discounts, coupon codes, percentage-off rules, or multi-item bundle pricing — those
+  would be distinct, separately-approved requirements if the store owner wants them in the future.
+  A product carries at most one active offer at a time (no stacked/overlapping offers to reconcile).

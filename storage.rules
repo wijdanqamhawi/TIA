@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Admin-only image storage (T147, research.md §11). `products/**` and
+// `showcases/**` are the only writable paths in this feature — everything
+// else stays default-deny. Reads are public (product/showcase images are
+// shown on the public storefront), writes require the same `role: "ADMIN"`
+// custom claim `requireAdmin()` checks server-side (mirrors
+// scripts/create-admin.ts), plus a content-type/size check so an admin
+// account can't be used to upload arbitrary files through this path.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.role == "ADMIN";
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp)')
+        && request.resource.size < 8 * 1024 * 1024;
+    }
+
+    match /products/{productId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /showcases/{showcaseId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

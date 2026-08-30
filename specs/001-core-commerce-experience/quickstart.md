@@ -484,3 +484,86 @@ use; checkout always prefills from and revalidates against the live, admin-manag
 an unsupported or deactivated location can never silently produce an order; admins can manage the
 full location list without a code change; and the selector is fully responsive, PWA-compatible,
 and accessible.
+
+## Scenario 15 — Admin Excel export (spec FR-099–FR-112, SC-024–SC-026)
+
+1. **Happy path — Orders**: as admin, from the Admin Dashboard's Export to Excel screen, export
+   Orders with no filter. Confirm a real `.xlsx` file downloads (opens correctly in a standard
+   spreadsheet app) and contains, per order: order number, date, customer name, phone, email,
+   region, city/area, address, ordered products with quantities/prices, total, payment method,
+   status, and guest-vs-registered — matching the orders visible in `/admin/orders`.
+2. **Happy path — Products/Inventory**: export Products. Confirm each row has the product's
+   identifier, English name, Arabic name (blank for the Scenario 3's seed English-only product,
+   per FR-074's fallback), category, price, stock, derived SOLD OUT status, availability, New
+   Arrival, and Best Seller — matching `/admin/products`.
+3. **SOLD OUT export**: reduce a product's stock to `0` (as in Scenario 8), then export SOLD OUT
+   Products. Confirm that product appears, and a product with stock `> 0` does not.
+4. **Sales / Best-Sellers export**: export Sales and Best-Selling Products. Confirm the figures
+   match `/admin`'s own dashboard statistics exactly, including that a `Cancelled` test order
+   (Scenario 6) is excluded from both.
+5. **Customers export**: export Customers. Confirm it includes profile/order-summary fields only
+   — no password, credential, or token value appears anywhere in the file (none exists to export).
+6. **Delivery Locations export**: export Delivery Locations. Confirm every region/city from
+   `/admin/locations` appears with its bilingual name, active state, and display order.
+7. **Filters**: export Orders filtered by a date range and by status; export Products filtered by
+   category; export a low-stock threshold. Confirm each downloaded file contains only matching
+   rows, not a full unfiltered file with rows merely hidden.
+8. **Empty result set**: apply a filter guaranteed to match nothing (e.g., a future date range).
+   Confirm the download is still a valid, correctly-headered `.xlsx` file, not an error page.
+9. **Authorization boundary**: while logged in as the Scenario-2 customer (non-admin), attempt to
+   open the export screen and to call an export request directly (e.g., a raw request to
+   `/admin/api/export/orders`, bypassing the UI). Confirm both are rejected server-side and no
+   file is produced — not just the UI hiding the option (mirrors Scenario 7).
+10. **No import path**: confirm — by inspection of the routes/actions, not just behavior — that no
+    Excel/spreadsheet upload or import endpoint exists anywhere in the application. Download an
+    export, edit a value in it (e.g., change a price), and confirm there is nowhere in the product
+    to feed that edited file back in; the live storefront/admin data is unaffected.
+
+**Pass criteria**: every report type produces a real, correctly-populated `.xlsx` file matching
+live Firestore data and the admin dashboard's own figures; every filter is enforced server-side;
+an empty result set still yields a valid file; export is unreachable by a non-admin through any
+path; no Excel import capability exists, so a downloaded file can never be edited and fed back
+into Firestore.
+
+## Scenario 16 — Special Offers / promotional pricing (spec FR-113–FR-125, SC-027–SC-029)
+
+1. **Invalid sale price rejected**: as admin, attempt to enable an offer on a product with a sale
+   price equal to, or greater than, its regular price. Confirm the save is rejected — both a
+   client-side validation message and, by attempting the equivalent action call directly, a
+   server-side rejection — and no offer is saved.
+2. **Enable a valid offer**: set a sale price below the regular price and enable the offer with no
+   start/end dates. Confirm the product's derived offer status is immediately `Active`.
+3. **Scheduled offer**: set a future `saleStartAt`. Confirm the offer status shows as `Scheduled`
+   and the product displays only its regular price everywhere (Home, Shop, category page, product
+   detail, Quick View) until that instant passes.
+4. **Expired offer**: set a past `saleEndAt`. Confirm the offer status shows as `Expired` and the
+   product reverts to displaying only its regular price everywhere, with no manual admin action
+   beyond having set the date.
+5. **Consistent display**: with an `Active` offer (from step 2), confirm the identical crossed-out
+   regular price and sale price render on Home's Special Offers section, the Shop grid, the
+   product's category page, its detail page, and its Quick View — same two numbers, every surface.
+6. **Cart/checkout authoritative pricing**: add the on-sale product to the cart. Confirm the cart
+   line prices it at the sale price. Complete Cash on Delivery checkout (as in Scenario 1) and
+   confirm the resulting order's item price matches the sale price, not the regular price.
+7. **Mid-session price change**: with the on-sale product still in the cart, have admin disable the
+   offer in a separate session. Reload the cart page and confirm it now shows the regular price —
+   never a stale sale price — before checkout is attempted.
+8. **Sold Out overrides an active offer**: reduce the on-sale product's stock to `0` (as in
+   Scenario 8). Confirm it still displays SOLD OUT and remains non-purchasable, regardless of its
+   `Active` offer status.
+9. **Historical order price is immutable**: after completing an order at a sale price (step 6),
+   have admin change or remove that product's offer entirely. Confirm the already-placed order's
+   item price in both the customer's order history and the admin order list is unchanged.
+10. **Empty Special Offers section**: with no product currently `Active`, confirm the Home Special
+    Offers section degrades gracefully (hidden or a clear empty message) rather than showing a
+    broken or empty-looking block.
+11. **Authorization boundary**: while logged in as the Scenario-2 customer (non-admin), attempt to
+    enable an offer directly (bypassing the UI). Confirm it is rejected server-side (mirrors
+    Scenario 7).
+
+**Pass criteria**: an invalid sale price can never be saved; a scheduled or expired offer never
+displays or prices as active; every storefront surface shows identical offer pricing for the same
+product at the same moment; cart and checkout always price from the current authoritative offer
+state, never a stale or client-submitted value; Sold Out always overrides an active offer; a placed
+order's price is immune to any later offer change; offer management is admin-only and
+server-enforced.
