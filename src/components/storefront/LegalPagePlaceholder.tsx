@@ -22,7 +22,7 @@ export async function LegalPagePlaceholder({ locale, title }: { locale: string; 
       <div className="mx-auto max-w-2xl">
         <h1 className="text-center font-display text-3xl text-text-primary">{title}</h1>
 
-        <div className="mt-8 rounded-lg border-2 border-dashed border-brand-gold bg-brand-ivory p-6 text-center">
+        <div className="mt-8 rounded-none border border-dashed border-hairline bg-brand-cream/60 p-6 text-center">
           <p className="font-display text-lg text-brand-burgundy">{t("pendingNoticeTitle")}</p>
           <p className="mt-2 text-sm text-text-primary/80">{t("pendingNoticeBody")}</p>
           <Link

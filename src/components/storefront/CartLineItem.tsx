@@ -12,6 +12,7 @@ import { QuantitySelector } from "./QuantitySelector";
 import { resolveLocalizedString } from "@/types/localizedString";
 import { removeCartItemAction, updateCartItemQuantityAction } from "@/actions/cart.actions";
 import type { EnrichedCartLine } from "@/lib/domain/cart/cart.service";
+import { resolveProductImage } from "@/lib/config/demoImages";
 
 /**
  * A single cart line (spec FR-050d): a table row at `md`+, a stacked card
@@ -29,7 +30,10 @@ export function CartLineItem({ line, locale }: { line: EnrichedCartLine; locale:
 
   const name = line.product ? resolveLocalizedString(line.product.name, locale) : null;
   const optionLabel = line.product?.optionLabel ? resolveLocalizedString(line.product.optionLabel, locale) : null;
-  const image = line.product?.image;
+  // Real uploaded photo wins; a seeded placeholder shows the demo image.
+  const image = line.product
+    ? { url: resolveProductImage(line.product.image?.url, line.productId).url, alt: line.product.image?.alt ?? "" }
+    : null;
 
   function handleQuantityChange(nextQuantity: number) {
     startTransition(async () => {
@@ -61,14 +65,14 @@ export function CartLineItem({ line, locale }: { line: EnrichedCartLine; locale:
       aria-busy={isPending}
     >
       <div className="flex gap-3 sm:flex-1 sm:items-center">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-brand-beige">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-none bg-brand-beige">
           {image ? (
-            <Image src={image.url} alt={image.alt || name || ""} fill sizes="80px" className="object-cover" />
+            <Image src={image.url} alt={image.alt || name || ""} fill sizes="96px" className="object-cover" />
           ) : null}
         </div>
         <div className="flex flex-col gap-1">
           {name && line.product ? (
-            <Link href={`/shop/${line.product.slug}`} className="font-medium text-text-primary hover:text-brand-burgundy">
+            <Link href={`/shop/${line.product.slug}`} className="link-underline w-fit font-medium text-text-primary transition-colors hover:text-brand-burgundy focus-visible:outline-none">
               {name}
             </Link>
           ) : (
@@ -125,7 +129,7 @@ export function CartLineItem({ line, locale }: { line: EnrichedCartLine; locale:
           onClick={handleRemove}
           disabled={isPending}
           aria-label={t("remove")}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-text-primary/70 hover:bg-brand-beige hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-text-primary/60 transition-colors hover:bg-brand-beige hover:text-brand-burgundy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Trash2 aria-hidden="true" size={18} />
         </button>

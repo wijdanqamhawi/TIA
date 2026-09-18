@@ -8,6 +8,7 @@ import { usersCollection } from "@/lib/firebase/firestore";
 import { resolveLocalizedString } from "@/types/localizedString";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { Price } from "@/components/ui/Price";
+import { PageHeading } from "@/components/ui/PageHeading";
 
 // Reads the caller's live cart + current product pricing/stock/offer
 // state, and live delivery-region data, on every request — never
@@ -73,10 +74,10 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   );
 
   return (
-    <main className="container-luxury py-10">
-      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">{t("title")}</h1>
+    <main className="container-luxury py-14 sm:py-20">
+      <PageHeading title={t("title")} className="mb-10 sm:mb-14" />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-12">
         <div className="lg:col-span-2">
           <CheckoutForm
             locale={locale}
@@ -87,9 +88,9 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
           />
         </div>
 
-        <div className="flex h-fit flex-col gap-3 rounded-lg border border-border-luxury bg-brand-ivory p-6">
-          <h2 className="font-display text-lg text-text-primary">{t("orderSummary")}</h2>
-          <div className="flex flex-col gap-2 border-b border-border-luxury pb-3">
+        <div className="flex h-fit flex-col gap-4 rounded-2xl border border-hairline bg-brand-cream/50 p-6 shadow-elev-1 sm:p-7 lg:sticky lg:top-28">
+          <h2 className="font-display text-xl text-text-primary">{t("orderSummary")}</h2>
+          <div className="flex flex-col gap-2 border-b border-hairline pb-4">
             {summary.lines.map((line) => (
               <div
                 key={`${line.productId}:${line.selectedOption?.optionKey ?? ""}:${line.selectedOption?.valueKey ?? ""}`}
@@ -106,9 +107,9 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
             <span>{t("subtotal")}</span>
             <Price minorUnits={summary.subtotal} locale={locale} className="text-sm" />
           </div>
-          <div className="flex items-center justify-between border-t border-border-luxury pt-3 text-base font-semibold text-text-primary">
+          <div className="flex items-center justify-between border-t border-hairline pt-4 text-base font-semibold text-text-primary">
             <span>{t("total")}</span>
-            <Price minorUnits={summary.total} locale={locale} className="text-lg" />
+            <Price minorUnits={summary.total} locale={locale} className="text-xl" />
           </div>
         </div>
       </div>

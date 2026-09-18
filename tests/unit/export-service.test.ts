@@ -84,7 +84,54 @@ describe("mapProductRow", () => {
       availability: "Yes",
       newArrival: "Yes",
       bestSeller: "No",
+      offerStatus: "No Offer",
+      isOnSale: "No",
+      salePrice: "",
+      saleStartAt: "",
+      saleEndAt: "",
     });
+  });
+
+  it("T331: includes the derived offer status and sale price/dates for an active offer", () => {
+    const now = Timestamp.fromMillis(1_700_000_000_000);
+    const row = mapProductRow(
+      makeProduct({ isOnSale: true, salePrice: 9999, saleStartAt: null, saleEndAt: null }),
+      new Map(),
+      now,
+    );
+
+    expect(row.offerStatus).toBe("On Sale");
+    expect(row.isOnSale).toBe("Yes");
+    expect(row.salePrice).toBe(99.99);
+  });
+
+  it("T331: reports Scheduled/Expired/No Offer correctly, and leaves salePrice/dates blank when unset — never null/undefined", () => {
+    const now = Timestamp.fromMillis(1_700_000_000_000);
+    const future = Timestamp.fromMillis(now.toMillis() + 1000);
+    const past = Timestamp.fromMillis(now.toMillis() - 1000);
+
+    const scheduled = mapProductRow(
+      makeProduct({ isOnSale: true, salePrice: 9999, saleStartAt: future, saleEndAt: null }),
+      new Map(),
+      now,
+    );
+    expect(scheduled.offerStatus).toBe("Scheduled");
+    expect(scheduled.saleStartAt).toBe(future.toDate().toISOString());
+
+    const expired = mapProductRow(
+      makeProduct({ isOnSale: true, salePrice: 9999, saleStartAt: null, saleEndAt: past }),
+      new Map(),
+      now,
+    );
+    expect(expired.offerStatus).toBe("Expired");
+    expect(expired.saleEndAt).toBe(past.toDate().toISOString());
+
+    const noOffer = mapProductRow(makeProduct(), new Map(), now);
+    expect(noOffer.offerStatus).toBe("No Offer");
+    expect(noOffer.isOnSale).toBe("No");
+    expect(noOffer.salePrice).toBe("");
+    expect(noOffer.saleStartAt).toBe("");
+    expect(noOffer.saleEndAt).toBe("");
   });
 
   it("leaves the Arabic-name cell blank when unset, never null/undefined", () => {

@@ -68,13 +68,15 @@ test.describe("mobile commerce flow (Arabic/RTL)", () => {
     // 1. Home.
     await page.goto("/ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    await expect(page.getByRole("heading", { name: "ELORA JEWELLERY" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "أكثر من مجرد إكسسوارات", level: 1 })).toBeVisible();
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
-    // 2. Reach Shop via the mobile hamburger menu.
+    // 2. Reach Shop via the bottom tab bar — the primary mobile Shop entry.
+    //    The hamburger stays available (asserted visible) for categories
+    //    and secondary links, but no longer repeats the tab bar's
+    //    destinations, so there is exactly one visible Shop control.
     const openMenu = page.getByRole("button", { name: "فتح القائمة" });
     await expect(openMenu).toBeVisible();
-    await openMenu.click();
     const shopLink = page.getByRole("navigation").getByRole("link", { name: "المتجر", exact: true });
     await expect(shopLink).toBeVisible();
     await shopLink.click();

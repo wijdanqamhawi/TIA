@@ -1,5 +1,5 @@
 import "server-only";
-import type { Timestamp } from "firebase-admin/firestore";
+import { Timestamp } from "firebase-admin/firestore";
 import {
   productsCollection,
   ordersCollection,
@@ -11,6 +11,7 @@ import {
   getAllDeliveryLocationsByRegion,
 } from "@/lib/domain/delivery/deliveryLocation.service";
 import { isSoldOut } from "@/lib/domain/catalog/soldOut";
+import { getOfferStatus, type OfferStatus } from "@/lib/domain/catalog/offer";
 import { computeDashboardStats, computeBestSellers } from "@/lib/domain/admin/dashboard.service";
 import { fromMinorUnits } from "@/lib/utils/currency";
 import { resolveLocalizedString } from "@/types/localizedString";
@@ -33,6 +34,13 @@ import type { User } from "@/types/user";
 
 // --- Products / Inventory / SOLD OUT ---
 
+const OFFER_STATUS_LABEL: Record<OfferStatus, string> = {
+  DISABLED: "No Offer",
+  SCHEDULED: "Scheduled",
+  ACTIVE: "On Sale",
+  EXPIRED: "Expired",
+};
+
 export type ProductExportRow = {
   id: string;
   nameEn: string;
@@ -44,10 +52,21 @@ export type ProductExportRow = {
   availability: "Yes" | "No";
   newArrival: "Yes" | "No";
   bestSeller: "Yes" | "No";
+  /** Derived via `getOfferStatus` (T316) — never a stored field, so this can never drift from the admin badge (T330) or storefront pricing (spec FR-124). */
+  offerStatus: string;
+  isOnSale: "Yes" | "No";
+  /** Blank (never `0`/`null`) when no sale price is set — matches the blank-Arabic-name convention already used for `nameAr`. */
+  salePrice: number | "";
+  saleStartAt: string;
+  saleEndAt: string;
 };
 
-/** Pure row mapping (T308) — `categoryNameById` falls back to the raw `categoryId` for a deleted/unknown category, never throwing. */
-export function mapProductRow(product: Product, categoryNameById: Map<string, string>): ProductExportRow {
+/** Pure row mapping (T308) — `categoryNameById` falls back to the raw `categoryId` for a deleted/unknown category, never throwing. `now` defaults to the current instant; a fixed value is unit-test-only (mirrors `resolveOfferPricing`'s own `now` parameter pattern). */
+export function mapProductRow(
+  product: Product,
+  categoryNameById: Map<string, string>,
+  now: Timestamp = Timestamp.now(),
+): ProductExportRow {
   return {
     id: product.id,
     nameEn: product.name.en,
@@ -59,6 +78,11 @@ export function mapProductRow(product: Product, categoryNameById: Map<string, st
     availability: product.availability ? "Yes" : "No",
     newArrival: product.isNewArrival ? "Yes" : "No",
     bestSeller: product.isBestSeller ? "Yes" : "No",
+    offerStatus: OFFER_STATUS_LABEL[getOfferStatus(product, now)],
+    isOnSale: product.isOnSale ? "Yes" : "No",
+    salePrice: product.salePrice != null ? fromMinorUnits(product.salePrice) : "",
+    saleStartAt: product.saleStartAt ? product.saleStartAt.toDate().toISOString() : "",
+    saleEndAt: product.saleEndAt ? product.saleEndAt.toDate().toISOString() : "",
   };
 }
 

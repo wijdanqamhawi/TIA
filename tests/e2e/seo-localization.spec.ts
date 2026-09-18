@@ -12,7 +12,7 @@ import { test, expect } from "./fixtures/base";
 test.describe("localized SEO metadata", () => {
   test("home page has distinct, correctly-localized title/canonical/hreflang per locale", async ({ page }) => {
     await page.goto("/en");
-    await expect(page).toHaveTitle(/ELORA JEWELLERY/);
+    await expect(page).toHaveTitle(/TIA/);
     const enTitle = await page.title();
 
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/en$/);
@@ -23,7 +23,7 @@ test.describe("localized SEO metadata", () => {
     await page.goto("/ar");
     const arTitle = await page.title();
     expect(arTitle).not.toBe(enTitle);
-    expect(arTitle).toMatch(/إيلورا/);
+    expect(arTitle).toMatch(/تيا/);
 
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/ar$/);
     await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute("href", /\/en$/);

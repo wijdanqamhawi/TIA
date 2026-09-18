@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export type DialogProps = {
@@ -38,24 +39,35 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
       // dialogs that only ever mount while open) can otherwise still
       // surface its closed content to accessibility/automation queries.
       className={cn(
-        "m-auto rounded-lg border border-border-luxury bg-brand-ivory p-0 backdrop:bg-black/50",
-        "w-[min(90vw,32rem)]",
+        // The gold hairline ring reads as a drawn edge rather than a UI
+        // border, and the softened backdrop (blur + warm tint instead of
+        // flat black) keeps the page behind recognisably ELORA.
+        "m-auto overflow-hidden rounded-none border border-hairline bg-brand-ivory p-0 shadow-elev-3",
+        "backdrop:bg-brand-burgundy-dark/55 backdrop:backdrop-blur-sm",
+        "w-[min(92vw,32rem)]",
         !open && "hidden",
         className,
       )}
     >
-      <div className="flex items-center justify-between border-b border-border-luxury p-4">
-        <h2 className="font-display text-lg text-text-primary">{title}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="rounded-md p-1 text-text-primary hover:bg-brand-beige focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy"
-        >
-          ×
-        </button>
+      {/* The entrance animation lives on this inner panel, never on the
+          <dialog> itself, so native focus-trapping and Escape handling are
+          untouched. It is stilled automatically under reduced-motion. */}
+      <div className={cn(open && "animate-elora-dialog-in")}>
+        <div className="flex items-center justify-between gap-4 border-b border-hairline px-6 py-5">
+          <h2 className="font-display text-2xl font-light text-text-primary">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            // Was a bare "×" glyph in a 1-unit padded box, which fell well
+            // under the 44px touch-target floor every other control meets.
+            className="-me-2 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-text-primary/70 transition-colors hover:bg-brand-beige hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
+          >
+            <X aria-hidden="true" size={18} />
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
       </div>
-      <div className="p-4">{children}</div>
     </dialog>
   );
 }

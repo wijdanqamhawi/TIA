@@ -67,18 +67,16 @@ test.describe("mobile commerce flow (English/LTR)", () => {
   test("guest browses, adds to cart, and completes COD checkout on a mobile viewport", async ({ page }) => {
     // 1. Home
     await page.goto("/en");
-    await expect(page.getByRole("heading", { name: "ELORA JEWELLERY" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
-    // 2. Reach Shop via the mobile hamburger menu (proves mobile nav works).
-    // Retries the whole open->click sequence: on a slower engine, a click
-    // landing before client-side hydration completes hits inert
-    // server-rendered markup with no event handlers attached yet (same
-    // idiom used in browse.spec.ts).
+    // 2. Reach Shop via the bottom tab bar — the primary mobile Shop entry.
+    // The hamburger stays available (asserted visible) for categories and
+    // secondary links, but no longer repeats the tab bar's destinations,
+    // so there is exactly one visible Shop control.
     const openMenu = page.getByRole("button", { name: "Open menu" });
     await expect(openMenu).toBeVisible();
-    await openMenu.click();
-    const shopLink = page.getByRole("navigation").getByRole("link", { name: "Shop", exact: true });
+    const shopLink = page.getByRole("navigation").getByRole("link", { name: "Shop", exact: true }).first();
     await expect(shopLink).toBeVisible();
     await shopLink.click();
     await expect(page).toHaveURL(/\/en\/shop$/, { timeout: 10000 });

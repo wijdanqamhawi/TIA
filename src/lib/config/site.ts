@@ -9,4 +9,7 @@ export function getBaseUrl(): string {
   return (configured || "http://localhost:3000").replace(/\/+$/, "");
 }
 
-export const SITE_NAME = "ELORA JEWELLERY";
+export const SITE_NAME = "TIA";
+
+/** The brand descriptor that sits under the TIA wordmark in the logo lockup. */
+export const SITE_TAGLINE = "Accessories & More";

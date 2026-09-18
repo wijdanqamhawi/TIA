@@ -6,6 +6,7 @@ import { isDeliveryRegionId, type DeliveryRegionId } from "@/types/deliveryRegio
 import { Link } from "@/lib/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { ProfileForm } from "@/components/storefront/ProfileForm";
+import { PageHeading } from "@/components/ui/PageHeading";
 
 // Reads the caller's live profile + delivery-region data on every
 // request; `AccountLayout` already guards this route (Constitution
@@ -41,11 +42,11 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   }));
 
   return (
-    <main className="container-luxury py-10">
-      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">{t("title")}</h1>
+    <main className="container-luxury py-14 sm:py-20">
+      <PageHeading title={t("title")} className="mb-10 sm:mb-14" />
 
-      <div className="mx-auto flex max-w-2xl flex-col gap-6">
-        <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="mx-auto flex max-w-2xl flex-col gap-8">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Link href="/account/orders" className="flex-1">
             <Button type="button" variant="outline" className="w-full">
               {t("viewOrders")}

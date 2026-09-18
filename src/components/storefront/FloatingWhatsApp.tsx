@@ -50,7 +50,7 @@ export function FloatingWhatsApp({ href }: { href: string | null }) {
       title={t("whatsappLabel")}
       data-testid="floating-whatsapp"
       style={{ bottom: `${reservedBottom + 16}px` }}
-      className="fixed end-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-burgundy text-brand-gold shadow-lg transition-colors hover:bg-brand-burgundy-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
+      className="fixed end-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-burgundy text-brand-gold-muted shadow-lg transition-colors hover:bg-brand-burgundy-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
     >
       <WhatsAppIcon size={28} />
     </a>

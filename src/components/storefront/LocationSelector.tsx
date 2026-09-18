@@ -70,7 +70,7 @@ export function LocationSelector({
         onClick={() => setOpen(true)}
         className={
           className ??
-          "flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-text-primary hover:bg-brand-beige focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy"
+          "flex min-h-11 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-current opacity-80 transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
         }
       >
         <MapPin aria-hidden="true" size={16} />

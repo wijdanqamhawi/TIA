@@ -122,6 +122,14 @@ function readProductImages(value: FirebaseFirestore.DocumentData["images"]): Pro
         storagePath: image.storagePath,
         position: image.position ?? 0,
         alt: image.alt ?? "",
+        // Per-variant photography (see `ProductImage.valueKey`). This
+        // converter rebuilds each image field-by-field, so an image field
+        // missing from this list is silently dropped on *every* read no
+        // matter what is stored — which is exactly what happened when
+        // `valueKey` was first added and the gallery never saw it.
+        // Normalized to null so a stored `undefined` and an absent field
+        // are indistinguishable downstream.
+        valueKey: image.valueKey ?? null,
       }))
     : [];
 }

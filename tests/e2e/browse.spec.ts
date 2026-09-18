@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { switchToArabicWithAvailableControl } from "./fixtures/language";
 
 /**
  * Guest browses Home (all four showcases) → Shop → category page →
@@ -17,7 +18,9 @@ test.describe("guest browsing", () => {
   test("homepage shows the four category showcases and merchandising sections", async ({ page }) => {
     await page.goto("/en");
 
-    await expect(page.getByRole("heading", { name: "ELORA JEWELLERY" })).toBeVisible();
+    // Scoped to the hero's `h1`: the brand-statement band further down the
+    // page carries the same phrase as its own `h2`.
+    await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
     await expect(page.getByRole("link", { name: "Shop Bracelets" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Shop Rings" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Shop Earrings" })).toBeVisible();
@@ -31,10 +34,15 @@ test.describe("guest browsing", () => {
 
     await page.getByRole("link", { name: "Shop", exact: true }).first().click();
     await expect(page).toHaveURL(/\/en\/shop$/);
-    await expect(page.getByRole("heading", { name: "Shop", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "All Accessories", level: 1 })).toBeVisible();
 
-    await page.getByRole("link", { name: "Bracelets" }).first().click();
-    await expect(page).toHaveURL(/\/en\/shop\/category\/bracelets$/);
+    // The Shop page now filters by category in place rather than linking to
+    // the dedicated category route: the sidebar (desktop) and the filter
+    // drawer (below `lg`) render the same control, so this is not scoped to
+    // either one. The category route itself still exists and is covered by
+    // its own test below.
+    await page.getByRole("button", { name: "Bracelets", exact: true }).first().click();
+    await expect(page).toHaveURL(/\/en\/shop\?category=bracelets$/);
 
     const main = page.getByRole("main");
     await expect(main.getByRole("link", { name: "Golden Bangle Bracelet" }).first()).toBeVisible();
@@ -64,16 +72,14 @@ test.describe("guest browsing", () => {
   test("language switcher renders Arabic RTL content", async ({ page }) => {
     await page.goto("/en");
 
-    // On narrow viewports the switcher lives inside the mobile hamburger
-    // drawer (spec FR-003) rather than directly in the top bar.
-    const openMenu = page.getByRole("button", { name: "Open menu" });
-    if (await openMenu.isVisible()) {
-      await openMenu.click();
-    }
-
-    await page.getByRole("button", { name: "AR", exact: true }).click();
+    // The one visible language control at every viewport: the welcome
+    // screen's EN | AR (the header and the menu carry none).
+    await switchToArabicWithAvailableControl(page);
     await expect(page).toHaveURL(/\/ar$/);
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    await expect(page.getByRole("heading", { name: "أساور", exact: true })).toBeVisible();
+    // The category name now legitimately appears as a heading twice on the
+    // homepage — once in the Collections row and once on that category's
+    // own editorial showcase banner — so this scopes to the first.
+    await expect(page.getByRole("heading", { name: "أساور", exact: true }).first()).toBeVisible();
   });
 });

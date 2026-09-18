@@ -5,4 +5,8 @@
  * homepage Featured/Collection strips) rather than each component
  * inventing its own breakpoints.
  */
-export const PRODUCT_GRID_CLASS = "grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+// Column counts are unchanged (2 / 2 / 3 / 4) — only the gutters grow with
+// the viewport, which is what makes a grid read as a curated display case
+// rather than a dense results list.
+export const PRODUCT_GRID_CLASS =
+  "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-7 lg:gap-y-[1.875rem]";

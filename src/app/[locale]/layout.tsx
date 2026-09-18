@@ -13,15 +13,23 @@ import { Navbar } from "@/components/storefront/Navbar";
 import { Footer } from "@/components/storefront/Footer";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { FloatingWhatsApp } from "@/components/storefront/FloatingWhatsApp";
-import { WelcomeSplash } from "@/components/storefront/WelcomeSplash";
+import { WelcomeSplash, SPLASH_PREPAINT_SCRIPT } from "@/components/storefront/WelcomeSplash";
+import { MobileBottomNav } from "@/components/storefront/MobileBottomNav";
 import { ViewportInsetsProvider } from "@/components/storefront/ViewportInsets";
 import { PWA_THEME_COLOR } from "@/lib/config/brandColors";
 import { buildWhatsAppHref } from "@/lib/config/social";
+import { getCartItemCount } from "@/lib/domain/cart/cart-count";
 import "../globals.css";
 
+// TIA's editorial serif, per the approved design board: Playfair Display —
+// higher stroke contrast and more presence at headline sizes than the
+// previous Cormorant Garamond, which read too light against the navy.
+// Italic is loaded because the hero headline ends on an italic champagne
+// clause ("a part of you."), the reference's signature typographic move.
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -50,12 +58,12 @@ const notoSansArabic = Noto_Sans_Arabic({
  * not read the web manifest's icon list at all.
  */
 export const metadata: Metadata = {
-  title: "ELORA JEWELLERY",
-  description: "ELORA JEWELLERY — Bracelets, Rings, Earrings & Watches",
+  title: "TIA — Accessories & More",
+  description: "TIA — Accessories & More. Rings, earrings, bracelets and necklaces selected to become part of your everyday story.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ELORA JEWELLERY",
+    title: "TIA",
   },
 };
 
@@ -89,12 +97,21 @@ export default async function LocaleLayout({
   // WhatsApp button and the floating WhatsApp button must never be able to
   // disagree about the destination.
   const whatsappHref = buildWhatsAppHref(locale);
+  // `MobileBottomNav` is a Client Component and cannot perform a server
+  // read, so the count is resolved once here — in the same Server Component
+  // that already mounts it — and passed down. The Navbar reads it itself.
+  const cartCount = await getCartItemCount();
 
   return (
-    <html lang={locale} dir={dir}>
+    // `suppressHydrationWarning`: the first-entry pre-paint script below may
+    // add `data-tia-entered` to <html> before React hydrates.
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <body
         className={`${playfairDisplay.variable} ${inter.variable} ${notoKufiArabic.variable} ${notoSansArabic.variable} antialiased`}
       >
+        {/* Runs before the first paint: hides the server-rendered welcome
+            screen at once for a session that has already entered. */}
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_PREPAINT_SCRIPT }} />
         <NextIntlClientProvider messages={messages} locale={locale as Locale}>
           {/* Both bottom-anchored fixed elements live inside the provider
               so they coordinate their placement instead of overlapping
@@ -104,8 +121,12 @@ export default async function LocaleLayout({
               <Navbar locale={locale} />
               <div className="flex-1">{children}</div>
               <Footer locale={locale} />
+              {/* Reserves space for the fixed mobile bar so the footer's
+                  last row can always be scrolled clear of it. */}
+              <div aria-hidden="true" className="h-16 lg:hidden" />
             </div>
-            <WelcomeSplash whatsappHref={whatsappHref} />
+            <MobileBottomNav cartCount={cartCount} />
+            <WelcomeSplash />
             <InstallPrompt />
             <FloatingWhatsApp href={whatsappHref} />
           </ViewportInsetsProvider>

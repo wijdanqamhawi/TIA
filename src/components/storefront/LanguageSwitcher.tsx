@@ -26,10 +26,10 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           aria-current={loc === locale ? "true" : undefined}
           onClick={() => router.replace(pathname, { locale: loc })}
           className={cn(
-            "rounded-md px-2 py-1 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy",
+            "min-h-11 px-1.5 py-1 text-xs font-medium text-current transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current",
             loc === locale
-              ? "bg-brand-gold text-brand-burgundy-dark"
-              : "text-text-primary/70 hover:text-brand-burgundy",
+              ? "border-b border-current opacity-100"
+              : "opacity-75 hover:opacity-100",
           )}
         >
           {loc.toUpperCase()}

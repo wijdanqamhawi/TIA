@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
 /*
- * ELORA JEWELLERY design tokens — Burgundy + Gold + Cream/Ivory/Soft Beige.
- * Fixed brand palette (spec: Constitution Principle 2). Do not introduce
- * additional brand colors outside this token set.
+ * TIA — "Accessories & More" design tokens.
+ *
+ * Warm white + deep navy + champagne gold + cool pearl. White is the
+ * dominant colour (~70%), navy carries the brand (~20%), and champagne and
+ * pearl are accents (~5–10%). Gold belongs to the jewellery in the
+ * photographs, not to the interface: it is jewellery *on* the UI — hairline
+ * rules, icon strokes, tiny sparks — and never a background, a body text
+ * colour, or a major button.
+ *
+ * NOTE ON NAMING: the `--brand-burgundy*` / `--brand-gold*` custom-property
+ * names are retained deliberately. They are *internal identifiers* consumed
+ * by ~200 Tailwind class usages across the storefront and admin; re-pointing
+ * their values rebrands every surface at once with no churn and no risk of a
+ * missed usage, whereas renaming them would touch hundreds of call sites for
+ * no visual gain. The same is true of the `cream`/`beige`/`sand`/`stone`/
+ * `chocolate`/`espresso` ground names below: they now denote *tonal steps*,
+ * not hues — read them as "secondary ground", "surface", "alternate band",
+ * "pure white", "navy band" and "deepest navy". The values here, not the
+ * names, are the source of truth.
  */
 :root {
-  --brand-burgundy: #6d1b34;
-  --brand-burgundy-dark: #4a1123;
-  --brand-burgundy-light: #8a2a47;
+  /* Primary — deep navy. `light` is the *elevated* navy used for primary
+     button hover (a lift, not a darkening); `dark` is the deepest ink,
+     reserved for full-bleed grounds and the Sold Out badge. */
+  --brand-burgundy: #101c36;
+  --brand-burgundy-dark: #0a1226;
+  --brand-burgundy-light: #24324f;
 
-  --brand-gold: #c9a227;
-  --brand-gold-muted: #d8c08f;
+  /* Accent — champagne gold. Used sparingly: never as a default border or
+     rule, only where a genuine metallic note is wanted. At 2.3:1 on white
+     it is decorative by definition and must never carry essential text. */
+  --brand-gold: #c4a46b;
+  --brand-gold-muted: #e0cfa9;
 
-  --brand-cream: #fdf6ec;
-  --brand-ivory: #faf7f2;
-  --brand-beige: #f1e7d8;
+  /* Grounds — warm white, cool pearl, and a slightly deeper cool surface
+     for image placeholders and hover fills. */
+  --brand-cream: #f2f3f5;
+  --brand-ivory: #fcfbf8;
+  --brand-beige: #e8eaee;
 
-  --brand-text-primary: #2a1a20;
-  --brand-text-on-dark: #faf7f2;
+  /* Editorial bands. `stone` is pure white; `sand` is the same cool pearl
+     as `cream` so two adjacent sections read as one continuous band;
+     `chocolate`/`espresso` are the navy statement grounds. */
+  --brand-chocolate: #101c36;
+  --brand-espresso: #0a1226;
+  --brand-sand: #f2f3f5;
+  --brand-stone: #ffffff;
 
-  --brand-border-luxury: #e3d3ac;
+  --brand-text-primary: #101c36;
+  /* Slate blue-gray for supporting copy. Set a step darker than the base
+     slate so it clears AA on *both* grounds it is used over — 5.3:1 on warm
+     white and 5.0:1 on the cool pearl band, where the lighter value fell to
+     4.3:1 in the benefits strip. */
+  --brand-text-secondary: #616b7d;
+  --brand-text-on-dark: #fcfbf8;
+
+  --brand-border-luxury: #dde1e7;
+  /* Hairlines are navy-tinted, not gold. This single token feeds every
+     `border-hairline`, `.rule-accent` and divider in the storefront, so it
+     is what keeps the interface from reading as gold-lined. */
+  --brand-hairline: rgba(16, 28, 54, 0.12);
+  --brand-hairline-strong: rgba(16, 28, 54, 0.22);
+
+  /* Elevation. Navy-tinted and deliberately faint — a luxury catalogue
+     separates things with whitespace, not shadow. */
+  --elev-1: 0 1px 2px rgba(16, 28, 54, 0.03);
+  --elev-2: 0 2px 8px rgba(16, 28, 54, 0.05), 0 8px 24px -12px rgba(16, 28, 54, 0.08);
+  --elev-3: 0 4px 16px rgba(16, 28, 54, 0.07), 0 24px 48px -20px rgba(16, 28, 54, 0.14);
+
+  /* One shared easing + duration pair so every hover, lift and dialog in
+     the storefront moves with the same hand. */
+  --brand-ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
 
   /* Typography — set by next/font in the [locale] layout; Arabic pairs
      swap in automatically under dir="rtl" below. */
@@ -47,9 +101,22 @@
   --color-brand-cream: var(--brand-cream);
   --color-brand-ivory: var(--brand-ivory);
   --color-brand-beige: var(--brand-beige);
+  --color-brand-chocolate: var(--brand-chocolate);
+  --color-brand-espresso: var(--brand-espresso);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-stone: var(--brand-stone);
   --color-text-primary: var(--brand-text-primary);
+  --color-text-secondary: var(--brand-text-secondary);
   --color-text-on-dark: var(--brand-text-on-dark);
   --color-border-luxury: var(--brand-border-luxury);
+  --color-hairline: var(--brand-hairline);
+  --color-hairline-strong: var(--brand-hairline-strong);
+
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+
+  --ease-luxury: var(--brand-ease-luxury);
 
   --font-display: var(--brand-font-display);
   --font-body: var(--brand-font-body);
@@ -90,6 +157,440 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
+  /* A display serif set at heading sizes needs negative tracking and a
+     tight leading to read as editorial rather than as UI text. Both are
+     deliberately *not* applied under RTL: Noto Kufi Arabic is already
+     optically tight, and negative letter-spacing on Arabic damages the
+     joined letterforms. */
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6 {
+  letter-spacing: normal;
+  line-height: 1.3;
+}
+
+/*
+ * ---------------------------------------------------------------------
+ * Shared presentation utilities (Premium Visual Polish pass)
+ *
+ * These exist so the same luxury treatment is expressed once and reused,
+ * instead of each component re-inventing its own spacing, gold rule, or
+ * hover lift. Every one is purely visual — none carries behavior.
+ * ---------------------------------------------------------------------
+ */
+
+/* The small gold kicker that sits above a section title. Uppercase +
+   wide tracking is the whole effect, so under RTL (where wide tracking
+   breaks Arabic letter joining) it keeps its size and color but drops
+   the tracking and the uppercasing. */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: color-mix(in srgb, var(--brand-text-primary) 72%, transparent);
+}
+
+[dir="rtl"] .eyebrow {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.8125rem;
+}
+
+/* A short gold rule used as an editorial divider under section titles.
+   Symmetric, so it needs no RTL mirroring. */
+.rule-accent,
+.rule-gold {
+  display: block;
+  width: 3rem;
+  height: 1px;
+  border: 0;
+  background: var(--brand-hairline-strong);
+}
+
+/* The one place a genuine champagne note is wanted — reserved for the
+   hero and the welcome screen, never for ordinary section dividers. */
+.rule-champagne {
+  display: block;
+  width: 3rem;
+  height: 1px;
+  border: 0;
+  background: var(--brand-gold);
+}
+
+/* A full-bleed cool-pearl band used to separate editorial sections
+   without drawing a border. */
+.band-cream {
+  background: var(--brand-cream);
+}
+
+/* Wide, centered section rhythm. One scale everywhere means the homepage
+   reads as a composed page rather than a stack of unrelated blocks. */
+.section-y {
+  padding-block: 4.5rem;
+}
+
+@media (min-width: 640px) {
+  .section-y {
+    padding-block: 7rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-y {
+    padding-block: 9rem;
+  }
+}
+
+/*
+ * Clearance for the fixed mobile bottom navigation.
+ *
+ * The bar overlays the bottom of the viewport, so *any* control scrolled
+ * to the very bottom edge — "Proceed to Checkout", "Add to Cart", a form
+ * submit — can end up underneath it and receive no click. Padding the end
+ * of the document is not enough, because that only protects the last
+ * element, not one scrolled into view mid-page.
+ *
+ * `scroll-margin-block-end` is the correct fix: every browser scroll-into
+ * -view (anchor links, keyboard focus, `scrollIntoView`) then leaves room
+ * for the bar instead of parking the control beneath it. Logical property,
+ * so it is unaffected by writing direction, and scoped to the widths where
+ * the bar actually exists.
+ */
+@media (max-width: 1023px) {
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    scroll-margin-block-end: 6rem;
+  }
+}
+
+/* Hover lift. Neutralized automatically by the reduced-motion rule
+   above, which zeroes every transition-duration. */
+.hover-lift {
+  transition:
+    transform var(--dur-base) var(--brand-ease-luxury),
+    box-shadow var(--dur-base) var(--brand-ease-luxury),
+    border-color var(--dur-base) var(--brand-ease-luxury);
+}
+
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* An animated gold underline for nav links. Uses `scale` on a
+   pseudo-element rather than animating `width`, so it never triggers
+   layout, and `transform-origin` is set in logical terms so it grows
+   from the correct edge under RTL. */
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -0.35rem;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--brand-ease-luxury);
+}
+
+[dir="rtl"] .link-underline::after {
+  transform-origin: right center;
+}
+
+.link-underline:hover::after,
+.link-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Skeleton shimmer — a moving highlight reads as "loading" far more
+   clearly than an opacity pulse. Mirrored under RTL so the sweep always
+   travels with the reading direction. */
+@keyframes elora-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.animate-elora-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.9) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: elora-shimmer 1.6s linear infinite;
+}
+
+[dir="rtl"] .animate-elora-shimmer {
+  animation-direction: reverse;
+}
+
+/* Dialog entrance. Applied to the panel inside <dialog>, not the
+   element itself, so native focus-trapping/Escape behavior is untouched. */
+@keyframes elora-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-elora-dialog-in {
+  animation: elora-dialog-in var(--dur-base) var(--brand-ease-luxury) both;
+}
+
+/*
+ * ---------------------------------------------------------------------
+ * Editorial homepage treatments
+ * ---------------------------------------------------------------------
+ */
+
+/* Hero scrim: weighted toward the text side (the start edge) so the
+   headline holds AA contrast while the photograph stays luminous on the
+   far side. Mirrored under RTL, and re-weighted to the bottom on narrow
+   screens where the copy sits low over a portrait crop. */
+.hero-scrim {
+  background:
+    linear-gradient(90deg, rgba(10, 18, 38, 0.82) 0%, rgba(10, 18, 38, 0.55) 30%, rgba(10, 18, 38, 0.12) 60%, rgba(10, 18, 38, 0.28) 100%),
+    linear-gradient(180deg, rgba(10, 18, 38, 0.55) 0%, transparent 30%);
+}
+
+[dir="rtl"] .hero-scrim {
+  background:
+    linear-gradient(270deg, rgba(10, 18, 38, 0.82) 0%, rgba(10, 18, 38, 0.55) 30%, rgba(10, 18, 38, 0.12) 60%, rgba(10, 18, 38, 0.28) 100%),
+    linear-gradient(180deg, rgba(10, 18, 38, 0.55) 0%, transparent 30%);
+}
+
+@media (max-width: 1023px) {
+  .hero-scrim,
+  [dir="rtl"] .hero-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(10, 18, 38, 0.6) 0%,
+      rgba(10, 18, 38, 0.12) 32%,
+      rgba(10, 18, 38, 0.5) 60%,
+      rgba(10, 18, 38, 0.9) 100%
+    );
+  }
+}
+
+/* Feathers a product photograph into the band behind it on both edges,
+   so a landscape frame reads as part of the page rather than a box. */
+.feather-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+}
+
+/*
+ * Hero entrance — a short staggered fade-up for the hero copy (each item
+ * carries its own `--hero-delay`) and a slight settle on the photograph.
+ * Both are removed under reduced motion, where everything is simply there.
+ */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-image-in {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-rise {
+  animation: hero-rise 900ms var(--brand-ease-luxury) both;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+.hero-image {
+  animation: hero-image-in 1600ms var(--brand-ease-luxury) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise,
+  .hero-image {
+    animation: none !important;
+  }
+}
+
+/*
+ * Editorial reveal — a one-time entrance for `[data-reveal]` children of a
+ * `RevealOnView` block (currently the homepage Best Sellers row only).
+ *
+ * Content is hidden only while the root is `armed` (set by JavaScript), so
+ * server-rendered markup — and a page whose scripts fail — is always
+ * visible. Each item waits `--reveal-i × 100ms`, giving the soft stagger.
+ * `fade` fades; `up` fades and rises 12px; `line` draws from the start
+ * edge (mirrored under RTL).
+ */
+/* Transitions run only on the way *in*: arming hides instantly (no
+   visible fade-out of content that was server-rendered as visible). */
+[data-reveal-root="revealed"] [data-reveal] {
+  transition:
+    opacity 900ms var(--brand-ease-luxury),
+    transform 1000ms var(--brand-ease-luxury);
+  transition-delay: calc(var(--reveal-i, 0) * 100ms);
+}
+
+[data-reveal="line"] {
+  transform-origin: left center;
+}
+
+[dir="rtl"] [data-reveal="line"] {
+  transform-origin: right center;
+}
+
+[data-reveal-root="armed"] [data-reveal] {
+  opacity: 0;
+}
+
+[data-reveal-root="armed"] [data-reveal="up"] {
+  transform: translateY(12px);
+}
+
+[data-reveal-root="armed"] [data-reveal="line"] {
+  transform: scaleX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal-root] [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/*
+ * Brand statement band — the photographs feather into the ivory at their
+ * inner edge on desktop (mirrored under RTL), and drift very slightly with
+ * scroll where scroll-driven animations are supported. Browsers without
+ * them simply show a still image; reduced motion disables the drift.
+ */
+@media (min-width: 1024px) {
+  .statement-photo--start {
+    -webkit-mask-image: linear-gradient(90deg, #000 58%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 58%, transparent 100%);
+  }
+
+  .statement-photo--end {
+    -webkit-mask-image: linear-gradient(270deg, #000 58%, transparent 100%);
+    mask-image: linear-gradient(270deg, #000 58%, transparent 100%);
+  }
+
+  [dir="rtl"] .statement-photo--start {
+    -webkit-mask-image: linear-gradient(270deg, #000 58%, transparent 100%);
+    mask-image: linear-gradient(270deg, #000 58%, transparent 100%);
+  }
+
+  [dir="rtl"] .statement-photo--end {
+    -webkit-mask-image: linear-gradient(90deg, #000 58%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 58%, transparent 100%);
+  }
+}
+
+@keyframes statement-drift {
+  from {
+    transform: translateY(-3%) scale(1.07);
+  }
+  to {
+    transform: translateY(3%) scale(1.07);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .statement-parallax {
+      animation: statement-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+}
+
+/* Horizontal scrollers (collections on mobile, New Arrivals) scroll by
+   touch/trackpad without drawing a bar through the composition. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * Homepage reference containers.
+ *
+ * The approved design uses two measures: full-bleed-ish bands (the campaign
+ * banner, the editorial pair, the newsletter strip) run to ~1400px at a
+ * 1440 viewport, while the content rows (New Arrivals, Shop by Category,
+ * the gallery, the footer) sit on a narrower ~1248px measure. Expressing
+ * both once keeps every row on the page optically aligned.
+ */
+.container-wide {
+  width: 100%;
+  /* Content measure, not outer width: the padding is added on top, so the
+     inner width lands on the reference's 1400px at a 1440 viewport. */
+  max-width: calc(1400px + 2 * 1.25rem);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.container-rows {
+  width: 100%;
+  max-width: calc(1248px + 2 * 1.25rem);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .container-wide {
+    max-width: calc(1400px + 2 * 1.5rem);
+    padding-inline: 1.5rem;
+  }
+
+  .container-rows {
+    max-width: calc(1248px + 2 * 1.5rem);
+    padding-inline: 1.5rem;
+  }
 }
 
 .container-luxury {
@@ -112,38 +613,119 @@ h6 {
 }
 
 /*
- * `<WelcomeSplash>` entrance animation (first-visit-per-session only).
- * Automatically neutralized by the `prefers-reduced-motion: reduce` rule
- * above (it forces every `animation-duration` to ~0), so the splash still
- * appears instantly with its final, settled layout for a shopper who has
- * asked for reduced motion — no separate reduced-motion branch needed here.
+ * `<WelcomeSplash>` — the first-entry screen.
+ *
+ * Hidden before paint once this session has entered (the layout's
+ * pre-paint script sets `data-tia-entered`); page scroll is locked while it
+ * is open; entering fades it out to reveal the real page underneath.
+ *
+ * Entrance: the photograph fades in, then the wordmark, tagline, divider,
+ * headline and — last — the CTA, each on its own `--splash-delay`.
+ * Reduced motion removes every animation and the fade-out (delays too, so
+ * nothing waits to appear).
  */
-@keyframes elora-splash-rise {
+html[data-tia-entered] [data-welcome-splash] {
+  display: none !important;
+}
+
+html:has(dialog[data-welcome-splash][open]) {
+  overflow: hidden;
+}
+
+[data-welcome-splash] {
+  transition: opacity 700ms var(--brand-ease-luxury);
+}
+
+[data-welcome-splash][data-leaving] {
+  opacity: 0;
+}
+
+/* Dark ground on the copy side, the photograph luminous on the other.
+   Phones/tablets: the copy sits low over a full-bleed portrait, so the
+   weight moves to the bottom. Mirrored under RTL. */
+.splash-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 18, 38, 0.55) 0%,
+    rgba(10, 18, 38, 0.1) 28%,
+    rgba(10, 18, 38, 0.55) 52%,
+    rgba(10, 18, 38, 0.94) 100%
+  );
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .splash-scrim {
+    background: linear-gradient(180deg, rgba(10, 18, 38, 0.6) 0%, rgba(10, 18, 38, 0.72) 50%, rgba(10, 18, 38, 0.6) 100%);
+  }
+}
+
+@media (min-width: 1024px) {
+  .splash-scrim {
+    background:
+      linear-gradient(90deg, #0a1226 0%, #0a1226 32%, rgba(10, 18, 38, 0.72) 44%, rgba(10, 18, 38, 0.12) 64%, rgba(10, 18, 38, 0.3) 100%),
+      linear-gradient(180deg, rgba(10, 18, 38, 0.45) 0%, transparent 24%, transparent 76%, rgba(10, 18, 38, 0.55) 100%);
+  }
+
+  [dir="rtl"] .splash-scrim {
+    background:
+      linear-gradient(270deg, #0a1226 0%, #0a1226 32%, rgba(10, 18, 38, 0.72) 44%, rgba(10, 18, 38, 0.12) 64%, rgba(10, 18, 38, 0.3) 100%),
+      linear-gradient(180deg, rgba(10, 18, 38, 0.45) 0%, transparent 24%, transparent 76%, rgba(10, 18, 38, 0.55) 100%);
+  }
+}
+
+@keyframes splash-image-in {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.97);
+    transform: scale(1.04);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1);
   }
 }
 
-@keyframes elora-splash-line {
+@keyframes splash-rise {
   from {
-    width: 0;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-fade {
+  from {
     opacity: 0;
   }
   to {
-    width: 4rem;
     opacity: 1;
   }
 }
 
-.animate-elora-splash-rise {
-  animation: elora-splash-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+.splash-image {
+  animation: splash-image-in 1800ms var(--brand-ease-luxury) both;
 }
 
-.animate-elora-splash-line {
-  animation: elora-splash-line 600ms ease-out 500ms both;
+.splash-rise {
+  animation: splash-rise 1100ms var(--brand-ease-luxury) both;
+  animation-delay: var(--splash-delay, 0ms);
+}
+
+.splash-fade {
+  animation: splash-fade 1200ms ease both;
+  animation-delay: var(--splash-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-image,
+  .splash-rise,
+  .splash-fade {
+    animation: none !important;
+  }
+
+  [data-welcome-splash] {
+    transition: none !important;
+  }
 }

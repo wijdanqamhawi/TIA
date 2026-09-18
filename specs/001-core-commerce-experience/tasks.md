@@ -892,16 +892,22 @@ surface to the regular price with no code path relying on a stale cached value.
 
 ### Export
 
-- [ ] T331 [US10] Add `isOnSale`, `salePrice`, `saleStartAt`/`saleEndAt`, and the derived offer
+- [X] T331 [US10] Add `isOnSale`, `salePrice`, `saleStartAt`/`saleEndAt`, and the derived offer
       status to the Products export's row mapping (extends T296) in
-      `src/lib/domain/admin/export.service.ts` (spec FR-124) — **update (2026-08-30): the earlier
-      "Phase 20 doesn't exist" blocker is stale — Phase 20 was implemented in this pass**
-      (`export.service.ts`'s `mapProductRow`/`ProductExportRow`, the `/admin/api/export/products`
-      route, and the `/admin/exports` UI all now exist and are genuinely complete). **Still not
-      done**: this task's own actual scope — extending `ProductExportRow`/`mapProductRow` with the
-      four offer fields plus the derived offer status column — was correctly out of scope for a
-      Phase 20 implementation pass (Phase 21 work, not requested) and remains open for a future
-      Phase 21 pass.
+      `src/lib/domain/admin/export.service.ts` (spec FR-124) — **done 2026-09-10**:
+      `ProductExportRow`/`mapProductRow` now carry `offerStatus` (derived via T316's
+      `getOfferStatus`, never a stored field, so it can never drift from the admin badge of T330
+      or from storefront/cart pricing), `isOnSale` ("Yes"/"No"), `salePrice` (major units, blank
+      — never `0`/`null` — when unset, matching the existing blank-Arabic-name convention), and
+      ISO-8601 `saleStartAt`/`saleEndAt`. `mapProductRow` takes an optional `now` parameter
+      (defaults to `Timestamp.now()`; a fixed value is unit-test-only, mirroring
+      `resolveOfferPricing`'s own `now` pattern) so the derived status is deterministically
+      testable. The five new columns were added to the shared `PRODUCT_EXPORT_COLUMNS`
+      (`export-columns.ts`), so Products, Inventory and SOLD OUT all gain them together — a
+      deliberate structural choice (one row type, not two) rather than a gap. Verified:
+      `tests/unit/export-service.test.ts` **10/10 pass** (8 pre-existing + 2 new T331 cases
+      covering active/scheduled/expired/no-offer and the blank-cell guarantees) and
+      `tsc --noEmit` is clean.
 
 ### Tests
 
@@ -912,17 +918,23 @@ surface to the regular price with no code path relying on a stale cached value.
       Firebase Local Emulator Suite became reachable this session; all 6 cases (active/scheduled/
       expired via both `buildCartSummary` and `resolveOrderLinePrices`, plus Sold-Out-overrides-
       offer) pass against the real emulator.**
-- [ ] T333 [US10] Playwright test: admin enables an offer → it appears on Home/Shop/detail/Quick
+- [X] T333 [US10] Playwright test: admin enables an offer → it appears on Home/Shop/detail/Quick
       View with matching crossed-out/sale prices → adding it to cart and completing checkout prices
       it at the sale price → admin disables the offer → the same product now shows only the
       regular price everywhere, including a freshly loaded cart, in
-      `tests/e2e/special-offers.spec.ts` — **written (verified via `playwright test --list`: parses
-      correctly, 10 tests across the 5 device projects), but not markable [X] for the same emulator
-      reason as T332, and additionally cannot cover "completing checkout" since Phase 8's checkout
-      page doesn't exist — that assertion is explicitly deferred in the spec's own doc comment.
-      Covers everything buildable against Phases 1–6 plus this pass: admin toggling the offer via
-      the real `/admin/products` UI, Home/Shop/detail pricing consistency, and Cart
-      add/price/revert.**
+      `tests/e2e/special-offers.spec.ts` — **executed and passing 2026-09-10: 10/10 across all five
+      device projects** (mobile, mobile-ios, tablet, laptop, desktop), `--workers=1`, against a
+      real, live Firebase Local Emulator Suite (freshly seeded via `npm run seed` +
+      `npm run create-admin`) and a running `next dev` server. The spec's own earlier "cannot cover
+      completing checkout" caveat is now retired — Phase 8's real checkout exists, and the test
+      places an actual Cash-on-Delivery order and asserts the order snapshot is priced at the sale
+      price ($99.99) with the regular price ($150.00) absent entirely. One test-infrastructure fix
+      was needed to make it run: the lifecycle test exceeded Playwright's 30s default per-test
+      budget (admin login + two real form saves + six first-visit routes all compiling on demand in
+      dev mode), so it now sets an explicit `test.setTimeout(240_000)` envelope — the individual
+      per-assertion sub-timeouts were deliberately left untouched, so nothing that would mask a
+      real regression was loosened. **No Phase 21 product code needed any change to make this
+      pass**: the offer feature itself was already correct.
 
 **Checkpoint (2026-08-27 status)**: Offer state is derived identically everywhere a product is
 currently priced or displayed within Phases 1–6's scope (Home, Shop, category pages, product
@@ -934,7 +946,10 @@ yet-built Phase 10 forms. **Update (2026-08-30 audit)**: this checkpoint is stal
 Phase 10 have since been built, and T326/T328–T330 are verified genuinely complete (see their own
 task entries above). **Still not complete**: Excel export coverage (Phase 20 doesn't exist yet,
 T331), and executing (as opposed to writing) the emulator-dependent T333 Playwright spec (T332's
-integration tests do pass against the real emulator, per its own entry above).
+integration tests do pass against the real emulator, per its own entry above). **Update
+(2026-09-10)**: this paragraph is now fully closed out — Phase 20 was built (T295–T313), T331's
+export columns were added on top of it, and T333 was executed and passes 10/10 across all five
+device projects. Phase 21 (T314–T333) is 100% complete with no open items.
 
 ---
 
@@ -1703,3 +1718,52 @@ Task: "Create messages/en.json and messages/ar.json skeletons"
   decision was removed or weakened; no existing task ID was renumbered. The Firebase Local
   Emulator Suite that was already running manually before this phase started was never stopped,
   restarted, or otherwise touched at any point in this phase. Phase 19 was not started.
+
+- **2026-08-30 — Phase 19 (Delivery Location Selector) implementation**: T262–T291 are complete and
+  marked `[X]`. Adds the two fixed delivery regions (West Bank, Inside 1948 — `regionId` restricted
+  to exactly those two values in the schema, the server actions, and `firestore.rules`, so a third
+  region can never be introduced from a client) plus admin-managed cities under each, with
+  bilingual names, `isActive`, and `displayOrder`. A shopper picks her city from a responsive
+  `LocationSelector` dialog (modal on desktop, bottom-sheet on mobile) with bilingual live search;
+  the choice persists via a cookie mirroring the existing `NEXT_LOCALE` pattern and, for a
+  signed-in customer, onto her profile. Checkout prefills from that selection but always
+  **revalidates server-side** (region match + `isActive`) before an order can be created, and
+  snapshots the bilingual region/city names onto the order so historical orders never re-read live
+  location data. `firestore.indexes.json`, `firestore.rules`, and `scripts/seed.ts` were extended
+  accordingly. Verified against a live Firebase Local Emulator Suite + `next dev`.
+- **2026-08-30 — Phase 20 (Admin Excel Export) implementation**: T292–T313 are complete and marked
+  `[X]`. Eight admin-only `GET` Route Handlers under `/admin/api/export/**` (orders, products,
+  inventory, customers, sales, best-sellers, sold-out, delivery-locations) stream real `.xlsx`
+  files via ExcelJS, each calling the shared `requireAdminForRoute()` as its first statement —
+  independently of `admin/layout.tsx`, which does not wrap Route Handlers. Sales and best-seller
+  figures call `computeDashboardStats`/`computeBestSellers` directly rather than reimplementing
+  them, so an export can never disagree with the dashboard. Products/Inventory/SOLD OUT share one
+  `PRODUCT_EXPORT_COLUMNS` list so the three can never drift apart. `/admin/exports` provides the
+  report picker with per-report filters and a real in-progress/completion indicator (every download
+  goes through `fetch()`, not a bare `<a href>`, specifically so that state can be shown). The
+  "no spreadsheet import" guarantee (FR-110) is structural, not a runtime check: no `POST`/`PUT`
+  handler and no upload-reading code path exists anywhere. Verified: unit + emulator integration
+  tests plus `admin-export.spec.ts` (18/20 e2e; the 2 failures are a pre-existing WebKit bug in the
+  shared `registerNewCustomer` helper, documented under T311, not a Phase 20 defect).
+- **2026-09-10 — Phase 21 (Special Offers) completion pass**: the final two open tasks, **T331 and
+  T333, are now complete and marked `[X]`** — Phase 21 (T314–T333) is 100% done. T331 extended
+  `ProductExportRow`/`mapProductRow` and the shared `PRODUCT_EXPORT_COLUMNS` with `Offer Status`
+  (derived at read time via T316's `getOfferStatus`, never a stored field, so it cannot drift from
+  the admin badge or from storefront/cart pricing), `On Sale`, `Sale Price` (blank — never
+  `0`/`null` — when unset) and ISO-8601 `Sale Start`/`Sale End`; `mapProductRow` gained an optional
+  `now` parameter for deterministic testing, mirroring `resolveOfferPricing`'s existing pattern.
+  T333 was executed for the first time, not merely written: **10/10 pass across all five device
+  projects** against a live, freshly-seeded Firebase Local Emulator Suite and `next dev`, covering
+  admin enabling an offer through the real `/admin/products/[id]/edit` form, identical
+  crossed-out/sale pricing on Home/Shop/detail/Cart, a genuinely placed Cash-on-Delivery order
+  priced at the sale price, disabling the offer, and full reversion including a fresh cart — plus
+  Sold Out still overriding an active offer. **No Phase 21 product code required any change to
+  make T333 pass**; the one fix needed was test-infrastructure only (an explicit
+  `test.setTimeout(240_000)` envelope for the single whole-lifecycle test, whose per-assertion
+  sub-timeouts were deliberately left untouched so nothing that could mask a regression was
+  loosened). Verification run for this pass was deliberately narrow, per the request:
+  `tests/unit/export-service.test.ts` (10/10), `tests/e2e/special-offers.spec.ts` (10/10),
+  `tsc --noEmit` clean, and `eslint --max-warnings=0` clean on every touched file — the full suite
+  was not re-run. No previously-approved task, route, requirement, or architecture decision was
+  removed or weakened; no existing task ID was renumbered. No Phase 18 deployment task was touched,
+  and no new phase was started.

@@ -11,7 +11,7 @@ export type PriceProps = {
 
 export function Price({ minorUnits, locale, currency, className }: PriceProps) {
   return (
-    <span className={cn("font-semibold text-brand-burgundy", className)}>
+    <span className={cn("font-body font-semibold tabular-nums text-brand-burgundy", className)}>
       {formatCurrency(minorUnits, locale, currency)}
     </span>
   );
@@ -61,10 +61,13 @@ export function OfferPrice({
         {originalPriceLabel}: {formatCurrency(price, locale, currency)}. {salePriceLabel}:{" "}
         {formatCurrency(effectivePrice, locale, currency)}.
       </span>
-      <span aria-hidden="true" className="text-sm font-normal text-text-primary/50 line-through">
+      <span
+        aria-hidden="true"
+        className="font-body text-[0.8125em] font-normal tabular-nums text-text-primary/45 line-through decoration-text-primary/30 decoration-[1.5px]"
+      >
         {formatCurrency(price, locale, currency)}
       </span>
-      <span aria-hidden="true" className="font-semibold text-brand-burgundy">
+      <span aria-hidden="true" className="font-body font-semibold tabular-nums text-brand-burgundy">
         {formatCurrency(effectivePrice, locale, currency)}
       </span>
     </span>

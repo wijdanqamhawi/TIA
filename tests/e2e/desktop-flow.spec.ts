@@ -64,7 +64,7 @@ test.describe("desktop commerce flow (English/LTR)", () => {
   test("guest browses, adds to cart, and completes COD checkout on a desktop viewport", async ({ page }) => {
     // 1. Home.
     await page.goto("/en");
-    await expect(page.getByRole("heading", { name: "ELORA JEWELLERY" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
     // 2. Reach Shop via the always-visible desktop nav (no hamburger menu).

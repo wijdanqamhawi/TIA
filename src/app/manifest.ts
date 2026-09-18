@@ -10,9 +10,9 @@ import { PWA_THEME_COLOR, PWA_BACKGROUND_COLOR } from "@/lib/config/brandColors"
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ELORA JEWELLERY",
-    short_name: "ELORA",
-    description: "ELORA JEWELLERY — fine bracelets, rings, earrings, and watches.",
+    name: "TIA — Accessories & More",
+    short_name: "TIA",
+    description: "TIA — Accessories & More. Rings, earrings, bracelets and necklaces.",
     start_url: "/",
     scope: "/",
     display: "standalone",

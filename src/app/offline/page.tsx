@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import enMessages from "../../../messages/en.json";
 import arMessages from "../../../messages/ar.json";
 
@@ -42,7 +41,7 @@ export default function OfflinePage() {
       dir={t.dir}
       className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-ivory px-6 text-center text-text-primary"
     >
-      <Image src="/brand/logo.svg" alt="ELORA JEWELLERY" width={200} height={50} priority />
+      <span dir="ltr" className="font-display text-3xl font-light tracking-[0.3em] text-text-primary">TIA</span>
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-2xl text-brand-burgundy">{t.offlineTitle}</h1>
         <p className="max-w-md text-sm text-text-primary/70">{t.offlineBody}</p>

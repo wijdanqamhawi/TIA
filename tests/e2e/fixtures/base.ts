@@ -52,9 +52,44 @@ export type { Page } from "@playwright/test";
 
 const SPLASH_APPEAR_TIMEOUT_MS = 1500;
 const SPLASH_DISMISS_TIMEOUT_MS = 3000;
+const SPLASH_HYDRATION_TIMEOUT_MS = 15000;
 const PATCHED = Symbol("elora-welcome-splash-dismiss-patched");
 
+/** Routes rendered by the `[locale]` storefront layout — the only layout that mounts WelcomeSplash. */
+const STOREFRONT_PATH = /^\/(en|ar)(\/|$)/;
+
 async function dismissWelcomeSplashIfPresent(page: Page): Promise<void> {
+  // WelcomeSplash decides whether to open inside a client effect, and writes
+  // its `elora_welcome_shown` session key in that same effect — i.e. only
+  // once the page has hydrated. `goto` resolves at `load`, which on WebKit
+  // against the dev server can be ~1.5–2 s *before* hydration, so a fixed
+  // appear-timeout alone could give up just before the splash opened and
+  // leave it covering the page. On storefront routes, wait for the splash's
+  // own "effect has run" signal first; the appear check below then catches
+  // the open that immediately follows it. After the first navigation in a
+  // session the key already exists, so this returns at once.
+  let pathname = "";
+  try {
+    pathname = new URL(page.url()).pathname;
+  } catch {
+    // about:blank or an unparsable URL — not a storefront page.
+  }
+  if (STOREFRONT_PATH.test(pathname)) {
+    // The screen is server-rendered open, but its ENTER button only works
+    // once hydrated. Wait until either the session has already entered
+    // (the pre-paint script marks <html>) or the screen reports itself
+    // ready, so the click below is never lost on inert markup.
+    await page
+      .waitForFunction(
+        () =>
+          document.documentElement.hasAttribute("data-tia-entered") ||
+          document.querySelector("dialog[data-welcome-splash][data-ready]") !== null,
+        undefined,
+        { timeout: SPLASH_HYDRATION_TIMEOUT_MS },
+      )
+      .catch(() => {});
+  }
+
   const dialog = page.locator("dialog[open]");
   const appeared = await dialog
     .waitFor({ state: "visible", timeout: SPLASH_APPEAR_TIMEOUT_MS })
@@ -62,10 +97,10 @@ async function dismissWelcomeSplashIfPresent(page: Page): Promise<void> {
     .catch(() => false);
   if (!appeared) return;
 
-  // WelcomeSplash's dialog contains exactly one `<button>` — its "Shop Now"
-  // control — located structurally so this works identically under English
-  // and Arabic without hardcoding either locale's text, and never matches
-  // the WhatsApp action (an `<a>`, deliberately left alone).
+  // WelcomeSplash's first `<button>` is its ENTER THE COLLECTION control
+  // (the EN | AR switch buttons follow it in the DOM) — located
+  // structurally so this works identically under English and Arabic
+  // without hardcoding either locale's text.
   await dialog
     .locator("button")
     .first()

@@ -12,6 +12,7 @@ import { FormError } from "@/components/ui/FormError";
 import { resolveLocalizedString } from "@/types/localizedString";
 import { removeWishlistItemAction, moveWishlistItemToCartAction } from "@/actions/wishlist.actions";
 import type { EnrichedWishlistItem } from "@/lib/domain/wishlist/wishlist.service";
+import { resolveProductImage } from "@/lib/config/demoImages";
 
 const KNOWN_MOVE_ERROR_CODES = ["SOLD_OUT", "NOT_AVAILABLE", "INSUFFICIENT_STOCK", "NOT_FOUND"] as const;
 
@@ -36,7 +37,10 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
 
   const name = item.product ? resolveLocalizedString(item.product.name, locale) : null;
   const optionLabel = item.product?.optionLabel ? resolveLocalizedString(item.product.optionLabel, locale) : null;
-  const image = item.product?.image;
+  // Real uploaded photo wins; a seeded placeholder shows the demo image.
+  const image = item.product
+    ? { url: resolveProductImage(item.product.image?.url, item.productId).url, alt: item.product.image?.alt ?? "" }
+    : null;
 
   const canMoveToCart = Boolean(item.product) && !item.issue && !item.product!.isSoldOut && item.product!.availability;
 
@@ -73,7 +77,7 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-border-luxury bg-brand-ivory ${isBusy ? "opacity-60" : ""}`}
+      className={`group flex flex-col ${isBusy ? "opacity-60" : ""}`}
       aria-busy={isBusy}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-brand-beige">
@@ -91,7 +95,7 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
           </Link>
         ) : null}
 
-        <div className="absolute start-2 top-2 flex flex-col gap-1">
+        <div className="absolute start-3 top-3 flex flex-col items-start gap-1.5">
           {item.product?.isSoldOut ? <Badge variant="danger">{tCommon("soldOut")}</Badge> : null}
           {!item.product?.isSoldOut && item.product?.offerStatus === "ACTIVE" ? (
             <Badge variant="burgundy">{tCommon("onSale")}</Badge>
@@ -102,9 +106,9 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col items-start gap-2 pt-4">
         {item.product && name ? (
-          <Link href={`/shop/${item.product.slug}`} className="font-medium text-text-primary hover:text-brand-burgundy">
+          <Link href={`/shop/${item.product.slug}`} className="link-underline text-sm font-medium leading-snug text-text-primary transition-colors hover:text-brand-burgundy focus-visible:outline-none">
             {name}
           </Link>
         ) : (
@@ -125,7 +129,7 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
 
         <FormError message={error} />
 
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-auto flex w-full flex-col gap-2 pt-2 sm:flex-row">
           <Button
             type="button"
             size="sm"

@@ -68,7 +68,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-11 items-center justify-center gap-3 rounded-md bg-brand-burgundy px-6 py-3 font-medium text-brand-gold transition-colors hover:bg-brand-burgundy-dark"
+                className="flex min-h-11 items-center justify-center gap-3 rounded-none bg-brand-burgundy px-8 py-3.5 font-medium text-text-on-dark transition-colors hover:bg-brand-burgundy-dark"
               >
                 <WhatsAppIcon size={22} /> {t("whatsappCta")}
               </a>

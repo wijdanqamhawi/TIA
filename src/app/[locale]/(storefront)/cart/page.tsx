@@ -5,6 +5,7 @@ import { Price } from "@/components/ui/Price";
 import { CartLineItem } from "@/components/storefront/CartLineItem";
 import { CartEmptyState } from "@/components/storefront/CartEmptyState";
 import { getCartForDisplay, buildCartSummary } from "@/lib/domain/cart/cart.service";
+import { PageHeading } from "@/components/ui/PageHeading";
 
 // Reads the caller's live cart + current product pricing/stock on every
 // request (Constitution Principle 7/9/10) — never statically cached.
@@ -24,16 +25,16 @@ export default async function CartPage({ params }: { params: Promise<{ locale: s
   const summary = cart ? await buildCartSummary(cart) : { lines: [], subtotal: 0, total: 0, hasIssues: false, isEmpty: true };
 
   return (
-    <main className="container-luxury py-10">
-      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">{t("title")}</h1>
+    <main className="container-luxury py-14 sm:py-20">
+      <PageHeading title={t("title")} className="mb-10 sm:mb-14" />
 
       {summary.isEmpty ? (
         <CartEmptyState locale={locale} />
       ) : (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-12">
           <div className="lg:col-span-2">
             {summary.hasIssues ? (
-              <p role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+              <p role="alert" className="mb-6 rounded-xl border border-red-300 bg-red-50/80 p-4 text-sm text-red-800">
                 {t("hasIssuesWarning")}
               </p>
             ) : null}
@@ -55,14 +56,14 @@ export default async function CartPage({ params }: { params: Promise<{ locale: s
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 rounded-lg border border-border-luxury bg-brand-ivory p-6">
-            <div className="flex items-center justify-between text-sm text-text-primary">
+          <div className="flex h-fit flex-col gap-4 rounded-2xl border border-hairline bg-brand-cream/50 p-6 shadow-elev-1 sm:p-7 lg:sticky lg:top-28">
+            <div className="flex items-center justify-between text-sm text-text-primary/70">
               <span>{t("subtotal")}</span>
-              <Price minorUnits={summary.subtotal} locale={locale} />
+              <Price minorUnits={summary.subtotal} locale={locale} className="text-text-primary" />
             </div>
-            <div className="flex items-center justify-between border-t border-border-luxury pt-4 text-base font-semibold text-text-primary">
+            <div className="flex items-center justify-between border-t border-hairline pt-4 text-base font-semibold text-text-primary">
               <span>{t("total")}</span>
-              <Price minorUnits={summary.total} locale={locale} className="text-lg" />
+              <Price minorUnits={summary.total} locale={locale} className="text-xl" />
             </div>
             {summary.hasIssues ? (
               <Button type="button" disabled className="w-full">

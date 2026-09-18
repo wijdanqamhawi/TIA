@@ -1,13 +1,14 @@
 import { test, expect, type Page } from "./fixtures/base";
 
 /**
- * T212 (quickstart Scenario 11): navbar/footer/floating Instagram +
+ * T212 (quickstart Scenario 11): footer/Contact-page/floating Instagram +
  * WhatsApp resolve to the configured destination with safe `rel`
  * attributes, never overlap primary actions, are keyboard-accessible,
  * fail safely when unconfigured, and use the correct localized greeting
- * per locale.
+ * per locale. The header and the phone/tablet menu deliberately carry no
+ * social links.
  *
- * All three placements resolve their href server-side from the single
+ * All placements resolve their href server-side from the single
  * centralized config (`lib/config/social.ts`), so these assertions run
  * against whatever `NEXT_PUBLIC_INSTAGRAM_URL` /
  * `NEXT_PUBLIC_WHATSAPP_PHONE` the server was started with. The suite
@@ -37,77 +38,88 @@ async function expectSafeExternalLink(locator: ReturnType<Page["locator"]>) {
   expect(rel).toContain("noreferrer");
 }
 
+/** The open hamburger-menu drawer (portalled to <body>, marked by `data-nav-drawer-open`). */
+function menuDrawer(page: Page) {
+  return page.locator("[data-nav-drawer-open]");
+}
+
 test.describe("social contact — navbar", () => {
-  test("desktop navbar Instagram/WhatsApp links are safe, labeled, and point at the configured destination", async ({
+  test("desktop header carries only the main nav, logo and Search/Wishlist/Account/Cart — no social, location or language controls", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/en");
+    const header = page.getByRole("banner");
+
+    await expect(header.getByRole("link", { name: "TIA — Home" })).toBeVisible();
+    await expect(header.getByRole("navigation").getByRole("link", { name: "Shop", exact: true })).toBeVisible();
+    for (const name of ["Search", "Wishlist", "Account", "Cart"]) {
+      await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
+    }
+
+    await expect(header.locator('a[href*="instagram.com"], a[href*="wa.me"]')).toHaveCount(0);
+    await expect(header.getByRole("button", { name: /^(EN|AR)$/ })).toHaveCount(0);
+    await expect(header.getByRole("button", { name: /Select delivery location/ })).toHaveCount(0);
+  });
+
+  test("phone/tablet menu carries only Collections, About and Contact — no social, location or language controls", async ({
+    page,
+  }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/en");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("button", { name: "Close menu" }).last()).toBeVisible();
+
+    const drawer = menuDrawer(page);
+    await expect(drawer.getByText("Collections", { exact: true })).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "Bracelets", exact: true })).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "About", exact: true })).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "Contact", exact: true })).toBeVisible();
+
+    await expect(drawer.locator('a[href*="instagram.com"], a[href*="wa.me"]')).toHaveCount(0);
+    await expect(drawer.getByRole("button", { name: /^(EN|AR)$/ })).toHaveCount(0);
+    await expect(drawer.getByRole("button", { name: /Select delivery location/ })).toHaveCount(0);
+  });
+});
+
+test.describe("social contact — footer", () => {
+  test("footer Instagram/WhatsApp links are safe, labeled, and share the Contact page's and floating button's configured destination", async ({
     page,
   }) => {
     await page.setViewportSize(DESKTOP);
     const configured = await socialIsConfigured(page);
 
-    const header = page.getByRole("banner");
+    const footer = page.getByRole("contentinfo");
+    const footerInstagram = footer.locator('a[href*="instagram.com"]').first();
+    const footerWhatsapp = footer.locator('a[href*="wa.me"]').first();
+    const footerHrefs = {
+      instagram: configured.instagram ? await footerInstagram.getAttribute("href") : null,
+      whatsapp: configured.whatsapp ? await footerWhatsapp.getAttribute("href") : null,
+    };
 
     if (configured.instagram) {
-      const instagram = header.locator('a[href*="instagram.com"]').first();
-      await expect(instagram).toBeVisible();
-      await expectSafeExternalLink(instagram);
+      await expectSafeExternalLink(footerInstagram);
       // Never an unlabeled icon-only control (spec: understandable even
       // when represented primarily by icons).
-      expect(await instagram.getAttribute("aria-label")).toBeTruthy();
+      expect(await footerInstagram.getAttribute("aria-label")).toBeTruthy();
     }
-
     if (configured.whatsapp) {
-      const whatsapp = header.locator('a[href*="wa.me"]').first();
-      await expect(whatsapp).toBeVisible();
-      await expectSafeExternalLink(whatsapp);
-      expect(await whatsapp.getAttribute("aria-label")).toBeTruthy();
-      expect(await whatsapp.getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\d+/);
+      await expectSafeExternalLink(footerWhatsapp);
+      expect(await footerWhatsapp.getAttribute("aria-label")).toBeTruthy();
+      expect(footerHrefs.whatsapp).toMatch(/^https:\/\/wa\.me\/\d+/);
     }
-  });
 
-  test("mobile hamburger menu exposes the same Instagram/WhatsApp destinations", async ({ page }) => {
-    await page.setViewportSize(MOBILE);
-    const configured = await socialIsConfigured(page);
-
-    await page.goto("/en");
-    await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("button", { name: "Close menu" }).last()).toBeVisible();
-
-    const drawer = page.locator("div.relative.ms-auto");
-
+    // One centralized config — the footer, the Contact page and the
+    // floating button can never diverge.
+    await page.goto("/en/contact");
     if (configured.instagram) {
-      const instagram = drawer.locator('a[href*="instagram.com"]').first();
-      await expect(instagram).toBeVisible();
-      await expectSafeExternalLink(instagram);
+      const contactHref = await page.getByRole("link", { name: /Message us on Instagram/ }).getAttribute("href");
+      expect(footerHrefs.instagram).toBe(contactHref);
     }
     if (configured.whatsapp) {
-      const whatsapp = drawer.locator('a[href*="wa.me"]').first();
-      await expect(whatsapp).toBeVisible();
-      await expectSafeExternalLink(whatsapp);
-    }
-  });
-});
-
-test.describe("social contact — footer", () => {
-  test("footer Instagram/WhatsApp links are safe and share the navbar's configured destination", async ({ page }) => {
-    await page.setViewportSize(DESKTOP);
-    const configured = await socialIsConfigured(page);
-
-    const header = page.getByRole("banner");
-    const footer = page.getByRole("contentinfo");
-
-    if (configured.instagram) {
-      const footerHref = await footer.locator('a[href*="instagram.com"]').first().getAttribute("href");
-      const headerHref = await header.locator('a[href*="instagram.com"]').first().getAttribute("href");
-      // One centralized config — the two placements can never diverge.
-      expect(footerHref).toBe(headerHref);
-      await expectSafeExternalLink(footer.locator('a[href*="instagram.com"]').first());
-    }
-
-    if (configured.whatsapp) {
-      const footerHref = await footer.locator('a[href*="wa.me"]').first().getAttribute("href");
-      const headerHref = await header.locator('a[href*="wa.me"]').first().getAttribute("href");
-      expect(footerHref).toBe(headerHref);
-      await expectSafeExternalLink(footer.locator('a[href*="wa.me"]').first());
+      const contactHref = await page.getByRole("link", { name: /Chat with us on WhatsApp/ }).getAttribute("href");
+      expect(footerHrefs.whatsapp).toBe(contactHref);
+      expect(footerHrefs.whatsapp).toBe(await page.getByTestId("floating-whatsapp").getAttribute("href"));
     }
   });
 });
@@ -177,10 +189,10 @@ test.describe("social contact — floating WhatsApp button", () => {
         event.userChoice = Promise.resolve({ outcome: "dismissed" });
         window.dispatchEvent(event);
       });
-      await expect(page.getByRole("dialog", { name: "Install ELORA JEWELLERY" })).toBeVisible({ timeout: 2000 });
+      await expect(page.getByRole("dialog", { name: "Install TIA" })).toBeVisible({ timeout: 2000 });
     }).toPass({ timeout: 15000 });
 
-    const banner = page.getByRole("dialog", { name: "Install ELORA JEWELLERY" });
+    const banner = page.getByRole("dialog", { name: "Install TIA" });
     const bannerBox = await banner.boundingBox();
     const after = await floating.boundingBox();
 
@@ -199,11 +211,11 @@ test.describe("social contact — localization", () => {
     await page.setViewportSize(DESKTOP);
 
     await page.goto("/en");
-    const enHref = await page.getByRole("banner").locator('a[href*="wa.me"]').first().getAttribute("href");
+    const enHref = await page.getByRole("contentinfo").locator('a[href*="wa.me"]').first().getAttribute("href");
 
     await page.goto("/ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    const arHref = await page.getByRole("banner").locator('a[href*="wa.me"]').first().getAttribute("href");
+    const arHref = await page.getByRole("contentinfo").locator('a[href*="wa.me"]').first().getAttribute("href");
 
     // Same number, different pre-filled greeting per locale (research.md §37).
     expect(enHref).toMatch(/^https:\/\/wa\.me\/\d+/);

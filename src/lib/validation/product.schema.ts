@@ -13,10 +13,25 @@ export const priceMinorUnitsSchema = z
   .positive("Price must be greater than 0.");
 
 export const productImageSchema = z.object({
-  url: z.string().trim().url("Image url must be a valid URL."),
+  // An absolute URL (an uploaded Firebase Storage image) or a root-relative
+  // path (a local asset under `public/`). It was previously absolute-only,
+  // which meant a product referencing a local asset could not be saved from
+  // the admin form at all — the local-asset case is legitimate, so both
+  // forms are accepted. Still rejects an empty or relative-with-no-slash
+  // value, which is what the original rule was really guarding against.
+  url: z
+    .string()
+    .trim()
+    .min(1, "Image url is required.")
+    .refine(
+      (value) => /^https?:\/\//i.test(value) || value.startsWith("/"),
+      "Image url must be an absolute URL or a root-relative path.",
+    ),
   storagePath: z.string().trim().min(1, "Missing Firebase Storage path."),
   position: nonNegativeInt,
   alt: z.string().trim().min(1, "Alt text is required for every product image."),
+  /** Optional option-value link for per-variant photography (see `ProductImage`). */
+  valueKey: stableId.nullish(),
 });
 export type ProductImageInput = z.infer<typeof productImageSchema>;
 

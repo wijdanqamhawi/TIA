@@ -59,3 +59,14 @@ next-env.d.ts
 /public/sw.js.map
 /public/swe-worker-*.js
 /public/swe-worker-*.js.map
+
+# firebase credentials & emulator data — never commit
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+emulator-data/
+firebase-export-*/
+
+# local Claude Code runtime files
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

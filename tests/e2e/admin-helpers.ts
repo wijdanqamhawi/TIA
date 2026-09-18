@@ -9,7 +9,7 @@ export async function getTestFirestore() {
   return getFirestore(app);
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_BOOTSTRAP_EMAIL ?? "admin@elora.local";
+export const ADMIN_EMAIL = process.env.ADMIN_BOOTSTRAP_EMAIL ?? "admin@elora.local";
 const ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD ?? "DevAdminPass123";
 
 /** Signs in as the seeded admin account (`npm run create-admin`) and lands on `/admin`. */

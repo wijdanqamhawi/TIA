@@ -3,6 +3,7 @@ import { getWishlistForDisplay, buildWishlistSummary } from "@/lib/domain/wishli
 import { WishlistItemCard } from "@/components/storefront/WishlistItemCard";
 import { WishlistEmptyState } from "@/components/storefront/WishlistEmptyState";
 import { PRODUCT_GRID_CLASS } from "@/components/storefront/productGrid";
+import { PageHeading } from "@/components/ui/PageHeading";
 
 // Reads the caller's live wishlist + current product pricing/stock/offer
 // state on every request (Constitution Principle 7/9/10) — never
@@ -23,8 +24,8 @@ export default async function WishlistPage({ params }: { params: Promise<{ local
   const summary = wishlist ? await buildWishlistSummary(wishlist) : { items: [], isEmpty: true };
 
   return (
-    <main className="container-luxury py-10">
-      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">{t("title")}</h1>
+    <main className="container-luxury py-14 sm:py-20">
+      <PageHeading title={t("title")} className="mb-10 sm:mb-14" />
 
       {summary.isEmpty ? (
         <WishlistEmptyState locale={locale} />

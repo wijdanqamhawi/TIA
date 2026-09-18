@@ -72,14 +72,15 @@ export default function LoginPage() {
 
   return (
     <main className="container-luxury flex min-h-[70vh] items-center justify-center py-16">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-elev-2">
         <CardHeader>
-          <h1 className="font-display text-2xl text-text-primary">{t("loginTitle")}</h1>
+          <h1 className="text-center font-display text-3xl text-text-primary">{t("loginTitle")}</h1>
+          <hr className="rule-gold mx-auto mt-4" aria-hidden="true" />
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-text-primary">
+              <label htmlFor="email" className="text-xs font-medium tracking-wide text-text-primary/80">
                 {t("emailLabel")}
               </label>
               <Input
@@ -94,7 +95,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-sm font-medium text-text-primary">
+              <label htmlFor="password" className="text-xs font-medium tracking-wide text-text-primary/80">
                 {t("passwordLabel")}
               </label>
               <Input
@@ -125,7 +126,7 @@ export default function LoginPage() {
                     ? { ...(next !== "/" ? { next } : {}), ...(intent ? { intent } : {}) }
                     : undefined,
               }}
-              className="font-medium text-brand-burgundy hover:underline"
+              className="font-medium text-brand-burgundy underline-offset-4 transition-colors hover:text-brand-burgundy-light hover:underline"
             >
               {t("registerCta")}
             </Link>

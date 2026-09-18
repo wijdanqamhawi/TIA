@@ -6,6 +6,18 @@ export type ProductImage = {
   storagePath: string;
   position: number;
   alt: string;
+  /**
+   * Optional link to one of the product's option *values* (e.g. the `gold`
+   * value of its `color` option). When a product has images carrying a
+   * `valueKey`, the detail gallery shows only those matching the shopper's
+   * selected value, so choosing a colour swaps the photography.
+   *
+   * Absent on every image of every product that has no per-variant
+   * photography — those galleries show all images exactly as before. This
+   * is the only field added for variant imagery: an image belongs to a
+   * value, rather than variants being a new entity of their own.
+   */
+  valueKey?: string | null;
 };
 
 export type ProductOptionValue = {

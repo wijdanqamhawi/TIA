@@ -23,13 +23,13 @@ export function QuantitySelector({
   }
 
   return (
-    <div className="inline-flex items-center rounded-md border border-border-luxury" aria-label={t("quantity")}>
+    <div className="inline-flex h-[3.25rem] items-center border border-hairline-strong" aria-label={t("quantity")}>
       <button
         type="button"
         onClick={() => step(-1)}
         disabled={disabled || value <= 1}
         aria-label="-"
-        className="flex min-h-11 min-w-11 items-center justify-center text-text-primary hover:bg-brand-beige disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-full min-w-10 items-center justify-center text-text-primary transition-colors hover:bg-brand-cream disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Minus aria-hidden="true" size={16} />
       </button>
@@ -41,7 +41,7 @@ export function QuantitySelector({
         onClick={() => step(1)}
         disabled={disabled || value >= max}
         aria-label="+"
-        className="flex min-h-11 min-w-11 items-center justify-center text-text-primary hover:bg-brand-beige disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-full min-w-10 items-center justify-center text-text-primary transition-colors hover:bg-brand-cream disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus aria-hidden="true" size={16} />
       </button>

@@ -30,7 +30,7 @@ test.describe("PWA — manifest", () => {
     expect(response.ok()).toBe(true);
     const manifest = await response.json();
 
-    expect(manifest.name).toBe("ELORA JEWELLERY");
+    expect(manifest.name).toBe("TIA — Accessories & More");
     expect(manifest.short_name).toBeTruthy();
     expect(manifest.display).toBe("standalone");
     expect(manifest.theme_color).toBe("#6d1b34");
@@ -246,11 +246,11 @@ test.describe("PWA — install prompt", () => {
     // async) — retry the dispatch until the listener has caught on.
     await expect(async () => {
       await page.evaluate(dispatchBeforeInstallPrompt);
-      await expect(page.getByRole("dialog", { name: "Install ELORA JEWELLERY" })).toBeVisible({ timeout: 2000 });
+      await expect(page.getByRole("dialog", { name: "Install TIA" })).toBeVisible({ timeout: 2000 });
     }).toPass({ timeout: 15000 });
 
     await page.getByRole("button", { name: "Not now" }).first().click();
-    await expect(page.getByRole("dialog", { name: "Install ELORA JEWELLERY" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "Install TIA" })).toHaveCount(0);
   });
 
   test("never shows when display-mode: standalone is simulated (already installed)", async ({ page }) => {
@@ -274,7 +274,7 @@ test.describe("PWA — install prompt", () => {
       event.userChoice = Promise.resolve({ outcome: "dismissed" });
       window.dispatchEvent(event);
     });
-    await expect(page.getByRole("dialog", { name: "Install ELORA JEWELLERY" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "Install TIA" })).toHaveCount(0);
   });
 
   test("standalone mode remains fully responsive (no horizontal overflow, mobile nav works)", async ({ page }) => {

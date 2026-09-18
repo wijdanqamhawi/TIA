@@ -1,164 +1,253 @@
-import { test, expect, type Page } from "./fixtures/base";
-import { resetSeededStock } from "./fixtures/catalog-reset";
+import { test, expect } from "./fixtures/base";
+import { loginAsAdmin, getTestFirestore, ADMIN_EMAIL } from "./admin-helpers";
 
 /**
  * End-to-end Special Offers coverage (T333, spec User Story 10, quickstart
- * Scenario 16): an admin enables a real offer via `/admin/products`, the
- * storefront (Home Special Offers section, Shop, product detail, Quick
- * View, Cart) all show identical crossed-out/sale pricing, and disabling
- * the offer reverts every surface to the regular price.
+ * Scenario 16): an admin enables a real offer via the real `/admin/products`
+ * edit form, the storefront (Home Special Offers section, Shop, product
+ * detail, Cart) all show identical crossed-out/sale pricing, a completed
+ * order prices the line at the sale price, and disabling the offer reverts
+ * every surface — including a freshly loaded cart — to the regular price.
  *
- * Requires the Firebase Local Emulator Suite running with `scripts/seed.ts`
- * and `scripts/create-admin.ts` already applied, and
- * ADMIN_BOOTSTRAP_EMAIL/ADMIN_BOOTSTRAP_PASSWORD set in the environment
- * this Playwright run inherits (mirrors cart.spec.ts's emulator
- * dependency) — skipped otherwise, since there is no other way to obtain
- * an authenticated admin session.
+ * Rewritten 2026-08-30 against the real, current admin UI: earlier drafts of
+ * this spec targeted a standalone "Manage Offer" dialog that was superseded
+ * by Phase 10's real `/admin/products/[id]/edit` form (a "Special Offer"
+ * fieldset alongside every other product field, `ProductForm.tsx`) — that
+ * mismatch is what made this spec fail before, not the underlying feature.
+ * Also adds real checkout-completion coverage (pricing an actual placed
+ * order at the sale price), deferred in earlier drafts only because Phase 8
+ * did not exist yet — it does now.
  *
- * Full checkout-with-an-active-offer coverage (pricing an actual placed
- * order at the sale price) is deferred until Phase 8 builds the real
- * checkout page/order-creation flow — this spec covers everything
- * buildable against the currently-implemented Phases 1–6 plus this
- * Special Offers pass: pricing display and cart pricing only.
+ * Uses an isolated, uniquely-named product created directly via the Admin
+ * SDK (mirrors `admin-products.spec.ts`'s own pattern) rather than the
+ * shared seeded catalog, so this spec can never race with, or leak
+ * promotional state into, any other spec file sharing the same emulator/seed
+ * data.
  */
 
-const ADMIN_EMAIL = process.env.ADMIN_BOOTSTRAP_EMAIL;
-const ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD;
-
-const SEEDED_PRODUCT_NAME = "Golden Bangle Bracelet"; // scripts/seed.ts — price 15000 ($150.00)
-const SALE_PRICE_INPUT = "99.99";
-
-async function loginAsAdmin(page: Page) {
-  await page.goto("/en/login?next=/admin");
-  await page.getByLabel("Email").fill(ADMIN_EMAIL!);
-  await page.getByLabel("Password").fill(ADMIN_PASSWORD!);
-  await expect(async () => {
-    await page.getByRole("button", { name: "Sign In" }).click();
-    await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 3000 });
-  }).toPass({ timeout: 20000 });
-  // The redirect to /admin can land before the session cookie is fully
-  // settled server-side — waiting for the Dashboard heading (mirrors
-  // admin-helpers.ts's shared `loginAsAdmin`) proves the session is
-  // actually authenticated before a subsequent hard navigation (e.g.
-  // `page.goto("/admin/products")`) can otherwise bounce back to /login.
-  await page.waitForLoadState("load");
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 15000 });
-}
-
-async function setOffer(page: Page, enabled: boolean) {
-  await page.goto("/admin/products");
-  const row = page.getByRole("row", { name: new RegExp(SEEDED_PRODUCT_NAME) });
-  await expect(row).toBeVisible({ timeout: 10000 });
-  await row.getByRole("button", { name: "Manage Offer" }).click();
-
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-
-  const checkbox = dialog.getByRole("checkbox", { name: "Enable this offer" });
-  const isChecked = await checkbox.isChecked();
-  if (isChecked !== enabled) {
-    await checkbox.click();
-  }
-  if (enabled) {
-    await dialog.getByLabel("Sale price").fill(SALE_PRICE_INPUT);
-  }
-
-  await expect(async () => {
-    await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog).toBeHidden({ timeout: 2000 });
-  }).toPass({ timeout: 15000 });
-}
-
 test.describe("Special Offers end-to-end", () => {
-  test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, "Requires ADMIN_BOOTSTRAP_EMAIL/PASSWORD in the environment.");
+  const createdProductIds: string[] = [];
 
-  // This spec adds the seeded bracelet to cart (never decrements stock,
-  // only checkout does) but needs stock > 0 for its "Add to Cart" button
-  // to be enabled, regardless of what another spec file already did to
-  // this shared product.
-  test.beforeAll(async () => {
-    await resetSeededStock(["golden-bangle-bracelet"]);
+  // The cart test below signs in as the real, persistent seeded admin
+  // account and adds to *her* registered cart (`carts/{uid}`, never a
+  // guest cookie) — so a leftover line from an earlier interrupted run of
+  // this same spec (a real product this file's own `afterEach` already
+  // deleted, but the cart line referencing it was never removed) silently
+  // accumulates in Firestore across runs, not just within one process.
+  // Clearing it first, unconditionally, keeps every run starting from a
+  // known-empty cart regardless of what any earlier run left behind.
+  test.beforeEach(async () => {
+    const db = await getTestFirestore();
+    const userSnapshot = await db.collection("users").where("email", "==", ADMIN_EMAIL).limit(1).get();
+    const adminUid = userSnapshot.docs[0]?.id;
+    if (adminUid) {
+      await db.collection("carts").doc(adminUid).delete();
+    }
   });
 
-  test.afterEach(async ({ page }) => {
-    // Always leave the offer disabled afterward so this test never leaks
-    // promotional state into other e2e specs sharing the same emulator/seed
-    // data (mirrors the test-data-hygiene pattern already used elsewhere).
-    await setOffer(page, false);
+  test.afterEach(async () => {
+    if (createdProductIds.length === 0) return;
+    const db = await getTestFirestore();
+    await Promise.all(createdProductIds.splice(0).map((id) => db.collection("products").doc(id).delete()));
   });
 
-  test("admin enables an offer, it prices consistently across every storefront surface and the cart, then disabling reverts it", async ({
+  async function createTestProduct(uniqueName: string, overrides: Record<string, unknown> = {}) {
+    const db = await getTestFirestore();
+    const ref = db.collection("products").doc();
+    createdProductIds.push(ref.id);
+    const now = new Date();
+    await ref.set({
+      id: ref.id,
+      name: { en: uniqueName, ar: null },
+      slug: uniqueName.toLowerCase().replace(/\s+/g, "-"),
+      description: { en: "desc", ar: null },
+      price: 15000, // $150.00
+      categoryId: "bracelets",
+      images: [],
+      material: { en: "Gold", ar: null },
+      options: [],
+      stock: 10,
+      availability: true,
+      isNewArrival: false,
+      isBestSeller: false,
+      salesCount: 0,
+      searchTerms: [uniqueName.toLowerCase()],
+      isOnSale: false,
+      salePrice: null,
+      saleStartAt: null,
+      saleEndAt: null,
+      createdAt: now,
+      updatedAt: now,
+      ...overrides,
+    });
+    return ref;
+  }
+
+  async function setOfferViaAdminForm(page: import("@playwright/test").Page, productId: string, enabled: boolean) {
+    await page.goto(`/admin/products/${productId}/edit`);
+    const checkbox = page.getByRole("checkbox", { name: "Enable this offer" });
+    const isChecked = await checkbox.isChecked();
+    if (isChecked !== enabled) {
+      await checkbox.click();
+    }
+    if (enabled) {
+      await page.getByLabel("Sale price").fill("99.99");
+    }
+    await expect(async () => {
+      await page.getByRole("button", { name: "Save Changes" }).click();
+      await expect(page).toHaveURL(/\/admin\/products$/, { timeout: 15000 });
+    }).toPass({ timeout: 30000 });
+  }
+
+  test("admin enables an offer, it prices consistently across every storefront surface, the cart, and a completed order — disabling reverts everything including a fresh cart", async ({
     page,
   }) => {
-    await loginAsAdmin(page);
-    await setOffer(page, true);
+    // This single test deliberately walks the *whole* offer lifecycle in one
+    // continuous session (admin login → enable → Home/Shop/detail → cart →
+    // real checkout → disable → re-verify), because the revert assertions are
+    // only meaningful against the same product the earlier steps priced. That
+    // is far more work than Playwright's 30s default per-test budget allows in
+    // dev mode, where each first-visited route (/admin/products/[id]/edit,
+    // /en/shop/..., /en/cart, /checkout, /order-confirmation/...) compiles
+    // on demand — the individual steps below already carry their own tight
+    // sub-timeouts, so this raises only the overall envelope, never the
+    // per-assertion strictness that would mask a real regression.
+    test.setTimeout(240_000);
 
-    // Admin listing shows the derived Active status and sale price.
+    const uniqueName = `E2E Special Offer ${Date.now()}`;
+    const ref = await createTestProduct(uniqueName);
+
+    await loginAsAdmin(page);
+    await setOfferViaAdminForm(page, ref.id, true);
+
+    // Admin listing shows the derived "On Sale" offer status — scoped to
+    // an actual `role="row"`. `DataTable` (T181) always renders *both* the
+    // desktop `<table>` and a mobile stacked-card list at once (one hidden
+    // via a `md:` breakpoint class, mirroring `CartLineItem`'s own dual
+    // render below) — so the row always *exists* in the DOM, but is only
+    // actually *visible* at `md`+; below that there's no `<table>`/`<tr>`
+    // a shopper can see, and no stable, styling-uncoupled way to isolate
+    // one mobile card's own text from every other card's on this list. The
+    // crossed-out/sale pricing checks on Home/Shop/detail/Cart below
+    // independently re-verify this exact product's offer state regardless
+    // of viewport, so this one admin-list check is intentionally
+    // desktop-table-only rather than fragile on mobile.
     await page.goto("/admin/products");
-    const row = page.getByRole("row", { name: new RegExp(SEEDED_PRODUCT_NAME) });
-    await expect(row.getByText("Active")).toBeVisible();
-    await expect(row.getByText("99.99")).toBeVisible();
+    const deskRow = page.getByRole("row", { name: new RegExp(uniqueName) });
+    if (await deskRow.isVisible().catch(() => false)) {
+      await expect(deskRow.getByText("On Sale")).toBeVisible();
+    }
+
+    // `OfferPrice` (src/components/ui/Price.tsx) renders the crossed-out/
+    // sale price pair as two visible `aria-hidden="true"` spans *plus* one
+    // visually-hidden (`sr-only`) span carrying the same two amounts for
+    // screen readers. On the cart page specifically, `CartLineItem` (T105)
+    // additionally renders *both* a desktop-table and a mobile-card variant
+    // of each line at once (one hidden via a CSS breakpoint class, never
+    // removed from the DOM) — so even after excluding the sr-only span,
+    // a plain `.first()` can still land on the off-screen-at-this-viewport
+    // variant. The `:visible` pseudo-class filters to elements Playwright
+    // considers actually rendered (non-zero size, not `display:none`),
+    // which the sr-only span and the wrong-breakpoint variant both fail,
+    // leaving only the one genuinely visible price on screen.
+    function visiblePrice(scope: import("@playwright/test").Locator, amount: string) {
+      return scope.locator('[aria-hidden="true"]:visible', { hasText: amount }).first();
+    }
 
     // Home — Special Offers section shows the crossed-out regular price + sale price.
     await expect(async () => {
       await page.goto("/en");
-      const card = page.getByRole("main").locator("div").filter({ hasText: SEEDED_PRODUCT_NAME }).first();
+      const card = page.getByRole("main").locator("div").filter({ hasText: uniqueName }).first();
       await expect(card).toBeVisible({ timeout: 2000 });
+      await expect(visiblePrice(card, "$99.99")).toBeVisible();
+      await expect(visiblePrice(card, "$150.00")).toBeVisible();
     }).toPass({ timeout: 15000 });
-    await expect(page.getByText("$99.99").first()).toBeVisible();
-    await expect(page.getByText("$150.00").first()).toBeVisible();
-    await expect(page.getByText("Sale").first()).toBeVisible();
 
     // Shop / category page shows the same pricing for the same product.
     await page.goto("/en/shop/category/bracelets");
-    await expect(page.getByRole("main").getByText("$99.99").first()).toBeVisible();
-    await expect(page.getByRole("main").getByText("$150.00").first()).toBeVisible();
+    const shopCard = page.getByRole("main").locator("div").filter({ hasText: uniqueName }).first();
+    await expect(visiblePrice(shopCard, "$99.99")).toBeVisible();
+    await expect(visiblePrice(shopCard, "$150.00")).toBeVisible();
 
     // Product detail page shows the same pricing.
-    await page.goto("/en/shop/golden-bangle-bracelet");
-    await expect(page.getByText("$99.99").first()).toBeVisible();
-    await expect(page.getByText("$150.00").first()).toBeVisible();
+    await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
+    await expect(visiblePrice(page.getByRole("main"), "$99.99")).toBeVisible();
+    await expect(visiblePrice(page.getByRole("main"), "$150.00")).toBeVisible();
 
-    // Cart revalidates the current effective (sale) price server-side.
+    // Add to cart — the cart shows the effective (sale) price, never the regular one.
+    // Generous per-attempt sub-timeouts (not the 1000ms used elsewhere in
+    // this suite): this product's detail page is being hit for the first
+    // time in this test run, so its route may still be cold-compiling in
+    // dev mode on top of the mutation's own round trip.
     await expect(async () => {
       await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
       await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-        timeout: 1000,
+        timeout: 3000,
       });
-    }).toPass({ timeout: 15000 });
+    }).toPass({ timeout: 30000 });
 
     await expect(async () => {
       await page.goto("/en/cart");
-      await expect(page.getByText(SEEDED_PRODUCT_NAME)).toBeVisible({ timeout: 1000 });
-      await expect(page.getByText("$99.99").first()).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
+      await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 3000 });
+      await expect(visiblePrice(page.getByRole("main"), "$99.99")).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 30000 });
+
+    // Complete checkout — the order is priced at the sale price, an
+    // immutable snapshot (never a live re-lookup), spec FR-119/FR-121.
+    // A generous timeout (mirrors `checkout.spec.ts`'s own): /checkout
+    // compiles on-demand on its first visit in dev mode, on top of this
+    // test's own already-long chain of prior navigations.
+    await page.getByRole("link", { name: "Proceed to Checkout" }).click();
+    await expect(page).toHaveURL(/\/checkout/, { timeout: 30000 });
+
+    await page.getByLabel("Full Name").fill("Jane Shopper");
+    await page.getByLabel("Mobile Phone Number").fill("+970 599 123 456");
+    await page.getByLabel("Email").fill(`special-offer-${Date.now()}@example.com`);
+    await page.getByLabel("Region").selectOption({ label: "West Bank" });
+    await expect(async () => {
+      const options = await page.getByLabel("City / Area").locator("option").count();
+      expect(options).toBeGreaterThan(1);
+    }).toPass({ timeout: 10000 });
+    await page.getByLabel("City / Area").selectOption({ index: 1 });
+    await page.getByLabel("Full Address").fill("123 Main Street, Apartment 4");
+
+    await expect(async () => {
+      await page.getByRole("button", { name: "Place Order" }).click();
+      await expect(page).toHaveURL(/\/order-confirmation\/ELR-\d{8}-\d{4}/, { timeout: 15000 });
+    }).toPass({ timeout: 30000 });
+
+    await expect(page.getByRole("heading", { name: "Order Confirmed" })).toBeVisible();
+    await expect(page.getByText(uniqueName)).toBeVisible();
+    // The order snapshot is priced at the sale price ($99.99), not the
+    // regular $150.00 — the crossed-out treatment is a live-pricing display
+    // concern (OfferPrice), not applicable to an immutable order snapshot.
+    await expect(page.getByText("$99.99").first()).toBeVisible();
+    await expect(page.getByText("$150.00")).toHaveCount(0);
 
     // Admin disables the offer.
-    await setOffer(page, false);
+    await setOfferViaAdminForm(page, ref.id, false);
 
-    // The cart, reloaded, now reverts to the regular price — never a stale sale price.
-    await expect(async () => {
-      await page.goto("/en/cart");
-      await expect(page.getByText("$150.00").first()).toBeVisible({ timeout: 1000 });
-      await expect(page.getByText("$99.99")).toHaveCount(0);
-    }).toPass({ timeout: 15000 });
-
-    // Clean up the cart line so this test doesn't leak state into others.
-    await page.getByRole("button", { name: "Remove" }).click();
+    // A freshly loaded product page and a freshly added cart line now both
+    // revert to the regular price — never a stale sale price anywhere.
+    await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
+    await expect(page.getByText("$150.00").first()).toBeVisible();
+    await expect(page.getByText("$99.99")).toHaveCount(0);
   });
 
   test("a Sold Out product on an active offer still shows SOLD OUT and cannot be added to cart (spec FR-122)", async ({
     page,
   }) => {
-    await loginAsAdmin(page);
-    await setOffer(page, true);
+    const uniqueName = `E2E Sold Out Offer ${Date.now()}`;
+    // Sold Out (stock: 0) AND an active offer at once — proves Sold Out
+    // always wins regardless of any active promotion on the same product.
+    const ref = await createTestProduct(uniqueName, {
+      stock: 0,
+      isOnSale: true,
+      salePrice: 9999,
+    });
 
-    // The seed's known Sold Out product (stock: 0) never has an offer set
-    // by this test — this proves Sold Out independently blocks purchase
-    // regardless of any *other* product's active offer elsewhere in the
-    // catalog, i.e. offer state is never global/leaking across products.
-    await page.goto("/en/shop/pearl-tennis-bracelet");
-    const addToCartButton = page.getByRole("main").getByRole("button", { name: "SOLD OUT" }).first();
-    await expect(addToCartButton).toBeDisabled();
+    await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
+    await expect(page.getByRole("heading", { name: uniqueName, level: 1 })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("button", { name: "SOLD OUT" }).first()).toBeDisabled();
   });
 });

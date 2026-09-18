@@ -1,3 +1,4 @@
+import { RowHeading } from "@/components/ui/PageHeading";
 import { ProductCard, type ProductCardProduct } from "./ProductCard";
 import { PRODUCT_GRID_CLASS } from "./productGrid";
 
@@ -13,22 +14,37 @@ export function CollectionSection({
   title,
   products,
   locale,
+  /** Optional "See All" affordance rendered opposite the title. */
+  actionLabel,
+  actionHref,
+  /** Renders the row on the cool-pearl band instead of the page ground, so consecutive rows alternate. */
+  tone = "plain",
 }: {
   title: string;
   products: ProductCardProduct[];
   locale: string;
+  actionLabel?: string;
+  actionHref?: string;
+  tone?: "plain" | "cream";
 }) {
   if (products.length === 0) {
     return null;
   }
 
   return (
-    <section className="container-luxury py-12 sm:py-16">
-      <h2 className="mb-6 text-center font-display text-2xl text-text-primary sm:text-3xl">{title}</h2>
-      <div className={PRODUCT_GRID_CLASS}>
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} locale={locale} />
-        ))}
+    <section className={tone === "cream" ? "band-cream section-y" : "section-y"}>
+      <div className="container-luxury">
+        <RowHeading
+          title={title}
+          actionLabel={actionLabel}
+          actionHref={actionHref}
+          className="mb-12 sm:mb-16"
+        />
+        <div className={PRODUCT_GRID_CLASS}>
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} locale={locale} />
+          ))}
+        </div>
       </div>
     </section>
   );

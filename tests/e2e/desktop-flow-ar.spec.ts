@@ -66,7 +66,7 @@ test.describe("desktop commerce flow (Arabic/RTL)", () => {
     // 1. Home.
     await page.goto("/ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    await expect(page.getByRole("heading", { name: "ELORA JEWELLERY" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "أكثر من مجرد إكسسوارات", level: 1 })).toBeVisible();
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
     // 2. Reach Shop via the always-visible desktop nav.

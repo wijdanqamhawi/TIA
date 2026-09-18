@@ -35,8 +35,8 @@ export async function FeaturedCategoryProducts({
   const products = rawProducts.map((product) => toProductCardData(product, wishlistedProductIds));
 
   return (
-    <div className="container-luxury py-8">
-      <h3 className="mb-4 text-center font-display text-xl text-text-primary">
+    <div className="container-luxury py-14 sm:py-20">
+      <h3 className="mb-10 text-center font-display text-2xl font-light text-text-primary sm:text-3xl">
         {t("featuredIn", { category: categoryLabel })}
       </h3>
       <div className={PRODUCT_GRID_CLASS}>

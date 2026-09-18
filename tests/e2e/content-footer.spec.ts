@@ -2,8 +2,8 @@ import { test, expect, type Page } from "./fixtures/base";
 
 /**
  * T217: About/Contact/Footer render correctly, all four legal routes
- * resolve, and footer social links (Phase 13) match the Navbar's
- * destinations, in both languages.
+ * resolve, and footer social links (Phase 13) match the Contact page's
+ * destinations (the header and menu carry none), in both languages.
  */
 
 const LEGAL_ROUTES = [
@@ -25,13 +25,13 @@ async function socialIsConfigured(page: Page): Promise<{ instagram: boolean; wha
 test.describe("content pages — About", () => {
   test("renders the brand-identity content in English and Arabic", async ({ page }) => {
     await page.goto("/en/about");
-    await expect(page.getByRole("heading", { name: "About ELORA JEWELLERY", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "About TIA", level: 1 })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Our Story" })).toBeVisible();
     await expect(page.getByRole("main").getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/en/contact");
 
     await page.goto("/ar/about");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    await expect(page.getByRole("heading", { name: "من نحن - إيلورا للمجوهرات", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "من نحن - تيا", level: 1 })).toBeVisible();
   });
 });
 
@@ -106,7 +106,7 @@ test.describe("content pages — Footer", () => {
     expect(overflowMobile).toBe(true);
 
     const footer = page.getByRole("contentinfo");
-    const logoBox = await footer.locator("img").first().boundingBox();
+    const logoBox = await footer.getByRole("link", { name: "TIA — Home" }).boundingBox();
     const shopHeadingBox = await footer.getByRole("heading", { name: "Shop" }).boundingBox();
     // Stacked: the second column's heading starts below the first column's logo.
     expect(shopHeadingBox!.y).toBeGreaterThan(logoBox!.y);
@@ -118,7 +118,7 @@ test.describe("content pages — Footer", () => {
     );
     expect(overflowDesktop).toBe(true);
 
-    const logoBoxDesktop = await footer.locator("img").first().boundingBox();
+    const logoBoxDesktop = await footer.getByRole("link", { name: "TIA — Home" }).boundingBox();
     const shopHeadingBoxDesktop = await footer.getByRole("heading", { name: "Shop" }).boundingBox();
     // Side-by-side: roughly the same y, not stacked.
     expect(Math.abs(shopHeadingBoxDesktop!.y - logoBoxDesktop!.y)).toBeLessThan(40);
@@ -140,23 +140,27 @@ test.describe("content pages — Footer", () => {
     expect(columns).toBe(3);
   });
 
-  test("footer Instagram/WhatsApp destinations exactly match the Navbar's (Phase 13)", async ({ page }) => {
+  test("footer Instagram/WhatsApp destinations exactly match the Contact page's (Phase 13)", async ({ page }) => {
     const configured = await socialIsConfigured(page);
     test.skip(!configured.instagram && !configured.whatsapp, "No social channels configured on this server instance.");
 
+    // Social links live in the footer and on the Contact page (the header
+    // and menu carry none) — both read the one centralized config.
     await page.goto("/en");
-    const header = page.getByRole("banner");
     const footer = page.getByRole("contentinfo");
+    const footerInstagram = configured.instagram
+      ? await footer.locator('a[href*="instagram.com"]').first().getAttribute("href")
+      : null;
+    const footerWhatsapp = configured.whatsapp ? await footer.locator('a[href*="wa.me"]').first().getAttribute("href") : null;
 
+    await page.goto("/en/contact");
     if (configured.instagram) {
-      const headerHref = await header.locator('a[href*="instagram.com"]').first().getAttribute("href");
-      const footerHref = await footer.locator('a[href*="instagram.com"]').first().getAttribute("href");
-      expect(footerHref).toBe(headerHref);
+      const contactHref = await page.getByRole("link", { name: /Message us on Instagram/ }).getAttribute("href");
+      expect(footerInstagram).toBe(contactHref);
     }
     if (configured.whatsapp) {
-      const headerHref = await header.locator('a[href*="wa.me"]').first().getAttribute("href");
-      const footerHref = await footer.locator('a[href*="wa.me"]').first().getAttribute("href");
-      expect(footerHref).toBe(headerHref);
+      const contactHref = await page.getByRole("link", { name: /Chat with us on WhatsApp/ }).getAttribute("href");
+      expect(footerWhatsapp).toBe(contactHref);
     }
   });
 });

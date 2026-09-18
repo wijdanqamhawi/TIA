@@ -1,0 +1,858 @@
+/*
+ * About TIA — a measured reproduction of the approved 1024px-wide reference.
+ *
+ * ── UNITS ────────────────────────────────────────────────────────────────
+ * The page is a container (`.page`), and every dimension below is written
+ * in *reference pixels*: `calc(var(--u) * N)` is "N px of the 1024px
+ * reference, scaled to the current width". From 1024px up the whole page is
+ * therefore the reference at a uniform scale — a 1440px screenshot shrunk
+ * to 1024 overlays the reference — and the scale stops at 1440 so very wide
+ * screens keep the 1440 composition centred inside full-bleed bands.
+ *
+ *   --u  geometry (image sizes, gutters, section heights)
+ *   --t  type and text spacing; equal to --u on desktop, floored below it
+ *        so tablet copy never shrinks under a readable size.
+ *
+ * Below 640px the page stops scaling and stacks (see the end of the file).
+ */
+
+.page {
+  container-type: inline-size;
+  background: var(--brand-ivory);
+  --u: min(calc(100cqw / 1024), 1.40625px);
+  --t: max(var(--u), 0.9px);
+  --about-serif: var(--font-about-serif), var(--brand-font-display);
+  --about-sans: var(--brand-font-body);
+  /* Two tints of warm white taken from the palette itself (champagne
+     mixed into warm white), matching the reference's softly deeper Values
+     and Thank You grounds without introducing a beige. */
+  --about-tint: color-mix(in srgb, var(--brand-gold) 5%, var(--brand-ivory));
+  --about-tint-soft: color-mix(in srgb, var(--brand-gold) 4%, var(--brand-ivory));
+}
+
+:global([dir="rtl"]) .page {
+  --about-serif: var(--brand-font-display);
+}
+
+/* The global navbar has no route awareness; on this page only, About shows
+   the reference's persistent underline. Pure CSS — no navbar code changes. */
+:global(body):has(.page) :global(header nav a[href$="/about"]) {
+  opacity: 1;
+}
+:global(body):has(.page) :global(header nav a[href$="/about"])::after {
+  transform: scaleX(1);
+}
+
+.frame {
+  position: relative;
+  width: calc(var(--u) * 1024);
+  margin-inline: auto;
+}
+
+.serif {
+  font-family: var(--about-serif);
+  font-weight: 400;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--about-sans);
+  font-weight: 500;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+:global([dir="rtl"]) .eyebrow {
+  text-transform: none;
+  letter-spacing: normal !important;
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  border: 0;
+  background: var(--brand-gold);
+}
+
+/* ── 1 · HERO ─────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: calc(var(--u) * 243);
+  color: var(--brand-text-on-dark);
+}
+
+.heroImage {
+  z-index: -1;
+  object-fit: cover;
+  object-position: center;
+}
+
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: calc(var(--u) * 53);
+}
+
+.heroEyebrow {
+  font-size: calc(var(--t) * 12);
+  letter-spacing: 0.34em;
+  margin-inline-start: 0.34em;
+  color: rgba(252, 251, 248, 0.92);
+}
+
+.heroRule {
+  width: calc(var(--u) * 92);
+  margin-top: calc(var(--u) * 17);
+}
+
+.heroTitle {
+  margin-top: calc(var(--u) * 25);
+  font-size: calc(var(--t) * 47);
+  line-height: 1;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.heroTagline {
+  margin-top: calc(var(--u) * 10);
+  font-size: calc(var(--t) * 20.1);
+  line-height: 1;
+  color: rgba(252, 251, 248, 0.94);
+}
+
+:global([dir="rtl"]) .heroTitle {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: calc(var(--t) * 40);
+  line-height: 1.25;
+  margin-top: calc(var(--u) * 20);
+}
+
+:global([dir="rtl"]) .heroTagline {
+  font-size: calc(var(--t) * 17);
+  line-height: 1.5;
+  margin-top: calc(var(--u) * 10);
+}
+
+/* ── 2 · OUR STORY ────────────────────────────────────────────────────── */
+
+.story {
+  display: grid;
+  grid-template-columns: calc(var(--u) * 434) 1fr;
+  column-gap: calc(var(--u) * 40);
+  padding-block: calc(var(--u) * 24);
+  padding-inline-start: calc(var(--u) * 58);
+  padding-inline-end: calc(var(--u) * 58);
+  min-height: calc(var(--u) * 426);
+}
+
+.storyMedia {
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--u) * 434);
+  height: calc(var(--u) * 378);
+  background: var(--brand-cream);
+}
+
+.storyImage {
+  object-fit: cover;
+  object-position: center;
+}
+
+.storyCaption {
+  position: absolute;
+  /* Physical left in both directions: the photograph is not mirrored, and
+     its left edge is the light fabric the dark caption needs. */
+  left: calc(var(--u) * 25);
+  bottom: calc(var(--u) * 19);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.storyCaptionText {
+  font-size: calc(var(--t) * 10.5);
+  letter-spacing: 0.3em;
+  line-height: calc(var(--t) * 15.5);
+  color: #3b4356;
+}
+
+.storyCaptionText span {
+  display: block;
+}
+
+:global([dir="rtl"]) .storyCaptionText {
+  font-size: calc(var(--t) * 13);
+  line-height: 1.6;
+}
+
+.storyCaptionRule {
+  width: calc(var(--u) * 61);
+  height: calc(var(--u) * 2);
+  margin-top: calc(var(--u) * 14);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.storyText {
+  padding-top: calc(var(--u) * 29);
+  min-width: 0;
+}
+
+.storyEyebrow {
+  font-size: calc(var(--t) * 12);
+  letter-spacing: 0.26em;
+  color: var(--brand-text-primary);
+}
+
+.storyRule {
+  width: calc(var(--u) * 35);
+  margin-top: calc(var(--u) * 16);
+}
+
+.storyTitle {
+  margin-top: calc(var(--u) * 17);
+  max-width: calc(var(--t) * 370);
+  font-size: calc(var(--t) * 42);
+  letter-spacing: 0.012em;
+  line-height: calc(var(--t) * 44.5);
+  color: var(--brand-text-primary);
+}
+
+:global([dir="rtl"]) .storyTitle {
+  max-width: none;
+  font-size: calc(var(--t) * 32);
+  line-height: 1.45;
+}
+
+.storyBody {
+  margin-top: calc(var(--u) * 13);
+  max-width: calc(var(--t) * 432);
+  font-family: var(--about-sans);
+  font-weight: 350;
+  font-size: calc(var(--t) * 14.9);
+  line-height: calc(var(--t) * 21);
+  color: #444d60;
+}
+
+:global([dir="rtl"]) .storyBody {
+  line-height: 1.85;
+}
+
+.storyScript {
+  display: block;
+  margin-top: calc(var(--u) * 13);
+  margin-inline-start: calc(var(--u) * -8);
+  width: calc(var(--u) * 330);
+  height: auto;
+}
+
+.storyAccentText {
+  margin-top: calc(var(--u) * 26);
+  font-size: calc(var(--t) * 24);
+  color: var(--brand-gold);
+}
+
+/* ── 3 · OUR VALUES ───────────────────────────────────────────────────── */
+
+.values {
+  background: var(--about-tint);
+  min-height: calc(var(--u) * 297);
+  padding-top: calc(var(--u) * 27);
+  padding-bottom: calc(var(--u) * 31);
+}
+
+.valuesHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.valuesEyebrow {
+  font-size: calc(var(--t) * 11.5);
+  letter-spacing: 0.26em;
+  margin-inline-start: 0.26em;
+  color: var(--brand-gold);
+}
+
+.valuesRule {
+  width: calc(var(--u) * 93);
+  margin-top: calc(var(--u) * 15);
+}
+
+.valuesTitle {
+  margin-top: calc(var(--u) * 11);
+  font-size: calc(var(--t) * 42.5);
+  letter-spacing: 0.008em;
+  line-height: 1;
+  color: var(--brand-text-primary);
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, calc(var(--u) * 315));
+  justify-content: center;
+  margin-top: calc(var(--u) * 15);
+  margin-inline: auto;
+  width: calc(var(--u) * 1024);
+  /* the reference's columns sit 3.5px past centre */
+  padding-inline-start: calc(var(--u) * 7);
+}
+
+.valueItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Hairline separators: drawn on the item's start edge so they mirror under
+   RTL, and sized to the reference's 103px run below the icons. */
+.valueItem + .valueItem::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: calc(var(--u) * 40);
+  height: calc(var(--u) * 103);
+  width: 1px;
+  background: rgba(16, 28, 54, 0.13);
+}
+
+.valueIcon {
+  height: calc(var(--u) * 40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-gold);
+}
+
+.valueIcon svg {
+  display: block;
+  width: calc(var(--u) * var(--icon-w));
+  height: auto;
+}
+
+.valueTitle {
+  margin-top: calc(var(--u) * 15);
+  font-family: var(--about-sans);
+  font-weight: 500;
+  font-size: calc(var(--t) * 11.8);
+  line-height: 1;
+  letter-spacing: 0.33em;
+  margin-inline-start: 0.33em;
+  text-transform: uppercase;
+  color: var(--brand-text-primary);
+}
+
+:global([dir="rtl"]) .valueTitle {
+  font-size: calc(var(--t) * 15);
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin-inline-start: 0;
+  text-transform: none;
+}
+
+.valueRule {
+  width: calc(var(--u) * 41);
+  margin-top: calc(var(--u) * 16);
+  opacity: 0.85;
+}
+
+.valueBody {
+  margin-top: calc(var(--u) * 14);
+  font-family: var(--about-sans);
+  font-weight: 350;
+  font-size: calc(var(--t) * 15.6);
+  line-height: calc(var(--t) * 22);
+  color: #4b5467;
+}
+
+:global([dir="rtl"]) .valueBody {
+  max-width: calc(var(--t) * 230) !important;
+  line-height: 1.8;
+}
+
+/* ── 4 · NAVY EDITORIAL BANNER ────────────────────────────────────────── */
+
+.banner {
+  position: relative;
+  overflow: hidden;
+  background: var(--brand-burgundy);
+  height: calc(var(--u) * 200);
+}
+
+/* The photograph occupies the reference's right 496px of 1024 and carries
+   its own navy-to-photo blend at its start edge; the gradient only guards
+   the seam when the band is wider than the 1440 frame. */
+.bannerMedia {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: 0;
+  /* = 100% minus the navy run up to the frame's x=528 (496px at 1024). */
+  width: calc(50% - var(--u) * 16);
+}
+
+.bannerImage {
+  object-fit: cover;
+  object-position: left center;
+}
+
+.bannerMedia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, var(--brand-burgundy) 0, transparent calc(var(--u) * 24));
+}
+
+:global([dir="rtl"]) .bannerImage {
+  transform: scaleX(-1);
+}
+
+:global([dir="rtl"]) .bannerMedia::after {
+  background: linear-gradient(to left, var(--brand-burgundy) 0, transparent calc(var(--u) * 24));
+}
+
+.bannerQuote {
+  position: relative;
+  z-index: 1;
+  padding-top: calc(var(--u) * 49);
+  padding-inline-start: calc(var(--u) * 143);
+  width: calc(var(--u) * 528);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--brand-text-on-dark);
+}
+
+.bannerQuote blockquote {
+  margin: 0;
+  font-size: calc(var(--t) * 38);
+  line-height: calc(var(--t) * 46);
+  white-space: nowrap;
+}
+
+.bannerLine2 {
+  display: block;
+  padding-inline-start: calc(var(--u) * 26);
+}
+
+:global([dir="rtl"]) .bannerQuote blockquote {
+  font-size: calc(var(--t) * 29);
+  line-height: 1.6;
+}
+
+.bannerRule {
+  width: calc(var(--u) * 43);
+  margin-top: calc(var(--u) * 21);
+  align-self: center;
+}
+
+/* ── 5 · THANK YOU ────────────────────────────────────────────────────── */
+
+.thanks {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--about-tint-soft);
+  min-height: calc(var(--u) * 280);
+  padding-top: calc(var(--u) * 28);
+  padding-bottom: calc(var(--u) * 68);
+}
+
+.floral {
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--u) * 1);
+  inset-inline-start: 0;
+  width: calc(var(--u) * 250);
+  height: auto;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+:global([dir="rtl"]) .floral {
+  transform: scaleX(-1);
+}
+
+.thanksInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.thanksEyebrow {
+  font-size: calc(var(--t) * 12);
+  letter-spacing: 0.3em;
+  margin-inline-start: 0.3em;
+  color: var(--brand-text-primary);
+}
+
+.thanksRule {
+  width: calc(var(--u) * 24);
+  margin-top: calc(var(--u) * 14);
+}
+
+.thanksTitle {
+  margin-top: calc(var(--u) * 12);
+  font-size: calc(var(--t) * 37);
+  line-height: 1;
+  color: var(--brand-text-primary);
+}
+
+.thanksBody {
+  margin-top: calc(var(--u) * 10);
+  font-family: var(--about-sans);
+  font-weight: 350;
+  font-size: calc(var(--t) * 14.6);
+  line-height: calc(var(--t) * 21);
+  color: #444d60;
+}
+
+.thanksBody span {
+  display: block;
+}
+
+:global([dir="rtl"]) .thanksBody {
+  line-height: 1.85;
+}
+
+.thanksButton {
+  margin-top: calc(var(--u) * 17);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 155);
+  min-height: calc(var(--u) * 39);
+  border-radius: calc(var(--u) * 4);
+  background: var(--brand-burgundy);
+  color: var(--brand-text-on-dark);
+  font-family: var(--about-sans);
+  font-weight: 600;
+  font-size: calc(var(--t) * 15);
+  transition: background-color var(--dur-base) var(--brand-ease-luxury);
+}
+
+.thanksButton:hover {
+  background: var(--brand-burgundy-light);
+}
+
+.thanksButton:focus-visible {
+  outline: 2px solid var(--brand-burgundy);
+  outline-offset: 3px;
+}
+
+.thanksScript {
+  position: absolute;
+  top: calc(var(--u) * 122);
+  inset-inline-start: calc(var(--u) * 818);
+  width: calc(var(--u) * 174);
+  height: auto;
+  pointer-events: none;
+}
+
+.thanksAccentText {
+  position: absolute;
+  top: calc(var(--u) * 140);
+  inset-inline-start: calc(var(--u) * 800);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 10);
+  font-size: calc(var(--t) * 22);
+  color: var(--brand-gold);
+  pointer-events: none;
+}
+
+.thanksAccentText::after {
+  content: "";
+  display: block;
+  width: calc(var(--u) * 110);
+  height: 1px;
+  background: var(--brand-gold);
+}
+
+/* ── TABLET (640–1023) ────────────────────────────────────────────────────
+   The reference geometry keeps scaling; only the places where the type
+   floor (--t) outgrows the scaled geometry are loosened. */
+@container (max-width: 1023.98px) {
+  .storyText {
+    padding-top: calc(var(--u) * 10);
+  }
+  .storyMedia {
+    align-self: start;
+  }
+  .storyTitle {
+    font-size: calc(var(--t) * 36);
+    line-height: 1.12;
+  }
+  .storyBody {
+    font-size: calc(var(--t) * 14);
+    line-height: 1.6;
+  }
+  .storyScript {
+    width: calc(var(--u) * 300);
+  }
+  .values {
+    height: auto;
+  }
+  .banner {
+    height: auto;
+    min-height: calc(var(--u) * 200);
+    padding-bottom: calc(var(--u) * 40);
+  }
+  .bannerQuote {
+    padding-inline-start: calc(var(--u) * 70);
+    width: calc(var(--u) * 560);
+  }
+  .bannerQuote blockquote {
+    font-size: calc(var(--t) * 32);
+    line-height: 1.3;
+  }
+}
+
+/* ── PHONE (< 640) ────────────────────────────────────────────────────────
+   One column, fixed readable sizes; the same imagery, rules and hierarchy. */
+@container (max-width: 639.98px) {
+  .frame {
+    width: 100%;
+  }
+
+  .hero {
+    height: 300px;
+  }
+  .heroInner {
+    height: 100%;
+    justify-content: center;
+    padding: 0 20px;
+  }
+  .heroEyebrow {
+    font-size: 11px;
+  }
+  .heroRule {
+    width: 72px;
+    margin-top: 14px;
+  }
+  .heroTitle {
+    margin-top: 22px;
+    font-size: 38px;
+  }
+  .heroTagline {
+    margin-top: 14px;
+    font-size: 18px;
+    line-height: 1.35;
+  }
+  .heroImage {
+    /* keep the ring in frame on a narrow crop */
+    object-position: 76% center;
+  }
+
+  .story {
+    grid-template-columns: 1fr;
+    row-gap: 36px;
+    padding: 24px 20px 48px;
+    min-height: 0;
+  }
+  .storyMedia {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 434 / 378;
+  }
+  .storyCaption {
+    left: 20px;
+    bottom: 18px;
+  }
+  .storyCaptionText {
+    font-size: 10px;
+    line-height: 15px;
+  }
+  .storyCaptionRule {
+    width: 54px;
+    height: 2px;
+    margin-top: 12px;
+  }
+  .storyText {
+    padding-top: 0;
+  }
+  .storyEyebrow {
+    font-size: 11px;
+  }
+  .storyRule {
+    width: 35px;
+    margin-top: 14px;
+  }
+  .storyTitle {
+    margin-top: 16px;
+    max-width: 330px;
+    font-size: 32px;
+    line-height: 1.15;
+  }
+  .storyBody {
+    margin-top: 16px;
+    max-width: none;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .storyScript {
+    margin-top: 18px;
+    margin-inline-start: -6px;
+    width: min(300px, 100%);
+  }
+  .storyAccentText {
+    margin-top: 20px;
+    font-size: 22px;
+  }
+
+  .values {
+    min-height: 0;
+    padding: 48px 20px 52px;
+  }
+  .valuesEyebrow {
+    font-size: 11px;
+  }
+  .valuesRule {
+    width: 72px;
+    margin-top: 14px;
+  }
+  .valuesTitle {
+    margin-top: 14px;
+    font-size: 33px;
+    line-height: 1.15;
+  }
+  .valuesGrid {
+    grid-template-columns: 1fr;
+    width: 100%;
+    row-gap: 0;
+    margin-top: 16px;
+    padding-inline-start: 0;
+  }
+  .valueItem {
+    padding-block: 28px;
+  }
+  .valueItem + .valueItem::before {
+    top: 0;
+    inset-inline-start: 50%;
+    width: 48px;
+    height: 1px;
+    transform: translateX(-50%);
+  }
+  .valueIcon {
+    height: 40px;
+  }
+  .valueIcon svg {
+    width: calc(1px * var(--icon-w));
+  }
+  .valueTitle {
+    margin-top: 16px;
+    font-size: 12px;
+  }
+  .valueRule {
+    width: 40px;
+    margin-top: 16px;
+  }
+  .valueBody {
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 260px !important;
+  }
+
+  .banner {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .bannerQuote {
+    width: 100%;
+    padding: 48px 20px 40px;
+    align-items: center;
+    text-align: center;
+  }
+  .bannerQuote blockquote {
+    white-space: normal;
+    font-size: 28px;
+    line-height: 1.3;
+  }
+  .bannerLine2 {
+    padding-inline-start: 0;
+  }
+  .bannerRule {
+    width: 43px;
+    margin-top: 22px;
+  }
+  .bannerMedia {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 496 / 199;
+  }
+  .bannerMedia::after {
+    background: linear-gradient(to bottom, var(--brand-burgundy) 0, transparent 18px);
+  }
+  :global([dir="rtl"]) .bannerMedia::after {
+    background: linear-gradient(to bottom, var(--brand-burgundy) 0, transparent 18px);
+  }
+
+  .thanks {
+    min-height: 0;
+    padding: 48px 20px 44px;
+  }
+  .floral {
+    width: 120px;
+    top: 0;
+    opacity: 0.5;
+  }
+  .thanksEyebrow {
+    font-size: 11px;
+  }
+  .thanksRule {
+    width: 24px;
+    margin-top: 14px;
+  }
+  .thanksTitle {
+    margin-top: 16px;
+    font-size: 30px;
+    line-height: 1.2;
+  }
+  .thanksBody {
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .thanksBody span {
+    display: inline;
+  }
+  .thanksButton {
+    margin-top: 24px;
+    width: 155px;
+    min-height: 44px;
+    border-radius: 4px;
+    font-size: 15px;
+  }
+  .thanksScript,
+  .thanksAccentText {
+    position: static;
+    margin-top: 28px;
+    margin-inline: auto;
+  }
+  .thanksScript {
+    display: block;
+    width: 150px;
+  }
+  .thanksAccentText {
+    font-size: 21px;
+    gap: 10px;
+  }
+  .thanksAccentText::after {
+    width: 100px;
+  }
+}

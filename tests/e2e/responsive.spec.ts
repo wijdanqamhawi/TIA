@@ -55,7 +55,7 @@ test.describe("responsive — storefront (LTR)", () => {
   test("Shop product grid renders 2 columns on mobile, more on tablet/desktop, and never overflows", async ({ page }) => {
     await page.setViewportSize(MOBILE);
     await page.goto("/en/shop");
-    await expect(page.getByRole("heading", { name: "Shop", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "All Accessories", level: 1 })).toBeVisible();
     const mobileColumns = await gridColumnCount(page, "[data-testid='product-grid']");
     expect(mobileColumns).toBe(2);
     expect(await hasNoHorizontalOverflow(page)).toBe(true);
