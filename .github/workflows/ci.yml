@@ -19,27 +19,29 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  FIREBASE_PROJECT_ID: demo-elora
-  GCLOUD_PROJECT: demo-elora
-  FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
-  FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-  FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
-  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true"
-  NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDEMO0000000000000000000000000
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-elora.firebaseapp.com
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-elora
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-elora.appspot.com
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
-  NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
-  NEXT_PUBLIC_APP_URL: http://localhost:3000
-  ADMIN_BOOTSTRAP_EMAIL: admin@elora.local
-  ADMIN_BOOTSTRAP_PASSWORD: DevAdminPass123CI
+# No workflow-level env: each job declares exactly the environment it needs.
+# Emulator variables (FIRESTORE_EMULATOR_HOST etc.) exist ONLY in the jobs
+# that start the Firebase Local Emulator Suite. The production build must
+# never see them — with them set, any build-time Firestore access tries to
+# reach an emulator that does not exist in that job (ECONNREFUSED :8080).
 
 jobs:
   static-checks:
     name: Typecheck, lint, build
     runs-on: ubuntu-latest
+    # Production-like build environment: public client config placeholders
+    # only, emulators OFF, no emulator hosts, no Admin credentials. Any
+    # build-time Firestore access therefore fails loudly instead of silently
+    # depending on a database.
+    env:
+      NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "false"
+      NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDEMO0000000000000000000000000
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-elora.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-elora
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-elora.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,11 +51,34 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx eslint src tests playwright.config.ts --max-warnings=0
+      - name: Guard — no emulator configuration in the production build
+        run: |
+          if env | grep -E '^(FIRESTORE|FIREBASE_AUTH|FIREBASE_STORAGE|FIREBASE_DATABASE)_EMULATOR_HOST=' ; then
+            echo "::error::Emulator variables must not be set for the production build."
+            exit 1
+          fi
       - run: npm run build
 
   unit-and-integration:
     name: Vitest (unit + Firebase Emulator integration)
     runs-on: ubuntu-latest
+    # Firebase Local Emulator Suite configuration (demo project only).
+    env:
+      FIREBASE_PROJECT_ID: demo-elora
+      GCLOUD_PROJECT: demo-elora
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+      FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
+      NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true"
+      NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDEMO0000000000000000000000000
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-elora.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-elora
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-elora.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      ADMIN_BOOTSTRAP_EMAIL: admin@elora.local
+      ADMIN_BOOTSTRAP_PASSWORD: DevAdminPass123CI
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -73,6 +98,23 @@ jobs:
   e2e:
     name: Playwright (mobile/tablet/desktop, EN/AR)
     runs-on: ubuntu-latest
+    # Firebase Local Emulator Suite configuration (demo project only).
+    env:
+      FIREBASE_PROJECT_ID: demo-elora
+      GCLOUD_PROJECT: demo-elora
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+      FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
+      NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true"
+      NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDEMO0000000000000000000000000
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-elora.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-elora
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-elora.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      ADMIN_BOOTSTRAP_EMAIL: admin@elora.local
+      ADMIN_BOOTSTRAP_PASSWORD: DevAdminPass123CI
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

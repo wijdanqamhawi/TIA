@@ -4,6 +4,12 @@ import { getBaseUrl } from "@/lib/config/site";
 import { getActiveCategories } from "@/lib/domain/catalog/category.service";
 import { getSitemapProducts } from "@/lib/domain/catalog/product.service";
 
+// Generated per request from the live catalog, never at build time: a
+// build must not depend on Firestore being reachable (CI builds have no
+// database at all), and a request-time sitemap is always current with the
+// catalog instead of frozen at the last deploy.
+export const dynamic = "force-dynamic";
+
 const STATIC_PATHS = [
   "",
   "/shop",
