@@ -12,7 +12,7 @@ export async function GET(): Promise<Response> {
 
   const rows = await getCustomerExportRows();
 
-  return createXlsxResponse("elora-customers.xlsx", (workbook) => {
+  return createXlsxResponse("tia-customers.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Customers");
     worksheet.columns = [
       { header: "UID", key: "uid", width: 24 },

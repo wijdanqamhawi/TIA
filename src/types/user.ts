@@ -1,6 +1,7 @@
 import type { Timestamp } from "firebase-admin/firestore";
+import type { UserRole } from "@/lib/auth/roles";
 
-export type UserRole = "CUSTOMER" | "ADMIN";
+export type { UserRole };
 
 export type UserAddress = {
   regionId: string;
@@ -23,6 +24,8 @@ export type User = {
   role: UserRole;
   profile: {
     address: UserAddress | null;
+    /** Optional, self-declared; ISO calendar date `YYYY-MM-DD`. */
+    dateOfBirth?: string | null;
   };
   createdAt: Timestamp;
   updatedAt: Timestamp;

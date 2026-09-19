@@ -1,3 +1,4 @@
+import { E2E_BASE_URL } from "./emulator-env";
 import { test, expect, type Page } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
 import { loginAsAdmin } from "./admin-helpers";
@@ -42,7 +43,7 @@ async function persistLocation(page: Page, slug: string) {
     locationId: doc.id,
   });
   await page.context().addCookies([
-    { name: LOCATION_COOKIE_NAME, value, url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000" },
+    { name: LOCATION_COOKIE_NAME, value, url: E2E_BASE_URL },
   ]);
 }
 

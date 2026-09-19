@@ -1,6 +1,7 @@
 import "server-only";
 import { getAdminAuth } from "./admin";
 import { SESSION_COOKIE_NAME } from "./session-cookie-name";
+import { toUserRole, type UserRole } from "@/lib/auth/roles";
 
 export { SESSION_COOKIE_NAME };
 
@@ -47,7 +48,7 @@ export async function revokeAllSessions(uid: string): Promise<void> {
 export type SessionClaims = {
   uid: string;
   email: string | null;
-  role: "CUSTOMER" | "ADMIN";
+  role: UserRole;
 };
 
 /**
@@ -60,7 +61,7 @@ export type SessionClaims = {
 export async function verifySessionCookie(sessionCookie: string): Promise<SessionClaims | null> {
   try {
     const decoded = await getAdminAuth().verifySessionCookie(sessionCookie, true);
-    const role = decoded.role === "ADMIN" ? "ADMIN" : "CUSTOMER";
+    const role = toUserRole(decoded.role);
     return { uid: decoded.uid, email: decoded.email ?? null, role };
   } catch {
     return null;

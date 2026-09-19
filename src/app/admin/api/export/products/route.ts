@@ -15,7 +15,7 @@ export async function GET(request: Request): Promise<Response> {
   const categoryId = searchParams.get("categoryId") ?? undefined;
   const rows = await getProductExportRows(categoryId);
 
-  return createXlsxResponse("elora-products.xlsx", (workbook) => {
+  return createXlsxResponse("tia-products.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Products");
     worksheet.columns = PRODUCT_EXPORT_COLUMNS;
     worksheet.addRows(rows);

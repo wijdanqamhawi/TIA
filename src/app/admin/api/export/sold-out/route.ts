@@ -13,7 +13,7 @@ export async function GET(): Promise<Response> {
 
   const rows = await getSoldOutExportRows();
 
-  return createXlsxResponse("elora-sold-out.xlsx", (workbook) => {
+  return createXlsxResponse("tia-sold-out.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Sold Out");
     worksheet.columns = PRODUCT_EXPORT_COLUMNS;
     worksheet.addRows(rows);

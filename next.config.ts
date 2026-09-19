@@ -23,6 +23,10 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  // The emulator-only E2E server (playwright.config.ts) builds into its own
+  // directory so it never shares `.next` with the developer's `next dev`.
+  // Unset everywhere else, so normal dev and production builds are unchanged.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // A stray lockfile in the user's home directory otherwise makes Next.js
   // infer the wrong workspace root.
   outputFileTracingRoot: path.join(__dirname),

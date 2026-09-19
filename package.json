@@ -15,6 +15,9 @@
     "test:e2e": "playwright test",
     "emulators": "firebase emulators:start",
     "create-admin": "node --require ./scripts/_shims/server-only-shim.cjs --import tsx scripts/create-admin.ts",
+    "grant-admin": "node --require ./scripts/_shims/server-only-shim.cjs --import tsx scripts/grant-admin.ts",
+    "revoke-admin": "node --require ./scripts/_shims/server-only-shim.cjs --import tsx scripts/revoke-admin.ts",
+    "list-admins": "node --require ./scripts/_shims/server-only-shim.cjs --import tsx scripts/list-admins.ts",
     "seed": "node --require ./scripts/_shims/server-only-shim.cjs --import tsx scripts/seed.ts"
   },
   "dependencies": {

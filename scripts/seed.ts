@@ -20,7 +20,6 @@ import {
 } from "../src/lib/firebase/firestore";
 import { deriveProductSlug } from "../src/lib/domain/catalog/product.service";
 import { buildSearchTerms } from "../src/lib/utils/searchTokens";
-import { getBaseUrl } from "../src/lib/config/site";
 import type { LocalizedString } from "../src/types/localizedString";
 import type { ProductOption } from "../src/types/product";
 import type { DeliveryRegionId } from "../src/types/deliveryRegion";
@@ -121,13 +120,17 @@ const PRODUCTS: SeedProduct[] = [
     price: 9800,
     stock: 0,
     isNewArrival: true,
-    // Still on the brand placeholder, exactly as the live document is, so a
-    // fresh seed writes the same fields the live store holds. The rings
-    // photograph shoppers actually see comes from the temporary demo layer
-    // (`demoImages.ts`), which picks it from the Firestore document id — so
-    // on a brand-new database, with a new id, the placeholder resolves to a
-    // different demo frame. Wire a real `pearl-turquoise-ring-set.jpg` here
-    // when the store's own photography exists, and that goes away.
+    // Pinned explicitly: on the brand placeholder, the demo layer picked
+    // this photo by hashing the Firestore document id, so a fresh database
+    // (new id) would have shown an unrelated frame. `product-02.jpg` is the
+    // pearl-and-turquoise ring set the product was renamed to match.
+    images: [
+      {
+        url: "/images/demo/product-02.jpg",
+        storagePath: "seed/products/pearl-tennis-bracelet.jpg",
+        alt: "Pearl & Turquoise Ring Set worn on the hand",
+      },
+    ],
   },
   {
     categoryId: "rings",
@@ -360,13 +363,11 @@ export async function seedShowcases(): Promise<void> {
       id: showcaseId,
       categoryId: category.id,
       desktopImage: {
-        // A fully-qualified URL — `productImageSchema`/the showcase image
-        // schema require a real URL (`z.string().url()`), so a bare
-        // relative path here would fail validation the moment an admin
-        // ever saves this form without first replacing this placeholder
-        // image (a real bug this seed data was silently triggering —
-        // T247/Phase 17).
-        url: `${getBaseUrl()}/brand/logo.svg`,
+        // Root-relative, which the showcase image schema accepts (it used to
+        // require an absolute URL, which forced this placeholder to embed
+        // the seeding machine's host — T247/Phase 17). Still recognised as
+        // the placeholder by `demoImages.ts`, so the storefront is unchanged.
+        url: "/brand/logo.svg",
         // A non-empty synthetic path — `productImageSchema`/the showcase
         // image schema require a non-empty `storagePath` (it's a real
         // Storage object reference in production), so an empty string
@@ -420,11 +421,10 @@ export async function seedProducts(): Promise<void> {
       images: (
         product.images ?? [
           {
-            // A fully-qualified URL — see `productImageSchema`: a bare
-            // relative path with no leading slash would fail validation the
-            // moment an admin saves this form without first replacing the
-            // placeholder image (T247/Phase 17).
-            url: `${getBaseUrl()}/brand/logo.svg`,
+            // Root-relative, which `productImageSchema` accepts, so no
+            // environment's host (e.g. localhost) is baked into stored data.
+            // Still recognised as the placeholder by `demoImages.ts`.
+            url: "/brand/logo.svg",
             // A non-empty synthetic path — see the matching note on
             // categoryShowcases' `desktopImage` above.
             storagePath: `seed/products/${slug}.svg`,

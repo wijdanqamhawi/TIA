@@ -338,8 +338,26 @@
       "locationRequired": "Select a delivery city or area.",
       "addressRequired": "Address is required.",
       "notesTooLong": "Notes must be 1000 characters or fewer.",
-      "generic": "Something went wrong. Please try again."
-    }
+      "generic": "Something went wrong. Please try again.",
+      "dobInvalid": "Enter a valid date of birth (DD/MM/YYYY)."
+    },
+    "subtitle": "Manage your information and preferences.",
+    "tabsLabel": "Account sections",
+    "profileTab": "My Profile",
+    "profileTabHint": "Personal information & address",
+    "ordersTabHint": "View your past orders",
+    "wishlistTabHint": "Saved items",
+    "profileCardTitle": "Profile Information",
+    "profileCardHint": "Keep your details up to date for a smoother shopping experience.",
+    "phonePlaceholder": "Enter your mobile number",
+    "signingOut": "Signing out…",
+    "emailAddressLabel": "Email Address",
+    "dobLabel": "Date of Birth",
+    "dobOptional": "(Optional)",
+    "dobPlaceholder": "DD/MM/YYYY",
+    "logout": "Logout",
+    "supportPrompt": "Need help?",
+    "supportLink": "Contact our support team"
   },
   "AccountOrders": {
     "title": "Order History",
@@ -425,5 +443,104 @@
     "productTitleTemplate": "{product} | TIA",
     "aboutDescription": "Learn about the TIA brand — timeless elegance, thoughtfully crafted.",
     "contactDescription": "Get in touch with TIA via Instagram or WhatsApp."
+  },
+  "AdminShell": {
+    "brand": "TIA",
+    "area": "Admin",
+    "menu": "Admin navigation",
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "categories": "Categories",
+      "showcases": "Showcases",
+      "orders": "Orders",
+      "customers": "Customers",
+      "locations": "Delivery Locations",
+      "exports": "Exports",
+      "team": "Team"
+    },
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "switchTo": "العربية",
+    "switchToLabel": "Switch the dashboard to Arabic"
+  },
+  "AdminTeam": {
+    "title": "Team",
+    "intro": "People who can sign in to this dashboard. Owners manage the team; admins manage the store.",
+    "readOnly": "You can view the team. Only an owner can add, change or remove admins.",
+    "empty": "No admins yet.",
+    "columns": {
+      "member": "Member",
+      "role": "Role",
+      "status": "Status",
+      "lastSignIn": "Last sign-in",
+      "actions": "Actions"
+    },
+    "roles": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "CUSTOMER": "Customer"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "verified": "Email verified",
+      "unverified": "Email not verified"
+    },
+    "never": "Never",
+    "you": "You",
+    "lastOwnerHint": "Last owner",
+    "add": {
+      "title": "Add an admin",
+      "help": "The person must first create an account on the store with their own email and password. You never see or set their password.",
+      "emailLabel": "Their account email",
+      "emailPlaceholder": "name@gmail.com",
+      "find": "Find account",
+      "finding": "Searching…",
+      "found": "Account found",
+      "alreadyStaff": "This account is already on the team as {role}.",
+      "disabled": "This account is disabled and can't be given admin access.",
+      "grant": "Make admin"
+    },
+    "actions": {
+      "promote": "Make owner",
+      "demote": "Make admin",
+      "remove": "Remove access"
+    },
+    "confirm": {
+      "cancel": "Cancel",
+      "working": "Saving…",
+      "grantTitle": "Give admin access?",
+      "grantBody": "{email} will be able to manage products, orders and customers. They'll need to sign in again.",
+      "grantConfirm": "Give admin access",
+      "promoteTitle": "Make this person an owner?",
+      "promoteBody": "{email} will be able to add, change and remove admins and owners — including you. They'll need to sign in again.",
+      "promoteConfirm": "Make owner",
+      "demoteTitle": "Change owner to admin?",
+      "demoteBody": "{email} keeps admin access but can no longer manage the team. They'll be signed out and must sign in again.",
+      "demoteConfirm": "Make admin",
+      "removeTitle": "Remove dashboard access?",
+      "removeBody": "{email} will lose all access to this dashboard immediately. Their store account stays as a normal customer account.",
+      "removeTypeLabel": "Type their email to confirm",
+      "removeConfirm": "Remove access"
+    },
+    "success": {
+      "GRANT": "{email} is now an admin.",
+      "PROMOTE": "{email} is now an owner.",
+      "DEMOTE": "{email} is now an admin.",
+      "REVOKE": "{email} no longer has dashboard access."
+    },
+    "errors": {
+      "FORBIDDEN": "Only an owner can manage the admin team.",
+      "SELF_CHANGE": "You can't change your own role. Ask another owner.",
+      "NO_CHANGE": "This account already has that role.",
+      "ACCOUNT_DISABLED": "This account is disabled.",
+      "LAST_OWNER": "This is the last owner. Make someone else an owner first.",
+      "NOT_FOUND": "No account exists with that email. Ask them to register on the store first.",
+      "BUSY": "Another team change is in progress. Try again in a moment.",
+      "CONFIRMATION_MISMATCH": "The email you typed doesn't match this account.",
+      "VALIDATION_ERROR": "Please enter a valid email address.",
+      "UNKNOWN": "Something went wrong. Please try again."
+    }
   }
 }

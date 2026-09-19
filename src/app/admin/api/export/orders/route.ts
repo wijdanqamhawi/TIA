@@ -36,7 +36,7 @@ export async function GET(request: Request): Promise<Response> {
     regionId: searchParams.get("regionId") ?? undefined,
   };
 
-  return createStreamingXlsxResponse("elora-orders.xlsx", async (workbook) => {
+  return createStreamingXlsxResponse("tia-orders.xlsx", async (workbook) => {
     const worksheet = workbook.addWorksheet("Orders");
     worksheet.columns = [
       { header: "Order Number", key: "orderNumber", width: 20 },

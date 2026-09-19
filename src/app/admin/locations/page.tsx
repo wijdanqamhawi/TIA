@@ -43,7 +43,7 @@ export default async function AdminLocationsPage() {
       <div>
         <h1 className="font-display text-2xl">Delivery Locations</h1>
         <p className="mt-1 text-sm text-text-primary/70">
-          ELORA delivers to exactly two regions — West Bank and Inside/1948 Areas. Relabel or
+          TIA delivers to exactly two regions — West Bank and Inside/1948 Areas. Relabel or
           reorder a region, and manage each region&apos;s cities/areas below.
         </p>
       </div>

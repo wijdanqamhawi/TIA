@@ -22,7 +22,7 @@ export async function GET(request: Request): Promise<Response> {
     to: parseDate(searchParams.get("to")),
   });
 
-  return createXlsxResponse("elora-best-sellers.xlsx", (workbook) => {
+  return createXlsxResponse("tia-best-sellers.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Best Sellers");
     worksheet.columns = [
       { header: "Product ID", key: "productId", width: 24 },

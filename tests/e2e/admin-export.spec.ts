@@ -71,7 +71,7 @@ test.describe("admin Excel export", () => {
       page.getByRole("button", { name: /Download/ }).click(),
     ]);
 
-    expect(download.suggestedFilename()).toBe("elora-best-sellers.xlsx");
+    expect(download.suggestedFilename()).toBe("tia-best-sellers.xlsx");
     const filePath = await download.path();
     const stats = await fs.stat(filePath!);
     expect(stats.size).toBeGreaterThan(0);

@@ -12,7 +12,7 @@ export async function GET(): Promise<Response> {
 
   const rows = await getDeliveryLocationExportRows();
 
-  return createXlsxResponse("elora-delivery-locations.xlsx", (workbook) => {
+  return createXlsxResponse("tia-delivery-locations.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Delivery Locations");
     worksheet.columns = [
       { header: "Region", key: "region", width: 20 },

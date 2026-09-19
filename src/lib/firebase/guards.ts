@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME, verifySessionCookie, type SessionClaims } from "./auth";
+import { isOwnerRole, isStaffRole } from "@/lib/auth/roles";
 
 export class UnauthenticatedError extends Error {
   constructor(message = "Authentication required.") {
@@ -43,10 +44,27 @@ export async function requireUser(): Promise<SessionClaims> {
  * unauthenticated caller and an authenticated non-admin caller — this is
  * the real enforcement point that a hidden nav link or client-side check
  * can never substitute for (Constitution Principle 6).
+ *
+ * OWNER passes too: an owner is an admin who can additionally manage the
+ * admin team, so every existing admin route stays open to them. No other
+ * role is added — a CUSTOMER (or any unknown claim) is still rejected.
  */
 export async function requireAdmin(): Promise<SessionClaims> {
   const claims = await requireUser();
-  if (claims.role !== "ADMIN") {
+  if (!isStaffRole(claims.role)) {
+    throw new ForbiddenError();
+  }
+  return claims;
+}
+
+/**
+ * The authoritative "is this caller an OWNER" check, required by every
+ * admin-team mutation (grant, promote, demote, remove). A regular ADMIN is
+ * rejected here even though `requireAdmin()` admits them.
+ */
+export async function requireOwner(): Promise<SessionClaims> {
+  const claims = await requireUser();
+  if (!isOwnerRole(claims.role)) {
     throw new ForbiddenError();
   }
   return claims;

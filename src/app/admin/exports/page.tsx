@@ -14,7 +14,7 @@ export default async function AdminExportsPage() {
         <h1 className="font-display text-2xl">Exports</h1>
         <p className="mt-1 text-sm text-text-primary/70">
           Download a real, up-to-the-moment `.xlsx` report generated directly from live store data.
-          There is no import path back into ELORA — editing a downloaded file has no effect on the
+          There is no import path back into TIA — editing a downloaded file has no effect on the
           store.
         </p>
       </div>

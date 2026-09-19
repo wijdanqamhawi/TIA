@@ -3,7 +3,17 @@ import { localizedStringSchema, optionalLocalizedStringSchema } from "./localize
 import { nonNegativeInt } from "./common";
 
 const showcaseImageSchema = z.object({
-  url: z.string().trim().url("Image url must be a valid URL."),
+  // Same rule as `productImageSchema`: an absolute URL (a Storage upload) or
+  // a root-relative local asset under `public/`, so a placeholder can be
+  // stored without baking any environment's host into the data.
+  url: z
+    .string()
+    .trim()
+    .min(1, "Image url is required.")
+    .refine(
+      (value) => /^https?:\/\//i.test(value) || value.startsWith("/"),
+      "Image url must be an absolute URL or a root-relative path.",
+    ),
   storagePath: z.string().trim().min(1, "Missing Firebase Storage path."),
 });
 export type ShowcaseImageInput = z.infer<typeof showcaseImageSchema>;

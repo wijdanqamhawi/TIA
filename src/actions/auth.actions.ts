@@ -20,8 +20,9 @@ import { mergeGuestCartIntoUserCart } from "@/lib/domain/cart/cart-merge.service
 import { parseWishlistIntent } from "@/lib/domain/wishlist/wishlist-intent";
 import { addItemToWishlist } from "@/lib/domain/wishlist/wishlist.service";
 import { getProductById, isSelectedOptionValid } from "@/lib/domain/catalog/product.service";
+import { toUserRole, type UserRole } from "@/lib/auth/roles";
 
-export type SessionResult = { uid: string; role: "CUSTOMER" | "ADMIN" };
+export type SessionResult = { uid: string; role: UserRole };
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -70,7 +71,7 @@ export async function createSessionAction(input: unknown): Promise<ActionResult<
   const userRef = usersCollection().doc(uid);
   const existing = await userRef.get();
 
-  let role: "CUSTOMER" | "ADMIN" = "CUSTOMER";
+  let role: UserRole = "CUSTOMER";
 
   if (!existing.exists) {
     await userRef.set({
@@ -86,7 +87,7 @@ export async function createSessionAction(input: unknown): Promise<ActionResult<
     });
   } else {
     const data = existing.data();
-    role = data?.role === "ADMIN" ? "ADMIN" : "CUSTOMER";
+    role = toUserRole(data?.role);
     // Keep the mirrored email in sync with the Firebase Auth account; it
     // is never independently editable (data-model.md).
     if (data?.email !== email) {

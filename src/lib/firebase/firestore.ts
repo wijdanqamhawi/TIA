@@ -11,6 +11,7 @@ import type { Wishlist, WishlistItem } from "@/types/wishlist";
 import type { DeliveryRegion } from "@/types/deliveryRegion";
 import type { DeliveryLocation } from "@/types/deliveryLocation";
 import type { Order, OrderItem } from "@/types/order";
+import { toUserRole } from "@/lib/auth/roles";
 
 /**
  * Builds a typed `FirestoreDataConverter<T>` from plain `toFirestore`/
@@ -64,7 +65,7 @@ export const usersConverter: FirestoreDataConverter<User> = createConverter<User
     name: data.name,
     email: data.email,
     phone: data.phone ?? null,
-    role: data.role === "ADMIN" ? "ADMIN" : "CUSTOMER",
+    role: toUserRole(data.role),
     profile: data.profile ?? { address: null },
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,

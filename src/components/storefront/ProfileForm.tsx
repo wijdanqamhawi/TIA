@@ -1,57 +1,56 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { CalendarDays, Mail, PhoneCall, User } from "lucide-react";
 import { FormError } from "@/components/ui/FormError";
-import { resolveLocalizedString } from "@/types/localizedString";
 import { updateProfileAction } from "@/actions/account.actions";
-import { getDeliveryLocationsForRegionAction, type DeliveryLocationOption } from "@/actions/checkout.actions";
-import type { CheckoutRegionOption } from "./CheckoutForm";
+import styles from "@/app/[locale]/(storefront)/account/account.module.css";
 
-const selectClassName =
-  "block w-full min-h-11 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary " +
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy " +
-  "disabled:cursor-not-allowed disabled:opacity-50";
+/** ISO `YYYY-MM-DD` → `DD/MM/YYYY` for display. */
+function isoToDisplay(iso: string | null): string {
+  const match = iso ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso) : null;
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
+}
 
-const textareaClassName =
-  "block w-full min-h-24 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary " +
-  "placeholder:text-text-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
-  "focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-50";
+/** `DD/MM/YYYY` → ISO `YYYY-MM-DD`; `null` when empty, `undefined` when malformed. */
+function displayToIso(display: string): string | null | undefined {
+  const value = display.trim();
+  if (!value) return null;
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : undefined;
+}
 
-export type ProfileFormAddress = {
-  regionId: string;
-  locationId: string;
-  addressLine: string;
-  notes: string | null;
-};
+/** Keeps digits only and inserts the slashes as the customer types. */
+function maskDate(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join("/");
+}
 
 /**
- * The account profile edit form (T135, spec User Story 2): name, phone,
- * and an optional saved delivery address — the same region/city dropdown
- * pattern as `CheckoutForm`, reusing `getDeliveryLocationsForRegionAction`
- * so there is exactly one region→city cascading implementation in the
- * codebase. `email` is displayed read-only (Firebase-Auth-owned, never
- * editable here).
+ * The account profile edit form (T135, spec User Story 2), laid out as the
+ * approved compact reference: Full Name + Email Address on the left, Mobile
+ * Phone Number + optional Date of Birth on the right, then Save Changes and
+ * the page-supplied Logout control.
+ *
+ * `email` is displayed read-only (Firebase-Auth-owned, never editable
+ * here). The saved delivery address is not edited on this page, so it is
+ * never sent — `updateProfileAction` leaves an omitted field untouched.
  */
 export function ProfileForm({
-  locale,
   email,
   initialName,
   initialPhone,
-  initialAddress,
-  regions,
-  initialLocations,
+  initialDateOfBirth,
+  actionsEnd,
 }: {
-  locale: string;
   email: string;
   initialName: string;
   initialPhone: string;
-  initialAddress: ProfileFormAddress | null;
-  regions: CheckoutRegionOption[];
-  initialLocations: DeliveryLocationOption[];
+  initialDateOfBirth: string | null;
+  /** Rendered at the end of the actions row (the Logout control). */
+  actionsEnd?: ReactNode;
 }) {
   const t = useTranslations("Account");
   const router = useRouter();
@@ -59,36 +58,18 @@ export function ProfileForm({
 
   const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
-  const [regionId, setRegionId] = useState(initialAddress?.regionId ?? "");
-  const [locationId, setLocationId] = useState(initialAddress?.locationId ?? "");
-  const [locations, setLocations] = useState<DeliveryLocationOption[]>(initialLocations);
-  const [locationsPending, startLocationsTransition] = useTransition();
-  const [addressLine, setAddressLine] = useState(initialAddress?.addressLine ?? "");
-  const [notes, setNotes] = useState(initialAddress?.notes ?? "");
+  const [dateOfBirth, setDateOfBirth] = useState(isoToDisplay(initialDateOfBirth));
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  function handleRegionChange(nextRegionId: string) {
-    setRegionId(nextRegionId);
-    setLocationId("");
-    setLocations([]);
-    if (!nextRegionId) return;
-    startLocationsTransition(async () => {
-      const result = await getDeliveryLocationsForRegionAction(nextRegionId);
-      setLocations(result);
-    });
-  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSuccess(false);
 
-    const hasAddressFields = regionId || locationId || addressLine;
-    if (hasAddressFields && (!regionId || !locationId || !addressLine.trim())) {
-      setError(
-        !regionId ? t("errors.regionRequired") : !locationId ? t("errors.locationRequired") : t("errors.addressRequired"),
-      );
+    const isoDateOfBirth = displayToIso(dateOfBirth);
+    if (isoDateOfBirth === undefined) {
+      setError(t("errors.dobInvalid"));
       return;
     }
 
@@ -96,10 +77,7 @@ export function ProfileForm({
       const result = await updateProfileAction({
         name,
         phone: phone || null,
-        address:
-          regionId && locationId && addressLine.trim()
-            ? { regionId, locationId, addressLine: addressLine.trim(), notes: notes || null }
-            : null,
+        dateOfBirth: isoDateOfBirth,
       });
 
       if (!result.ok) {
@@ -109,8 +87,8 @@ export function ProfileForm({
             ? "nameRequired"
             : field === "phone"
               ? "phoneInvalid"
-              : field === "address"
-                ? "addressRequired"
+              : field === "dateOfBirth"
+                ? "dobInvalid"
                 : "generic";
         setError(t(`errors.${key}` as "errors.generic"));
         return;
@@ -122,90 +100,87 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 font-display text-lg text-text-primary">{t("profileHeading")}</legend>
-
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("nameLabel")}
-          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} required />
+    <form onSubmit={handleSubmit} noValidate>
+      <div className={styles.fields}>
+        <label className={styles.field}>
+          <span className={styles.label}>{t("nameLabel")}</span>
+          <span className={styles.control}>
+            <User className={styles.controlIcon} aria-hidden="true" />
+            <input
+              className={styles.input}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isPending}
+              required
+              autoComplete="name"
+            />
+          </span>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("phoneLabel")}
-          <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isPending} />
+        <label className={styles.field}>
+          <span className={styles.label}>{t("phoneLabel")}</span>
+          <span className={styles.control}>
+            <PhoneCall className={styles.controlIcon} aria-hidden="true" />
+            <input
+              className={styles.input}
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={isPending}
+              placeholder={t("phonePlaceholder")}
+              autoComplete="tel"
+            />
+          </span>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("emailLabel")}
-          <Input type="email" value={email} disabled readOnly />
-        </label>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 font-display text-lg text-text-primary">{t("addressHeading")}</legend>
-
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("regionLabel")}
-          <select
-            className={selectClassName}
-            value={regionId}
-            onChange={(e) => handleRegionChange(e.target.value)}
-            disabled={isPending}
-          >
-            <option value="">{t("regionPlaceholder")}</option>
-            {regions.map((region) => (
-              <option key={region.id} value={region.id}>
-                {resolveLocalizedString(region.name, locale)}
-              </option>
-            ))}
-          </select>
+        <label className={styles.field}>
+          <span className={styles.label}>{t("emailAddressLabel")}</span>
+          <span className={styles.control}>
+            <Mail className={styles.controlIcon} aria-hidden="true" />
+            <input className={styles.input} type="email" value={email} disabled readOnly dir="ltr" />
+          </span>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("cityLabel")}
-          <select
-            className={selectClassName}
-            value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-            disabled={isPending || !regionId || locationsPending}
-          >
-            <option value="">{t("cityPlaceholder")}</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {resolveLocalizedString(location.name, locale)}
-              </option>
-            ))}
-          </select>
+        <label className={styles.field}>
+          <span className={styles.label}>
+            {t("dobLabel")} <span className={styles.labelOptional}>{t("dobOptional")}</span>
+          </span>
+          <span className={styles.control}>
+            <CalendarDays className={styles.controlIcon} aria-hidden="true" />
+            <input
+              className={styles.input}
+              inputMode="numeric"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(maskDate(e.target.value))}
+              disabled={isPending}
+              placeholder={t("dobPlaceholder")}
+              autoComplete="bday"
+              maxLength={10}
+              // Digits stay left-to-right once typed; while empty, the
+              // placeholder follows the page direction so it reads correctly.
+              dir={dateOfBirth ? "ltr" : undefined}
+            />
+          </span>
         </label>
+      </div>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("addressLabel")}
-          <textarea
-            className={textareaClassName}
-            value={addressLine}
-            onChange={(e) => setAddressLine(e.target.value)}
-            disabled={isPending}
-          />
-        </label>
+      {error || success ? (
+        <div className={styles.feedback}>
+          <FormError message={error} />
+          {success && !error ? (
+            <p role="status" className={styles.success}>
+              {t("saveSuccess")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("notesLabel")}
-          <textarea
-            className={textareaClassName}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={isPending}
-          />
-        </label>
-      </fieldset>
-
-      <FormError message={error} />
-      {success && !error ? <p className="text-sm text-green-700">{t("saveSuccess")}</p> : null}
-
-      <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-        {isPending ? t("saving") : t("saveButton")}
-      </Button>
+      <div className={styles.actions}>
+        <button type="submit" disabled={isPending} className={styles.save}>
+          {isPending ? t("saving") : t("saveButton")}
+        </button>
+        {actionsEnd}
+      </div>
     </form>
   );
 }

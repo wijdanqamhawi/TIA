@@ -29,11 +29,30 @@ export const profileAddressSchema = z.object({
 });
 
 /**
+ * Optional date of birth as an ISO calendar date (`YYYY-MM-DD`): must be a
+ * real date, not in the future, and not before 1900.
+ */
+export const dateOfBirthSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date of birth.")
+  .refine((value) => {
+    const [y, m, d] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const isRealDate = date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+    return isRealDate && y >= 1900 && date.getTime() <= Date.now();
+  }, "Enter a valid date of birth.");
+
+/**
  * `profileSchema` (T133): a registered customer's self-service profile —
- * name, optional phone, and an optional saved delivery address. Never
- * includes `email` (owned by Firebase Authentication, mirrored read-only
- * onto `users/{uid}.email` — data-model.md) or `role` (server-managed
- * only, Constitution Principle 6).
+ * name, optional phone, optional date of birth, and an optional saved
+ * delivery address. Never includes `email` (owned by Firebase
+ * Authentication, mirrored read-only onto `users/{uid}.email` —
+ * data-model.md) or `role` (server-managed only, Constitution Principle 6).
+ *
+ * `address` and `dateOfBirth` are three-state: omitted (`undefined`) keeps
+ * the stored value, `null` clears it, a value replaces it — so a form that
+ * does not edit a field can never wipe it.
  */
 export const profileSchema = z.object({
   name: nameSchema,
@@ -41,6 +60,7 @@ export const profileSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => (value ? value : null)),
+  dateOfBirth: dateOfBirthSchema.nullable().optional(),
   address: profileAddressSchema.nullable().optional(),
 });
 export type ProfileInput = z.infer<typeof profileSchema>;

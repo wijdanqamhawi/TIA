@@ -45,7 +45,7 @@ async function main() {
   const existing = await userRef.get();
 
   if (existing.exists) {
-    await userRef.set({ role: "ADMIN", updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    await userRef.update({ role: "ADMIN", updatedAt: FieldValue.serverTimestamp() });
   } else {
     await userRef.set({
       id: userRecord.uid,

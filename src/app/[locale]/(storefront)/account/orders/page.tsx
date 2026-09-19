@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getSessionClaims } from "@/lib/firebase/guards";
 import { getOrdersForCustomer, toOrderSummary } from "@/lib/domain/orders/order.service";
@@ -19,7 +20,10 @@ export default async function AccountOrdersPage({ params }: { params: Promise<{ 
   const t = await getTranslations({ locale, namespace: "AccountOrders" });
 
   const claims = await getSessionClaims();
-  const { orders, nextCursorId } = await getOrdersForCustomer(claims!.uid);
+  // Layout and page render in parallel (Next.js 15), so the page cannot
+  // rely on `AccountLayout`'s redirect having already run: guard here too.
+  if (!claims) redirect(`/${locale}/login?next=/${locale}/account`);
+  const { orders, nextCursorId } = await getOrdersForCustomer(claims.uid);
   const summaries = orders.map(toOrderSummary);
 
   return (

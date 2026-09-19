@@ -34,14 +34,20 @@ export async function updateProfileAction(input: unknown): Promise<ActionResult<
     return actionValidationError(parsed.error);
   }
 
-  const { name, phone, address } = parsed.data;
+  const { name, phone, address, dateOfBirth } = parsed.data;
 
-  await usersCollection().doc(claims.uid).update({
-    name,
-    phone,
-    profile: { address: address ?? null },
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  // Field-level writes: a profile field the caller did not send (e.g. the
+  // saved address, which the account page no longer edits) is left intact
+  // rather than being overwritten by a whole-`profile` replacement.
+  await usersCollection()
+    .doc(claims.uid)
+    .update({
+      name,
+      phone,
+      ...(address !== undefined ? { "profile.address": address } : {}),
+      ...(dateOfBirth !== undefined ? { "profile.dateOfBirth": dateOfBirth } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
   return actionOk(null);
 }

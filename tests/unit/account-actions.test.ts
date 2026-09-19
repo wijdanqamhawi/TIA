@@ -65,13 +65,38 @@ describe("updateProfileAction", () => {
     const address = { regionId: "west-bank", locationId: "west-bank-ramallah", addressLine: "123 Main St", notes: null };
     const result = await updateProfileAction({ name: "Jane Shopper", address });
     expect(result.ok).toBe(true);
-    const [, patch] = updateMock.mock.calls[0] as [string, { profile: { address: unknown } }];
-    expect(patch.profile.address).toEqual(address);
+    const [, patch] = updateMock.mock.calls[0] as [string, Record<string, unknown>];
+    expect(patch["profile.address"]).toEqual(address);
   });
 
-  it("clears the saved address when omitted", async () => {
+  it("keeps the saved address and date of birth when they are omitted", async () => {
     await updateProfileAction({ name: "Jane Shopper" });
-    const [, patch] = updateMock.mock.calls[0] as [string, { profile: { address: unknown } }];
-    expect(patch.profile.address).toBeNull();
+    const [, patch] = updateMock.mock.calls[0] as [string, Record<string, unknown>];
+    expect(patch).not.toHaveProperty("profile");
+    expect(patch).not.toHaveProperty("profile.address");
+    expect(patch).not.toHaveProperty("profile.dateOfBirth");
   });
+
+  it("clears the saved address only when explicitly null", async () => {
+    await updateProfileAction({ name: "Jane Shopper", address: null });
+    const [, patch] = updateMock.mock.calls[0] as [string, Record<string, unknown>];
+    expect(patch["profile.address"]).toBeNull();
+  });
+
+  it("saves, and clears, an optional date of birth", async () => {
+    await updateProfileAction({ name: "Jane Shopper", dateOfBirth: "1994-03-21" });
+    expect((updateMock.mock.calls[0] as [string, Record<string, unknown>])[1]["profile.dateOfBirth"]).toBe("1994-03-21");
+
+    await updateProfileAction({ name: "Jane Shopper", dateOfBirth: null });
+    expect((updateMock.mock.calls[1] as [string, Record<string, unknown>])[1]["profile.dateOfBirth"]).toBeNull();
+  });
+
+  it.each(["21/03/1994", "1994-02-30", "1899-12-31", "2999-01-01", "not-a-date"])(
+    "rejects an invalid date of birth (%s)",
+    async (dateOfBirth) => {
+      const result = await updateProfileAction({ name: "Jane Shopper", dateOfBirth });
+      expect(result.ok).toBe(false);
+      expect(updateMock).not.toHaveBeenCalled();
+    },
+  );
 });

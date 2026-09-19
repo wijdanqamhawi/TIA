@@ -16,7 +16,7 @@ export async function GET(request: Request): Promise<Response> {
   const lowStockThreshold = rawThreshold !== null && !Number.isNaN(Number(rawThreshold)) ? Number(rawThreshold) : undefined;
   const rows = await getInventoryExportRows(lowStockThreshold);
 
-  return createXlsxResponse("elora-inventory.xlsx", (workbook) => {
+  return createXlsxResponse("tia-inventory.xlsx", (workbook) => {
     const worksheet = workbook.addWorksheet("Inventory");
     worksheet.columns = PRODUCT_EXPORT_COLUMNS;
     worksheet.addRows(rows);

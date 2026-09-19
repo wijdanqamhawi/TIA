@@ -11,7 +11,7 @@ vi.mock("@/lib/firebase/auth", () => ({
   verifySessionCookie: verifySessionCookieMock,
 }));
 
-const { requireAdmin, requireUser, getSessionClaims, UnauthenticatedError, ForbiddenError } = await import(
+const { requireAdmin, requireOwner, requireUser, getSessionClaims, UnauthenticatedError, ForbiddenError } = await import(
   "@/lib/firebase/guards"
 );
 
@@ -44,6 +44,14 @@ describe("getSessionClaims / requireUser / requireAdmin", () => {
     await expect(requireUser()).resolves.toEqual({ uid: "u1", email: "a@b.com", role: "CUSTOMER" });
   });
 
+  // Staff roles are additive: ADMIN and OWNER keep full storefront access,
+  // so the storefront guard must accept them exactly like a CUSTOMER.
+  it.each(["ADMIN", "OWNER"])("requireUser (storefront) also resolves for an authenticated %s", async (role) => {
+    cookiesGetMock.mockReturnValue({ value: "cookie" });
+    verifySessionCookieMock.mockResolvedValue({ uid: "staff1", email: "staff@tia.com", role });
+    await expect(requireUser()).resolves.toMatchObject({ uid: "staff1", role });
+  });
+
   it("requireAdmin rejects an unauthenticated caller", async () => {
     cookiesGetMock.mockReturnValue(undefined);
     await expect(requireAdmin()).rejects.toBeInstanceOf(UnauthenticatedError);
@@ -63,5 +71,40 @@ describe("getSessionClaims / requireUser / requireAdmin", () => {
       email: "admin@elora.com",
       role: "ADMIN",
     });
+  });
+  it("requireAdmin also resolves for an authenticated OWNER caller", async () => {
+    cookiesGetMock.mockReturnValue({ value: "cookie" });
+    verifySessionCookieMock.mockResolvedValue({ uid: "owner1", email: "owner@tia.com", role: "OWNER" });
+    await expect(requireAdmin()).resolves.toMatchObject({ uid: "owner1", role: "OWNER" });
+  });
+
+  it("requireAdmin rejects an unrecognised role value", async () => {
+    cookiesGetMock.mockReturnValue({ value: "cookie" });
+    verifySessionCookieMock.mockResolvedValue({ uid: "u1", email: "a@b.com", role: "SUPERUSER" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(ForbiddenError);
+  });
+});
+
+describe("requireOwner", () => {
+  beforeEach(() => {
+    cookiesGetMock.mockReset();
+    verifySessionCookieMock.mockReset();
+  });
+
+  it("rejects an unauthenticated caller", async () => {
+    cookiesGetMock.mockReturnValue(undefined);
+    await expect(requireOwner()).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+
+  it.each(["CUSTOMER", "ADMIN"])("rejects an authenticated %s caller", async (role) => {
+    cookiesGetMock.mockReturnValue({ value: "cookie" });
+    verifySessionCookieMock.mockResolvedValue({ uid: "u1", email: "a@b.com", role });
+    await expect(requireOwner()).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("resolves for an authenticated OWNER caller", async () => {
+    cookiesGetMock.mockReturnValue({ value: "cookie" });
+    verifySessionCookieMock.mockResolvedValue({ uid: "owner1", email: "owner@tia.com", role: "OWNER" });
+    await expect(requireOwner()).resolves.toMatchObject({ uid: "owner1", role: "OWNER" });
   });
 });
