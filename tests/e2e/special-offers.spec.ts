@@ -155,14 +155,18 @@ test.describe("Special Offers end-to-end", () => {
       return scope.locator('[aria-hidden="true"]:visible', { hasText: amount }).first();
     }
 
-    // Home — Special Offers section shows the crossed-out regular price + sale price.
-    await expect(async () => {
-      await page.goto("/en");
-      const card = page.getByRole("main").locator("div").filter({ hasText: uniqueName }).first();
-      await expect(card).toBeVisible({ timeout: 2000 });
-      await expect(visiblePrice(card, "$99.99")).toBeVisible();
-      await expect(visiblePrice(card, "$150.00")).toBeVisible();
-    }).toPass({ timeout: 45000 });
+    // No homepage step. The approved homepage has no Special Offers section
+    // any more — `(storefront)/page.tsx` renders Hero, ServiceBenefits, New
+    // Arrivals, Featured Categories, LessOrdinary, EditorialPair, the
+    // Instagram row and the newsletter strip, and `getSpecialOffers` has no
+    // caller outside its own unit test. This step only ever passed because a
+    // just-created product also lands in New Arrivals, which shows the eight
+    // newest — so once a parallel run created a few more products it dropped
+    // out and the step failed (CI run 35529297026) or flaked (35519263633).
+    // Nothing about offer pricing is left unchecked: every surface that
+    // genuinely renders it is asserted below, and the page is
+    // `force-dynamic`, so there is no cache between an admin edit and the
+    // storefront.
 
     // Shop / category page shows the same pricing for the same product.
     await page.goto("/en/shop/category/bracelets");

@@ -85,6 +85,17 @@ export default defineConfig({
     // A production build is minutes of work before the server can listen;
     // `next dev` listens immediately.
     timeout: useProductionServer ? 900_000 : 180_000,
-    env: { ...e2eEnv, NEXT_DIST_DIR: E2E_DIST_DIR },
+    env: {
+      ...e2eEnv,
+      NEXT_DIST_DIR: E2E_DIST_DIR,
+      // `next start` means NODE_ENV=production, so every session and
+      // guest-cart cookie would be issued `Secure` — and this server is
+      // plain HTTP. Chromium accepts `Secure` cookies on localhost; WebKit
+      // refuses them, which cost 114 tests in run 35529297026. The flag is
+      // only honoured alongside independent proof of an emulator-only
+      // demo-project environment (see lib/config/cookies.ts), so it cannot
+      // weaken a real deployment.
+      E2E_INSECURE_COOKIES: "true",
+    },
   },
 });

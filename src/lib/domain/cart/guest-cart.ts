@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { logger } from "@/lib/utils/logger";
+import { cookieSecure } from "@/lib/config/cookies";
 
 export const GUEST_CART_COOKIE_NAME = "__guest_cart";
 const GUEST_CART_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // ~30 days, mirrors `guestCarts.expiresAt`
@@ -83,7 +84,7 @@ export async function getOrCreateGuestCartId(): Promise<string> {
   const cookieStore = await cookies();
   cookieStore.set(GUEST_CART_COOKIE_NAME, encode(guestCartId), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     sameSite: "lax",
     path: "/",
     maxAge: GUEST_CART_MAX_AGE_SECONDS,

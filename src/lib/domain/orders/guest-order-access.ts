@@ -2,6 +2,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { logger } from "@/lib/utils/logger";
+import { cookieSecure } from "@/lib/config/cookies";
 
 /**
  * Guest order-confirmation access control. Order numbers are sequential
@@ -65,7 +66,7 @@ export async function grantGuestOrderAccess(orderNumber: string): Promise<void> 
   const cookieStore = await cookies();
   cookieStore.set(GUEST_ORDER_ACCESS_COOKIE_NAME, encode(orderNumber), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
     sameSite: "lax",
     path: "/",
     maxAge: GUEST_ORDER_ACCESS_MAX_AGE_SECONDS,

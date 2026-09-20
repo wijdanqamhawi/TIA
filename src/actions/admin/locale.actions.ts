@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { ForbiddenError, requireAdmin, UnauthenticatedError } from "@/lib/firebase/guards";
 import { ADMIN_LOCALE_COOKIE, isAdminLocale } from "@/lib/i18n/admin";
 import { actionError, actionOk, type ActionResult } from "@/lib/validation/common";
+import { cookieSecure } from "@/lib/config/cookies";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
@@ -25,7 +26,7 @@ export async function setAdminLocaleAction(locale: unknown): Promise<ActionResul
     maxAge: ONE_YEAR_SECONDS,
     sameSite: "lax",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(),
   });
   return actionOk(null);
 }

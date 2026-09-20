@@ -55,8 +55,19 @@ function buildRevision(entries: (PrecacheEntry | string)[] | undefined): string 
 // replacing this token, and refuses to build if it appears more than once.
 const SW_MANIFEST: (PrecacheEntry | string)[] = self.__SW_MANIFEST ?? [];
 const BUILD_REVISION = buildRevision(SW_MANIFEST);
-/** Namespaces every cache this worker owns. `tia-`, never the old brand. */
+/**
+ * Namespaces the *runtime* caches this worker owns. `tia-`, never the old
+ * brand.
+ *
+ * Deliberately not treated as the prefix of every cache: Serwist resolves
+ * the precache's name (`serwist-precache-v2-<scope>`) in the first line of
+ * its constructor, before `cacheId` is applied, so the precache keeps the
+ * default prefix no matter what this says.
+ */
 const CACHE_ID = `tia-${BUILD_REVISION}`;
+
+/** The `cacheId` every pre-rebrand build shipped, whose caches are now dead. */
+const LEGACY_CACHE_PREFIX = "elora-";
 
 const PUBLIC_ASSET_PRECACHE_ENTRIES = [
   "/brand/logo.svg",
@@ -114,20 +125,27 @@ const serwist = new Serwist({
 });
 
 /**
- * Deletes every cache this build does not own, on activate.
+ * Deletes the caches left behind by pre-rebrand builds, on activate.
  *
- * Serwist's own cleanup only covers caches under the *current* `cacheId`,
- * so anything left by an earlier `cacheId` — every `elora-*` cache from
- * before the rebrand, and each superseded `tia-*` build — would otherwise
- * sit in the browser forever, still holding the old branded `/offline`
- * screen. Registered before `addEventListeners` so it runs alongside
- * Serwist's own activate handling.
+ * Only those. An earlier version of this handler deleted every cache whose
+ * name did not start with `CACHE_ID`, on the assumption that `cacheId`
+ * prefixes all of them — it does not, as noted above, so that handler
+ * deleted the precache itself on every activation. The result was an
+ * empty Cache Storage, a `/offline` fallback that could never be served,
+ * and `pwa.spec.ts`'s offline test failing on all five projects in CI run
+ * 35529297026.
+ *
+ * Serwist's `cleanupOutdatedCaches` already retires superseded precaches,
+ * and the only runtime caches this worker creates are `CACHE_ID`-prefixed,
+ * so the single thing left unmanaged is the old brand's namespace.
  */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
-      await Promise.all(names.filter((name) => !name.startsWith(CACHE_ID)).map((name) => caches.delete(name)));
+      await Promise.all(
+        names.filter((name) => name.startsWith(LEGACY_CACHE_PREFIX)).map((name) => caches.delete(name)),
+      );
     })(),
   );
 });

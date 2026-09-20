@@ -21,12 +21,15 @@ import { parseWishlistIntent } from "@/lib/domain/wishlist/wishlist-intent";
 import { addItemToWishlist } from "@/lib/domain/wishlist/wishlist.service";
 import { getProductById, isSelectedOptionValid } from "@/lib/domain/catalog/product.service";
 import { toUserRole, type UserRole } from "@/lib/auth/roles";
+import { cookieSecure } from "@/lib/config/cookies";
 
 export type SessionResult = { uid: string; role: UserRole };
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  // Evaluated at module load like the rest of these options; `cookieSecure`
+  // reads the environment itself (see lib/config/cookies.ts).
+  secure: cookieSecure(),
   sameSite: "lax" as const,
   path: "/",
   maxAge: Math.floor(SESSION_COOKIE_MAX_AGE_MS / 1000),
