@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/config/site";
 // Champagne group headings, as in the reference — small, uppercase, and
 // never carrying essential information on their own.
 const GROUP_LABEL =
-  "mb-2 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-brand-gold rtl:text-xs rtl:normal-case rtl:tracking-normal";
+  "mb-2 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-brand-gold-ink rtl:text-xs rtl:normal-case rtl:tracking-normal";
 
 // Tight desktop rhythm to match the reference's compact footer, while
 // keeping a full 44px touch target below `lg` where fingers are the input.
@@ -85,7 +85,7 @@ export async function Footer({ locale }: { locale: string }) {
           />
           <p className="max-w-[24ch] font-display text-[0.8125rem] leading-snug text-text-primary/80">
             {tHome("statementTitle")},
-            <span className="block italic text-brand-gold rtl:not-italic">{tHome("statementSubtitle")}</span>
+            <span className="block italic text-brand-gold-ink rtl:not-italic">{tHome("statementSubtitle")}</span>
           </p>
         </div>
 

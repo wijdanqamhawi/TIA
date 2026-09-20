@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { addCardToCart } from "./fixtures/add-to-cart";
 
 /**
  * T246 (Phase 17, quickstart Scenario 13 step 6): Arabic checkout — RTL
@@ -18,17 +19,16 @@ async function getTestFirestore() {
   return getFirestore(app);
 }
 
+/** The seeded Golden Bangle Bracelet, by the name each locale shows. */
+const BRACELET_NAME = { en: "Golden Bangle Bracelet", ar: "سوار ذهبي" } as const;
+
 async function addFirstBraceletToCart(page: Page, locale: "en" | "ar") {
   await page.goto(`/${locale}/shop/category/bracelets`);
-  const addButton = page.getByRole("main").getByRole("button", { name: /Add to Cart|أضف إلى السلة/ }).first();
-  // A single click, then wait out the Server Action's own pending state —
-  // not retry-wrapped around the click itself: under load, a too-short
-  // inner timeout here previously caused `.toPass()` to retry and
-  // double-click, silently adding quantity 2 instead of 1 and breaking
-  // this suite's authoritative-total assertion.
-  await expect(addButton).toBeEnabled({ timeout: 15000 });
-  await addButton.click();
-  await expect(addButton).toBeEnabled({ timeout: 15000 });
+  // By name, never `.first()`: the same grid lists the with-options Aurelia
+  // Signature Cuff, whose card opens Quick View instead of adding — which
+  // left this spec's cart empty and sent `/ar/checkout` straight back to
+  // the shop.
+  await addCardToCart(page, BRACELET_NAME[locale]);
 }
 
 test.describe("checkout — Arabic (RTL)", () => {
@@ -54,7 +54,7 @@ test.describe("checkout — Arabic (RTL)", () => {
     await expect(async () => {
       const options = await page.getByLabel("المدينة / الحي").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("المدينة / الحي").selectOption({ index: 1 });
     await page.getByLabel("العنوان الكامل").fill("شارع رئيسي ١٢٣");
 
@@ -83,7 +83,7 @@ test.describe("checkout — Arabic (RTL)", () => {
     await expect(async () => {
       const options = await page.getByLabel("المدينة / الحي").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("المدينة / الحي").selectOption({ index: 1 });
     await page.getByLabel("العنوان الكامل").fill("شارع رئيسي ١٢٣");
 

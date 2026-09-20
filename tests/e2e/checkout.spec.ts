@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { addCardToCart } from "./fixtures/add-to-cart";
 
 /**
  * Guest and registered checkout end-to-end coverage (T131, quickstart
@@ -12,13 +13,11 @@ import { resetSeededStock } from "./fixtures/catalog-reset";
  */
 
 async function addFirstProductToCart(page: Page) {
+  // The Golden Bangle Bracelet card specifically: a no-options product adds
+  // directly from its card, while the with-options Aurelia Signature Cuff in
+  // the same grid opens Quick View instead (see fixtures/product-card.ts).
   await page.goto("/en/shop/category/bracelets");
-  await expect(async () => {
-    await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
-    await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-      timeout: 1000,
-    });
-  }).toPass({ timeout: 15000 });
+  await addCardToCart(page, "Golden Bangle Bracelet");
 }
 
 async function fillCheckoutForm(page: Page, overrides: Partial<Record<string, string>> = {}) {
@@ -31,7 +30,7 @@ async function fillCheckoutForm(page: Page, overrides: Partial<Record<string, st
   await expect(async () => {
     const options = await page.getByLabel("City / Area").locator("option").count();
     expect(options).toBeGreaterThan(1);
-  }).toPass({ timeout: 10000 });
+  }).toPass({ timeout: 30000 });
   await page.getByLabel("City / Area").selectOption({ index: 1 });
 
   await page.getByLabel("Full Address").fill(overrides.fullAddress ?? "123 Main Street, Apartment 4");
@@ -87,7 +86,7 @@ test.describe("checkout — Cash on Delivery", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("123 Main Street");
 
@@ -132,7 +131,7 @@ test.describe("checkout — Cash on Delivery", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("456 Another Street");
 

@@ -37,10 +37,11 @@ test.describe("admin — product management", () => {
     await page.getByRole("combobox", { name: "Category", exact: true }).selectOption({ index: 1 });
     await page.getByRole("spinbutton", { name: "Stock", exact: true }).fill("5");
 
-    await expect(async () => {
-      await page.getByRole("button", { name: "Create Product" }).click();
-      await expect(page).toHaveURL(/\/admin\/products\/.+\/edit/, { timeout: 15000 });
-    }).toPass({ timeout: 30000 });
+    // A single click and a long wait, never a retry-wrapped click: this
+    // button creates a product, so a retry would both create a duplicate
+    // and abort the redirect already in flight.
+    await page.getByRole("button", { name: "Create Product" }).click();
+    await expect(page).toHaveURL(/\/admin\/products\/.+\/edit/, { timeout: 60000 });
     createdProductIds.push(page.url().match(/\/admin\/products\/([^/]+)\/edit/)![1]);
 
     // The edit page confirms the product now exists with the bilingual name.
@@ -97,7 +98,7 @@ test.describe("admin — product management", () => {
     expect(updated.data()?.stock).toBe(10);
   });
 
-  test("T236: Sold Out product → admin restock → purchasable again, including in its homepage Best Sellers strip", async ({
+  test("T236: Sold Out product → admin restock → purchasable again, including in its category listing", async ({
     page,
   }) => {
     const db = await getTestFirestore();
@@ -139,9 +140,12 @@ test.describe("admin — product management", () => {
     // the DOM regardless of viewport, so `.first()` is enough here.
     await expect(page.getByRole("main").getByRole("button", { name: "SOLD OUT" }).first()).toBeDisabled();
 
-    // Sold Out but still present in the homepage's Best Sellers strip.
+    // Sold Out but still present, browsable, in its category listing. (The
+    // approved homepage has no Best Sellers strip any more — see
+    // `(storefront)/page.tsx` — so the catalogue listing is where a
+    // merchandised product's card state is verified.)
     await expect(async () => {
-      await page.goto("/en");
+      await page.goto("/en/shop/category/bracelets");
       const card = page.locator(".group", { hasText: uniqueName }).first();
       await expect(card).toBeVisible({ timeout: 3000 });
       await expect(card.getByRole("button", { name: "SOLD OUT" })).toBeDisabled();
@@ -168,12 +172,12 @@ test.describe("admin — product management", () => {
     await expect(infoColumn.getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled();
     await expect(infoColumn.getByText("SOLD OUT")).toHaveCount(0);
 
-    // Purchasable again in the homepage Best Sellers strip too — scoped to
-    // this exact product's own card (the section also holds other, already
-    // in-stock best sellers, so a section-wide "Add to Cart" check alone
-    // wouldn't prove *this* card changed).
+    // Purchasable again in its category listing too — scoped to this exact
+    // product's own card (the listing also holds other, already in-stock
+    // products, so a listing-wide "Add to Cart" check alone wouldn't prove
+    // *this* card changed).
     await expect(async () => {
-      await page.goto("/en");
+      await page.goto("/en/shop/category/bracelets");
       const card = page.locator(".group", { hasText: uniqueName }).first();
       await expect(card).toBeVisible({ timeout: 3000 });
       await expect(card.getByRole("button", { name: "Add to Cart" })).toBeVisible({ timeout: 3000 });

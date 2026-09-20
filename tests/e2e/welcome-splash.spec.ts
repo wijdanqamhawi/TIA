@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./admin-helpers";
 
 /**
  * Verifies TIA's first-entry screen: part of the very first paint, shown
@@ -148,10 +149,26 @@ test.describe("welcome splash", () => {
   });
 
   test("never appears on an admin route", async ({ page }) => {
+    test.setTimeout(90_000);
+    const dialog = page.getByRole("dialog", { name: "Welcome to TIA" });
+
+    // An unauthenticated visit to `/admin` is redirected to the *storefront*
+    // sign-in page — the session's first storefront page, where the welcome
+    // screen correctly shows (it is part of that page's first paint).
     await page.goto("/admin");
-    // `/admin` redirects an unauthenticated visitor to /login — either way,
-    // `/admin/*` uses its own separate root layout that never mounts
-    // WelcomeSplash at all.
-    await expect(page.getByRole("dialog", { name: "Welcome to TIA" })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/en\/login\?next=(\/|%2F)admin/);
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Enter the Collection" }).click();
+    await expect(dialog).toHaveCount(0);
+
+    // Signed in, `/admin/*` renders under its own root layout, which never
+    // mounts WelcomeSplash: with this tab's "already entered" flag cleared,
+    // any layout that did mount it would show it again on the next load.
+    await loginAsAdmin(page);
+    await page.evaluate(() => window.sessionStorage.clear());
+    await page.goto("/admin");
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator("[data-welcome-splash]")).toHaveCount(0);
+    await expect(dialog).toHaveCount(0);
   });
 });

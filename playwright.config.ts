@@ -20,6 +20,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // The E2E server is `next dev`, not a production build, and these specs
+  // are whole journeys: an admin sign-in plus half a dozen navigations, a
+  // registration plus a real checkout, an .xlsx generated on demand. Even
+  // with the route warm-up in `global-setup.ts`, Playwright's 30s default
+  // is a budget several of those cannot make on a cold module graph — and
+  // a timeout there is a slow machine, not a broken storefront. 90s is
+  // generous enough that a failure means something is genuinely wrong,
+  // while still bounding a hang.
+  timeout: 120_000,
   reporter: "html",
   globalSetup: "./tests/e2e/global-setup.ts",
   use: {

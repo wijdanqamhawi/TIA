@@ -25,13 +25,23 @@ async function socialIsConfigured(page: Page): Promise<{ instagram: boolean; wha
 test.describe("content pages — About", () => {
   test("renders the brand-identity content in English and Arabic", async ({ page }) => {
     await page.goto("/en/about");
+    // The approved About composition: "Our Story" is the story section's
+    // eyebrow label above its own `h2`, followed by the values and closing
+    // sections.
+    const main = page.getByRole("main");
     await expect(page.getByRole("heading", { name: "About TIA", level: 1 })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Our Story" })).toBeVisible();
-    await expect(page.getByRole("main").getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/en/contact");
+    await expect(main.getByText("Our Story", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Jewellery Made to Become Part of You", level: 2 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What We Stand For", level: 2 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Thank You for Being Here", level: 2 })).toBeVisible();
+    await expect(main.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/en/contact");
 
     await page.goto("/ar/about");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    await expect(page.getByRole("heading", { name: "من نحن - تيا", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "من نحن", exact: true, level: 1 })).toBeVisible();
+    await expect(main.getByText("قصتنا", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "مجوهرات تُصنع لتكون جزءًا منكِ", level: 2 })).toBeVisible();
+    await expect(main.getByRole("link", { name: "تواصل معنا" })).toHaveAttribute("href", "/ar/contact");
   });
 });
 

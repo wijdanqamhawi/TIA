@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 
 /**
  * T238 (quickstart Scenario 1 step 8, spec Edge Cases): two concurrent
@@ -68,7 +69,7 @@ test.describe("concurrent checkout for the last unit", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("1 Concurrent Street");
   }
@@ -76,12 +77,6 @@ test.describe("concurrent checkout for the last unit", () => {
   test("exactly one of two simultaneous checkouts for the last unit succeeds; stock never goes negative", async ({
     browser,
   }) => {
-    // Two full guest checkout setups (browse -> add to cart -> fill
-    // checkout form) plus the concurrent submission itself and follow-up
-    // Firestore reads is a heavier flow than this suite's usual 30s
-    // default budget.
-    test.setTimeout(60000);
-
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -97,10 +92,7 @@ test.describe("concurrent checkout for the last unit", () => {
       // detail page (the desktop purchase panel and the mobile sticky
       // bar), both present in the DOM regardless of viewport — `.first()`
       // resolves the strict-mode ambiguity.
-      const addButton = page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first();
-      await expect(addButton).toBeEnabled({ timeout: 15000 });
-      await addButton.click();
-      await expect(addButton).toBeEnabled({ timeout: 15000 });
+      await addDetailToCart(page);
       await page.goto("/en/checkout");
       await expect(page).toHaveURL(/\/checkout/);
     }

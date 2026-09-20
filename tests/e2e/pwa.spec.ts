@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 
 /**
  * T200 (quickstart Scenario 10, research.md §27): manifest validity,
@@ -21,7 +22,7 @@ async function hasNoHorizontalOverflow(page: Page): Promise<boolean> {
 }
 
 test.describe("PWA — manifest", () => {
-  test("the manifest is valid and matches the approved Burgundy + Cream identity", async ({ page, request }) => {
+  test("the manifest is valid and matches the approved TIA navy + ivory identity", async ({ page, request }) => {
     await page.goto("/en");
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
     expect(manifestHref).toBeTruthy();
@@ -33,8 +34,10 @@ test.describe("PWA — manifest", () => {
     expect(manifest.name).toBe("TIA — Accessories & More");
     expect(manifest.short_name).toBeTruthy();
     expect(manifest.display).toBe("standalone");
-    expect(manifest.theme_color).toBe("#6d1b34");
-    expect(manifest.background_color).toBe("#fdf6ec");
+    // TIA deep navy / warm ivory (`--brand-burgundy` / `--brand-ivory` in
+    // globals.css, mirrored by `lib/config/brandColors.ts`).
+    expect(manifest.theme_color).toBe("#101c36");
+    expect(manifest.background_color).toBe("#fcfbf8");
     expect(manifest.icons?.length).toBeGreaterThanOrEqual(3);
     expect(manifest.icons.some((icon: { purpose?: string }) => icon.purpose === "maskable")).toBe(true);
     expect(manifest.icons.some((icon: { sizes?: string }) => icon.sizes === "192x192")).toBe(true);
@@ -47,7 +50,7 @@ test.describe("PWA — manifest", () => {
       1,
     );
     const themeColor = await page.locator('meta[name="theme-color"]').getAttribute("content");
-    expect(themeColor).toBe("#6d1b34");
+    expect(themeColor).toBe("#101c36");
   });
 });
 
@@ -76,7 +79,6 @@ test.describe("PWA — service worker (requires a production build: next build &
   });
 
   test("offline shows the branded /offline fallback in English and Arabic", async ({ page, context }) => {
-    test.setTimeout(45000);
     await page.goto("/en");
     const supported = await page.evaluate(() => "serviceWorker" in navigator);
     test.skip(!supported, "serviceWorker unsupported in this browser context");
@@ -109,8 +111,6 @@ test.describe("PWA — service worker (requires a production build: next build &
     page,
     context,
   }) => {
-    test.setTimeout(45000);
-
     async function attemptOfflineCheckout(locale: "en" | "ar") {
       await page.goto(`/${locale}/shop/golden-bangle-bracelet`);
 
@@ -129,12 +129,7 @@ test.describe("PWA — service worker (requires a production build: next build &
       // Populate the cart and reach checkout while still online — mirrors
       // quickstart Scenario 10 step 8's "cart already populated from an
       // earlier online session" precondition.
-      await expect(async () => {
-        await page.getByRole("main").getByRole("button", { name: locale === "en" ? "Add to Cart" : "أضف إلى السلة" }).first().click();
-        await expect(
-          page.getByRole("main").getByRole("button", { name: locale === "en" ? "Add to Cart" : "أضف إلى السلة" }).first(),
-        ).toBeEnabled({ timeout: 2000 });
-      }).toPass({ timeout: 15000 });
+      await addDetailToCart(page);
 
       await page.goto(`/${locale}/checkout`);
       await expect(page).toHaveURL(new RegExp(`/${locale}/checkout`));
@@ -154,7 +149,7 @@ test.describe("PWA — service worker (requires a production build: next build &
       await expect(async () => {
         const options = await page.getByLabel(cityLabel).locator("option").count();
         expect(options).toBeGreaterThan(1);
-      }).toPass({ timeout: 10000 });
+      }).toPass({ timeout: 30000 });
       await page.getByLabel(cityLabel).selectOption({ index: 1 });
       await page.getByLabel(addressLabel).fill("123 Main Street");
 

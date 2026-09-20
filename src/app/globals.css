@@ -34,6 +34,13 @@
      it is decorative by definition and must never carry essential text. */
   --brand-gold: #c4a46b;
   --brand-gold-muted: #e0cfa9;
+  /* The same champagne note, darkened to the point where it *can* carry
+     text: 5.4:1 on warm white and 5.0:1 on the cool pearl band, so small
+     uppercase eyebrows, footer headings and the brand tagline keep the
+     metallic accent and still clear WCAG AA (the axe scan in
+     `tests/e2e/accessibility.spec.ts` enforces this). Decorative gold —
+     icons, rules, borders, fills — stays `--brand-gold`. */
+  --brand-gold-ink: #7f642c;
 
   /* Grounds — warm white, cool pearl, and a slightly deeper cool surface
      for image placeholders and hover fills. */
@@ -98,6 +105,7 @@
   --color-brand-burgundy-light: var(--brand-burgundy-light);
   --color-brand-gold: var(--brand-gold);
   --color-brand-gold-muted: var(--brand-gold-muted);
+  --color-brand-gold-ink: var(--brand-gold-ink);
   --color-brand-cream: var(--brand-cream);
   --color-brand-ivory: var(--brand-ivory);
   --color-brand-beige: var(--brand-beige);

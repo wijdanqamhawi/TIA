@@ -24,7 +24,7 @@ async function registerNewCustomer(page: Page, name: string, emailPrefix: string
     await page.getByLabel("Password").fill(PASSWORD);
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
-  }).toPass({ timeout: 30000 });
+  }).toPass({ timeout: 75000 });
   return email;
 }
 
@@ -39,7 +39,7 @@ test.describe("account profile", () => {
   // Each test registers a fresh account and then makes several page visits;
   // against `next dev` (routes compile on first request) that legitimately
   // exceeds the default 30s per-test budget.
-  test.describe.configure({ timeout: 90_000 });
+  test.describe.configure({ timeout: 120_000 });
 
   test("registered customer can view and update her profile, including an optional date of birth", async ({
     page,
@@ -61,9 +61,15 @@ test.describe("account profile", () => {
 
     await saveAndExpectSuccess(page);
 
-    // Persists across a reload.
-    await page.reload();
-    await expect(page.getByLabel("Full Name")).toHaveValue("Updated Name");
+    // Persists across a reload. Re-loaded inside the retry: the success
+    // message is rendered as soon as the Server Action returns, but a
+    // reload issued in that same instant can still be served the
+    // already-in-flight previous render (observed on WebKit) — so this
+    // reloads again rather than reading one stale paint as a lost save.
+    await expect(async () => {
+      await page.reload();
+      await expect(page.getByLabel("Full Name")).toHaveValue("Updated Name", { timeout: 10000 });
+    }).toPass({ timeout: 45000 });
     await expect(page.getByLabel("Mobile Phone Number")).toHaveValue("+970599123456");
     await expect(page.getByLabel("Date of Birth")).toHaveValue("21/03/1994");
     await expect(page.getByLabel("Email Address")).toHaveValue(email);

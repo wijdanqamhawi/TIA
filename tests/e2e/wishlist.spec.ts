@@ -43,7 +43,7 @@ async function registerNewCustomer(page: Page, name: string, emailPrefix: string
     // router.push/refresh can comfortably exceed a couple of seconds
     // under dev-mode/cold-compile load.
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
-  }).toPass({ timeout: 30000 });
+  }).toPass({ timeout: 75000 });
   return email;
 }
 
@@ -136,16 +136,18 @@ test.describe("wishlist — registered customer", () => {
   }) => {
     await registerNewCustomer(page, "Sold Out Wishlist Tester", `sold-out-wishlist-${Date.now()}`);
 
+    // Seeded permanently sold out, on its original slug after being renamed
+    // in place (scripts/seed.ts).
     await addProductToWishlist(page, "pearl-tennis-bracelet");
 
     await page.goto("/en/wishlist");
-    await expect(page.getByText("Pearl Tennis Bracelet")).toBeVisible();
+    await expect(page.getByText("Pearl & Turquoise Ring Set")).toBeVisible();
     const moveButton = page.getByRole("button", { name: "SOLD OUT" });
     await expect(moveButton).toBeDisabled();
 
     // Reload to confirm it is still there (never silently removed).
     await page.reload();
-    await expect(page.getByText("Pearl Tennis Bracelet")).toBeVisible();
+    await expect(page.getByText("Pearl & Turquoise Ring Set")).toBeVisible();
   });
 
   test("removing a wishlist item works regardless of its current validity", async ({ page }) => {

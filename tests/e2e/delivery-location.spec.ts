@@ -1,15 +1,16 @@
 import { E2E_BASE_URL } from "./emulator-env";
 import { test, expect, type Page } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { addCardToCart } from "./fixtures/add-to-cart";
 import { loginAsAdmin } from "./admin-helpers";
 import { LOCATION_COOKIE_NAME, encodeLocationSelection } from "../../src/lib/domain/delivery/location-selection";
 
 /**
  * Delivery Location end-to-end coverage (T290, quickstart Scenario 14),
- * against the current UI: the storefront has no delivery-location
- * shortcut anywhere (header or phone/tablet menu) — the location is chosen
- * at checkout, through its Region / City fields and its "Change" dialog
- * with bilingual search. A persisted selection (the location cookie,
+ * against the current UI: the only delivery-location shortcut is the
+ * header's announcement bar, from `lg` up (none in the phone/tablet menu);
+ * the location is otherwise chosen at checkout, through its Region / City
+ * fields and its "Change" dialog with bilingual search. A persisted selection (the location cookie,
  * T271) still prefills checkout; admin-managed list changes are reflected
  * immediately with no code change.
  *
@@ -59,16 +60,7 @@ async function addFirstProductToCart(page: Page) {
   // `pearl-tennis-bracelet` (0 stock, per `resetSeededStock`'s baseline)
   // can render before it and would otherwise be picked instead.
   await page.goto("/en/shop/category/bracelets");
-  const card = page
-    .locator("div")
-    .filter({ has: page.getByRole("link", { name: "Golden Bangle Bracelet" }) })
-    .filter({ has: page.getByRole("button", { name: "Add to Cart" }) })
-    .last();
-  // A single click, then wait for the server action to resolve — not a
-  // retry-wrapped click, which can silently double-click and corrupt the
-  // assumed quantity=1 if the first click's re-enable check is still slow.
-  await card.getByRole("button", { name: "Add to Cart" }).click();
-  await expect(card.getByRole("button", { name: "Add to Cart" })).toBeEnabled({ timeout: 15000 });
+  await addCardToCart(page, "Golden Bangle Bracelet");
 }
 
 /** Adds a product (checkout needs a non-empty cart) and opens checkout in `locale`. */
@@ -87,7 +79,7 @@ async function chooseCheckoutLocation(
   await expect(async () => {
     const options = await page.getByLabel(cityLabel).locator("option").count();
     expect(options).toBeGreaterThan(1);
-  }).toPass({ timeout: 10000 });
+  }).toPass({ timeout: 30000 });
   await page.getByLabel(cityLabel).selectOption(typeof city === "number" ? { index: city } : { label: city });
 }
 
@@ -96,9 +88,20 @@ test.describe("delivery location — checkout", () => {
     await resetSeededStock(["golden-bangle-bracelet"]);
   });
 
-  test("the storefront has no delivery-location shortcut — not in the header, the menu or anywhere else", async ({ page }) => {
+  test("the only delivery-location shortcut is the announcement bar's, from lg up — never in the phone/tablet menu", async ({
+    page,
+  }) => {
     await page.goto("/en");
-    await expect(page.getByRole("button", { name: LOCATION_TRIGGER })).toHaveCount(0);
+    const trigger = page.getByRole("button", { name: LOCATION_TRIGGER });
+    // The approved reference's announcement bar (`AnnouncementBar.tsx`)
+    // carries the trigger from `lg` (1024px) up; below that the bar keeps
+    // only its centre statement.
+    if ((page.viewportSize()?.width ?? 0) >= 1024) {
+      await expect(trigger).toHaveCount(1);
+      await expect(page.getByRole("banner").getByRole("button", { name: LOCATION_TRIGGER })).toBeVisible();
+    } else {
+      await expect(trigger).toBeHidden();
+    }
 
     const openMenu = page.getByRole("button", { name: "Open menu" });
     if (await openMenu.isVisible()) {
@@ -127,7 +130,7 @@ test.describe("delivery location — checkout", () => {
     await expect(page.getByLabel("Region")).toHaveValue(/.+/);
     await expect(async () => {
       expect(await page.getByLabel("City / Area").inputValue()).not.toBe("");
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
 
     await page.goto("/en/shop");
     await page.goto("/en/checkout");
@@ -166,7 +169,7 @@ test.describe("delivery location — checkout", () => {
     await expect(async () => {
       const cityValue = await page.getByLabel("City / Area").inputValue();
       expect(cityValue).not.toBe("");
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
 
     // Change the location before submitting — a fresh dialog reopen, not
     // the plain region/city dropdowns, per T279.

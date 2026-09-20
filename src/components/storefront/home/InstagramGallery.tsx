@@ -60,9 +60,22 @@ export async function InstagramGallery({ locale }: { locale: string }) {
           <p className="text-xs text-text-secondary">{tHome("galleryCaption")}</p>
         </div>
 
-        <ul className="scrollbar-none -mx-5 flex max-w-[calc(100%+2.5rem)] snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-1 sm:mx-0 sm:grid sm:max-w-full sm:grid-cols-4 sm:gap-2.5 sm:overflow-visible sm:px-0 lg:grid-cols-7">
+        {/* `tabIndex`: below `sm` this row scrolls horizontally, and its
+            tiles are decorative images with nothing focusable inside, so
+            without a tab stop the row's off-screen content is unreachable
+            by keyboard (axe `scrollable-region-focusable`). The label names
+            what the tab stop is. */}
+        <ul
+          tabIndex={0}
+          aria-label={tHome("galleryCaption")}
+          className="scrollbar-none -mx-5 flex max-w-[calc(100%+2.5rem)] snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy sm:mx-0 sm:grid sm:max-w-full sm:grid-cols-4 sm:gap-2.5 sm:overflow-visible sm:px-0 lg:grid-cols-7"
+        >
           {frames.map((src, index) => (
-            <li key={src} className="w-[38%] shrink-0 snap-start sm:w-auto">
+            // `relative`: the tile's `sr-only` label is absolutely positioned,
+            // and without a positioned tile its containing block sat outside
+            // the phone scroll row, so off-screen labels escaped the row's
+            // clipping and widened the whole page (horizontal scroll).
+            <li key={src} className="relative w-[38%] shrink-0 snap-start sm:w-auto">
               <div className="relative aspect-square w-full overflow-hidden bg-brand-cream">
                 <Image
                   src={src}
@@ -83,7 +96,7 @@ export async function InstagramGallery({ locale }: { locale: string }) {
               <p className="font-display text-[0.8125rem] leading-snug text-text-primary lg:text-sm">
                 {tHome("statementTitle")}
               </p>
-              <p className="font-display text-[0.8125rem] italic leading-snug text-brand-gold lg:text-sm rtl:not-italic">
+              <p className="font-display text-[0.8125rem] italic leading-snug text-brand-gold-ink lg:text-sm rtl:not-italic">
                 {tHome("statementSubtitle")}
               </p>
             </div>

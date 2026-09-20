@@ -53,8 +53,11 @@ export function ColorSwatches({
     <div className={cn("flex flex-col items-start gap-1", className)}>
       <span
         className={cn(
-          "text-[0.625rem] uppercase tracking-[0.16em] text-text-secondary rtl:text-[0.6875rem] rtl:normal-case rtl:tracking-normal",
-          labelClassName,
+          "text-[0.625rem] uppercase tracking-[0.16em] rtl:text-[0.6875rem] rtl:normal-case rtl:tracking-normal",
+          // A caller's colour *replaces* the default rather than joining it:
+          // `cn` is a plain join, so two competing `color` utilities would be
+          // resolved by stylesheet order instead of by the caller's intent.
+          labelClassName ?? "text-text-secondary",
         )}
       >
         {t("colorCount", { count: variants.length })}

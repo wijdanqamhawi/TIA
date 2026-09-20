@@ -236,7 +236,7 @@ export default async function ProductDetailPage({
           <section className="mt-12">
             <div className="flex flex-col items-center gap-2 text-center">
               <span aria-hidden="true" className="block h-px w-9 bg-brand-gold/60" />
-              <h2 className="font-body text-[0.8125rem] font-medium uppercase tracking-[0.22em] text-brand-gold rtl:text-sm rtl:normal-case rtl:tracking-normal">
+              <h2 className="font-body text-[0.8125rem] font-medium uppercase tracking-[0.22em] text-brand-gold-ink rtl:text-sm rtl:normal-case rtl:tracking-normal">
                 {t("relatedProducts")}
               </h2>
             </div>

@@ -109,6 +109,35 @@ async function dismissWelcomeSplashIfPresent(page: Page): Promise<void> {
   await dialog.waitFor({ state: "hidden", timeout: SPLASH_DISMISS_TIMEOUT_MS }).catch(() => {});
 }
 
+/**
+ * A `goto` whose load was superseded is not a broken page: the storefront's
+ * own client-side navigation (a locale or delivery-location redirect, a
+ * `router.refresh()` from a Server Action that is still settling) can start
+ * while the requested navigation is in flight, and the browser reports the
+ * abandoned one as an error — `net::ERR_ABORTED` on Chromium, "interrupted
+ * by another navigation" on WebKit. The shopper simply ends up on the page;
+ * a spec should too. Only these are retried, and only a couple of times —
+ * anything else, including a genuine timeout, propagates untouched.
+ */
+const SUPERSEDED_NAVIGATION = /ERR_ABORTED|interrupted by another navigation/;
+
+async function gotoWithAbortRetry(
+  goto: Page["goto"],
+  args: Parameters<Page["goto"]>,
+): Promise<Awaited<ReturnType<Page["goto"]>>> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await goto(...args);
+    } catch (error) {
+      const message = String((error as Error)?.message ?? error);
+      if (!SUPERSEDED_NAVIGATION.test(message)) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 function patchPageGoto(page: Page): void {
   const tagged = page as Page & { [PATCHED]?: true };
   if (tagged[PATCHED]) return;
@@ -116,7 +145,7 @@ function patchPageGoto(page: Page): void {
 
   const originalGoto = page.goto.bind(page);
   page.goto = (async (...args: Parameters<Page["goto"]>) => {
-    const response = await originalGoto(...args);
+    const response = await gotoWithAbortRetry(originalGoto, args);
     await dismissWelcomeSplashIfPresent(page);
     return response;
   }) as Page["goto"];

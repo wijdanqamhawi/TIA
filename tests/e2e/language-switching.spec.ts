@@ -18,15 +18,17 @@ test.describe("language switching", () => {
     // viewport, and the helper drives exactly that.
     await page.goto("/en");
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+    // The approved homepage's two merchandising headings (it has no Best
+    // Sellers section any more — see `(storefront)/page.tsx`).
     await expect(page.getByRole("heading", { name: "New Arrivals" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Best Sellers" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Shop by Category" })).toBeVisible();
 
     await switchToArabicWithAvailableControl(page);
 
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.locator("html")).toHaveAttribute("lang", "ar");
     await expect(page.getByRole("heading", { name: "وصل حديثًا" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "الأكثر مبيعًا" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "تسوقي حسب الفئة" })).toBeVisible();
   });
 
   test("on a phone the menu has no language switcher; the welcome screen's EN | AR relocalizes the page", async ({

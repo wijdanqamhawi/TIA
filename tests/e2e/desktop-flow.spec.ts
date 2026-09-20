@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 
 /**
  * T241 (quickstart Scenarios 1 + 9 combined): the full guest commerce
@@ -62,13 +63,18 @@ test.describe("desktop commerce flow (English/LTR)", () => {
   });
 
   test("guest browses, adds to cart, and completes COD checkout on a desktop viewport", async ({ page }) => {
+    // This flow is specific to the desktop layout (its navigation differs by
+    // breakpoint), so it sets that viewport itself rather than inheriting
+    // whichever device project runs it.
+    await page.setViewportSize({ width: 1440, height: 900 });
     // 1. Home.
     await page.goto("/en");
     await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
     // 2. Reach Shop via the always-visible desktop nav (no hamburger menu).
-    await page.getByRole("navigation").getByRole("link", { name: "Shop", exact: true }).click();
+    // The header's nav specifically: the footer carries its own "Shop" navigation too.
+    await page.getByRole("banner").getByRole("navigation").getByRole("link", { name: "Shop", exact: true }).click();
     await expect(page).toHaveURL(/\/en\/shop$/, { timeout: 10000 });
     expect(await page.evaluate(hasNoHorizontalOverflow)).toBe(true);
 
@@ -81,10 +87,7 @@ test.describe("desktop commerce flow (English/LTR)", () => {
     // detail page (the desktop purchase panel and the mobile sticky bar,
     // both present in the DOM regardless of viewport) — `.first()`
     // resolves the strict-mode ambiguity.
-    const addToCartButton = page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
-    await addToCartButton.click();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
+    await addDetailToCart(page);
 
     // 5. Cart.
     await expect(async () => {
@@ -105,7 +108,7 @@ test.describe("desktop commerce flow (English/LTR)", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("1 Test Street");
 

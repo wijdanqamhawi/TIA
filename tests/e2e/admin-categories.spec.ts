@@ -41,7 +41,12 @@ test.describe("admin — category management", () => {
 
     await loginAsAdmin(page);
     await page.goto("/admin/categories");
-    await expect(page.getByText(categoryName).last()).toBeVisible();
+    // By role, not `getByText(...).last()`: the admin list renders a
+    // desktop table *and* a phone card list at once, one of them hidden by
+    // a CSS breakpoint, and the text query happily resolved to the hidden
+    // variant on the phone projects. Role queries read the accessibility
+    // tree, which the hidden variant is not in.
+    await expect(page.getByRole("button", { name: categoryName })).toBeVisible();
 
     // Deactivate via the admin UI.
     await page.getByRole("button", { name: categoryName }).click();

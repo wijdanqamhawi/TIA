@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "./fixtures/base";
-import { resetSeededStock } from "./fixtures/catalog-reset";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 import { loginAsAdmin } from "./admin-helpers";
 
 /**
@@ -19,48 +19,81 @@ async function getTestFirestore() {
   return getFirestore(app);
 }
 
-async function addFirstBraceletToCart(page: Page) {
-  await page.goto("/en/shop/category/bracelets");
+/**
+ * This file's own product — never a seeded one.
+ *
+ * The scenario *is* a rename: the product's live bilingual name (and, with
+ * it, its slug, which `updateProductAction` re-derives from the English
+ * name) changes after the order exists. On a seeded product that rename is
+ * shared state — for the seconds it is in effect, every other spec file
+ * running in parallel against the same emulator sees the seeded product
+ * under a different name and URL (`seo-localization` asserts the sitemap
+ * still lists `/shop/golden-bangle-bracelet`; `cart`, `checkout`, `browse`,
+ * `wishlist` … look it up by its seeded name). A dedicated, uniquely-named
+ * product keeps the scenario exactly as specified with no blast radius.
+ */
+const product = {
+  id: "",
+  nameEn: "",
+  nameAr: "",
+  slug: "",
+};
+
+async function createTestProduct() {
+  const db = await getTestFirestore();
+  const ref = db.collection("products").doc();
+  const stamp = Date.now();
+  product.id = ref.id;
+  product.nameEn = `E2E Snapshot Bracelet ${stamp}`;
+  product.nameAr = `سوار لقطة ${stamp}`;
+  product.slug = `e2e-snapshot-bracelet-${stamp}`;
+  const now = new Date();
+  await ref.set({
+    id: ref.id,
+    name: { en: product.nameEn, ar: product.nameAr },
+    slug: product.slug,
+    description: { en: "A dedicated order-snapshot test product.", ar: "منتج اختبار." },
+    price: 4500,
+    categoryId: "bracelets",
+    images: [],
+    material: { en: "Test Material", ar: "مادة اختبار" },
+    options: [],
+    stock: 12,
+    availability: true,
+    isNewArrival: false,
+    isBestSeller: false,
+    salesCount: 0,
+    searchTerms: [],
+    isOnSale: false,
+    salePrice: null,
+    saleStartAt: null,
+    saleEndAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
+async function addTestProductToCart(page: Page) {
+  await page.goto(`/en/shop/${product.slug}`);
   // A single click, then wait out the Server Action's own pending state —
   // not retry-wrapped around the click itself: under load, a too-short
   // inner timeout previously caused a retry to re-click and silently add
   // quantity >1, corrupting this test's assumption of a single unit.
-  const addButton = page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first();
-  await expect(addButton).toBeEnabled({ timeout: 15000 });
-  await addButton.click();
-  await expect(addButton).toBeEnabled({ timeout: 15000 });
+  await addDetailToCart(page);
 }
 
 test.describe("order snapshot localization survives a later product edit", () => {
-  let originalName: { en: string; ar: string | null } | undefined;
-  let originalSlug: string | undefined;
-  let productId: string | undefined;
-
-  test.beforeAll(async () => {
-    await resetSeededStock(["golden-bangle-bracelet"]);
-  });
+  test.beforeAll(createTestProduct);
 
   test.afterAll(async () => {
-    // Restore the product's original bilingual name AND slug so this
-    // doesn't leak into any other spec file sharing the seeded catalog —
-    // `updateProductAction` re-derives `slug` from the English name on
-    // every edit (spec: SEO-friendly URLs stay in sync with the name), so
-    // editing the name here also changes the live slug and must be
-    // reverted alongside it.
-    if (!productId || !originalName || !originalSlug) return;
     const db = await getTestFirestore();
-    await db.collection("products").doc(productId).update({ name: originalName, slug: originalSlug });
+    await db.collection("products").doc(product.id).delete();
   });
 
   test("historical order snapshot and status label stay correct after a product-translation edit", async ({
     page,
     browser,
   }) => {
-    // Registration + a full real checkout + a second admin browser
-    // context editing the product + re-verifying both locale confirmation
-    // pages is a heavier flow than this suite's usual 30s default budget.
-    test.setTimeout(60000);
-
     const email = `order-snapshot-${Date.now()}@example.com`;
 
     // Register and place a real order as a customer, in her own session.
@@ -71,14 +104,14 @@ test.describe("order snapshot localization survives a later product edit", () =>
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
 
-    await addFirstBraceletToCart(page);
+    await addTestProductToCart(page);
     await page.goto("/en/checkout");
     await page.getByLabel("Mobile Phone Number").fill("+970599123456");
     await page.getByLabel("Region").selectOption({ label: "West Bank" });
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("123 Main Street");
 
@@ -90,7 +123,7 @@ test.describe("order snapshot localization survives a later product edit", () =>
     const orderNumber = page.url().match(/ELR-\d{8}-\d{4}/)?.[0];
     expect(orderNumber).toBeTruthy();
 
-    await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible();
+    await expect(page.getByText(product.nameEn)).toBeVisible();
     await expect(page.getByText("Pending", { exact: true })).toBeVisible();
 
     // Confirm the stored `status` is the raw enum value, not a translated string.
@@ -98,24 +131,16 @@ test.describe("order snapshot localization survives a later product edit", () =>
     const orderSnapshot = await db.collection("orders").where("orderNumber", "==", orderNumber).limit(1).get();
     expect(orderSnapshot.docs[0].data().status).toBe("PENDING");
 
-    // Find the product and record its original name for cleanup, then
-    // edit it as admin — a separate browser context so the customer's own
-    // session/cookies are untouched.
-    const productSnapshot = await db
-      .collection("products")
-      .where("slug", "==", "golden-bangle-bracelet")
-      .limit(1)
-      .get();
-    productId = productSnapshot.docs[0].id;
-    originalName = productSnapshot.docs[0].data().name;
-    originalSlug = productSnapshot.docs[0].data().slug;
-
+    // Now edit the product as admin — a separate browser context so the
+    // customer's own session/cookies are untouched.
+    const editedEn = `${product.nameEn} EDITED`;
+    const editedAr = `${product.nameAr} معدّل`;
     const adminContext = await browser.newContext();
     const adminPage = await adminContext.newPage();
     await loginAsAdmin(adminPage);
-    await adminPage.goto(`/admin/products/${productId}/edit`);
-    await adminPage.getByLabel("Name — English").fill("Golden Bangle Bracelet EDITED");
-    await adminPage.getByLabel("Name — Arabic").fill("سوار ذهبي معدّل");
+    await adminPage.goto(`/admin/products/${product.id}/edit`);
+    await adminPage.getByLabel("Name — English").fill(editedEn);
+    await adminPage.getByLabel("Name — Arabic").fill(editedAr);
     await expect(async () => {
       await adminPage.getByRole("button", { name: "Save Changes" }).click();
       await expect(adminPage).toHaveURL(/\/admin\/products$/, { timeout: 15000 });
@@ -124,30 +149,30 @@ test.describe("order snapshot localization survives a later product edit", () =>
 
     // The live product now has the edited name — editing the name also
     // re-derives the slug (spec: SEO-friendly URLs track the name), so
-    // look up the product's current slug rather than assuming it's still
-    // "golden-bangle-bracelet".
-    const updatedSnapshot = await db.collection("products").doc(productId).get();
+    // look up the product's current slug rather than assuming it is
+    // unchanged.
+    const updatedSnapshot = await db.collection("products").doc(product.id).get();
     const updatedSlug = updatedSnapshot.data()!.slug as string;
     await page.goto(`/en/shop/${updatedSlug}`);
-    await expect(page.getByRole("heading", { name: "Golden Bangle Bracelet EDITED" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: editedEn })).toBeVisible();
 
     // But the already-placed order's confirmation page — in both
     // languages — still shows the ORIGINAL name captured at order time,
     // never the edited one.
     await page.goto(`/en/order-confirmation/${orderNumber}`);
     // Not `exact: true` — the order line renders as one combined text
-    // node ("Golden Bangle Bracelet × N $..."), so the discriminator is
-    // that the *edited* name never appears, not that the original name is
-    // the sole content of its own text node.
-    await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible();
-    await expect(page.getByText("Golden Bangle Bracelet EDITED")).toHaveCount(0);
+    // node ("<product name> × N $..."), so the discriminator is that the
+    // *edited* name never appears, not that the original name is the sole
+    // content of its own text node.
+    await expect(page.getByText(product.nameEn)).toBeVisible();
+    await expect(page.getByText(editedEn)).toHaveCount(0);
     await expect(page.getByText("Pending", { exact: true })).toBeVisible();
 
     await page.goto(`/ar/order-confirmation/${orderNumber}`);
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     // Not `exact: true` — same combined-text-node reasoning as above.
-    await expect(page.getByText("سوار ذهبي")).toBeVisible();
-    await expect(page.getByText("سوار ذهبي معدّل")).toHaveCount(0);
+    await expect(page.getByText(product.nameAr)).toBeVisible();
+    await expect(page.getByText(editedAr)).toHaveCount(0);
     await expect(page.getByText("قيد الانتظار", { exact: true })).toBeVisible();
   });
 });

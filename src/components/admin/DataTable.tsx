@@ -37,7 +37,11 @@ export function DataTable<T>({
     <>
       <div className="flex flex-col gap-3 md:hidden">
         {rows.map((row) => (
-          <div key={rowKey(row)} className="rounded-lg border border-border-luxury bg-brand-ivory p-4">
+          <div
+            key={rowKey(row)}
+            data-testid="admin-row"
+            className="rounded-lg border border-border-luxury bg-brand-ivory p-4"
+          >
             {columns.map((column, index) =>
               column.header ? (
                 <div key={`${column.header}-${index}`} className="flex items-start justify-between gap-3 py-1 text-sm first:pt-0 last:pb-0">
@@ -67,7 +71,7 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={rowKey(row)} className="border-b border-border-luxury last:border-0">
+              <tr key={rowKey(row)} data-testid="admin-row" className="border-b border-border-luxury last:border-0">
                 {columns.map((column, index) => (
                   <td key={`${column.header}-${index}`} className="p-3 align-middle">
                     {column.render(row)}

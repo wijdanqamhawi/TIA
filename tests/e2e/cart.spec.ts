@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { addCardToCart } from "./fixtures/add-to-cart";
 
 /**
  * Guest adds/removes/updates cart quantities and the cart persists across
@@ -23,24 +24,12 @@ test.beforeAll(async () => {
 
 async function addFirstProductToCart(page: Page) {
   await page.goto("/en/shop/category/bracelets");
-
-  // Retries the click: on a slower engine (WebKit/iPad), a click landing
-  // before client-side hydration completes hits inert server-rendered
-  // markup with no event handlers attached yet.
-  await expect(async () => {
-    await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
-    await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-      timeout: 1000,
-    });
-  }).toPass({ timeout: 15000 });
-
-  // Confirm the mutation actually landed (the click above only proves the
-  // button was clickable and re-enabled afterward, not that the Server
-  // Action's cart write completed) before the caller proceeds.
-  await expect(async () => {
-    await page.goto("/en/cart");
-    await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible({ timeout: 1000 });
-  }).toPass({ timeout: 15000 });
+  await addCardToCart(page, "Golden Bangle Bracelet");
+  // Every test below reads the cart page itself, and the helper only
+  // guarantees the cart changed — land there and confirm the line before
+  // the caller starts asserting on it.
+  await page.goto("/en/cart");
+  await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible({ timeout: 15000 });
 }
 
 async function registerNewCustomer(page: Page, name: string, emailPrefix: string) {
@@ -55,8 +44,8 @@ async function registerNewCustomer(page: Page, name: string, emailPrefix: string
     await page.getByLabel("Email").fill(`${emailPrefix}-attempt${attempt}@example.com`);
     await page.getByLabel("Password").fill("supersecret123");
     await page.getByRole("button", { name: "Create Account" }).click();
-    await expect(page).toHaveURL(/\/en\/?$/, { timeout: 3000 });
-  }).toPass({ timeout: 20000 });
+    await expect(page).toHaveURL(/\/en\/?$/, { timeout: 20000 });
+  }).toPass({ timeout: 75000 });
 }
 
 test.describe("guest cart", () => {
@@ -81,20 +70,35 @@ test.describe("guest cart", () => {
   test("guest can increase and decrease quantity, and the line total updates", async ({ page }) => {
     await addFirstProductToCart(page);
 
+    // The stepper's own value, not "a 2 somewhere on the page".
+    const quantity = page.getByLabel("Quantity").locator("span").first();
+    await expect(quantity).toHaveText("1");
+
+    // Re-clicks only while the quantity is still 1: `+` fires a Server
+    // Action that is not idempotent, so a retry that clicks unconditionally
+    // walks the line item up to 3, 5, 8 units and then looks for a "2" that
+    // no longer exists.
     const increaseButton = page.getByRole("button", { name: "+" });
     await expect(async () => {
-      await increaseButton.click();
-      await expect(page.getByText("2", { exact: true })).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
+      if ((await quantity.textContent())?.trim() === "1") {
+        await increaseButton.click();
+        await expect(quantity).toHaveText("2", { timeout: 10000 });
+      }
+    }).toPass({ timeout: 45000 });
+    await expect(quantity).toHaveText("2");
   });
 
   test("guest can remove an item and the cart becomes empty", async ({ page }) => {
     await addFirstProductToCart(page);
 
+    // Clicking Remove again after it already worked is harmless (the
+    // button is gone), so this retry is safe — unlike the quantity
+    // stepper's, which had to be guarded.
     await expect(async () => {
-      await page.getByRole("button", { name: "Remove" }).click();
-      await expect(page.getByText("Your cart is empty")).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
+      const remove = page.getByRole("button", { name: "Remove" });
+      if (await remove.count()) await remove.first().click();
+      await expect(page.getByText("Your cart is empty")).toBeVisible({ timeout: 10000 });
+    }).toPass({ timeout: 45000 });
   });
 
   test("a Sold Out product cannot be added to cart", async ({ page }) => {

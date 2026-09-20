@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 import { loginAsAdmin, getTestFirestore, ADMIN_EMAIL } from "./admin-helpers";
 
 /**
@@ -161,7 +162,7 @@ test.describe("Special Offers end-to-end", () => {
       await expect(card).toBeVisible({ timeout: 2000 });
       await expect(visiblePrice(card, "$99.99")).toBeVisible();
       await expect(visiblePrice(card, "$150.00")).toBeVisible();
-    }).toPass({ timeout: 15000 });
+    }).toPass({ timeout: 45000 });
 
     // Shop / category page shows the same pricing for the same product.
     await page.goto("/en/shop/category/bracelets");
@@ -179,12 +180,7 @@ test.describe("Special Offers end-to-end", () => {
     // this suite): this product's detail page is being hit for the first
     // time in this test run, so its route may still be cold-compiling in
     // dev mode on top of the mutation's own round trip.
-    await expect(async () => {
-      await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
-      await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-        timeout: 3000,
-      });
-    }).toPass({ timeout: 30000 });
+    await addDetailToCart(page);
 
     await expect(async () => {
       await page.goto("/en/cart");
@@ -207,7 +203,7 @@ test.describe("Special Offers end-to-end", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("123 Main Street, Apartment 4");
 
@@ -237,7 +233,11 @@ test.describe("Special Offers end-to-end", () => {
   test("a Sold Out product on an active offer still shows SOLD OUT and cannot be added to cart (spec FR-122)", async ({
     page,
   }) => {
-    const uniqueName = `E2E Sold Out Offer ${Date.now()}`;
+    // Deliberately not containing the words "sold out": the gallery's
+    // thumbnail buttons are labelled with the product name, and a substring
+    // (case-insensitive) role-name match would then resolve to a thumbnail
+    // instead of the purchase panel's own Sold Out button.
+    const uniqueName = `E2E Unavailable Offer ${Date.now()}`;
     // Sold Out (stock: 0) AND an active offer at once — proves Sold Out
     // always wins regardless of any active promotion on the same product.
     const ref = await createTestProduct(uniqueName, {
@@ -248,6 +248,6 @@ test.describe("Special Offers end-to-end", () => {
 
     await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
     await expect(page.getByRole("heading", { name: uniqueName, level: 1 })).toBeVisible();
-    await expect(page.getByRole("main").getByRole("button", { name: "SOLD OUT" }).first()).toBeDisabled();
+    await expect(page.getByRole("main").getByRole("button", { name: "SOLD OUT", exact: true }).first()).toBeDisabled();
   });
 });

@@ -10,7 +10,8 @@ import { test, expect, type Page } from "./fixtures/base";
  * itself (Phase 10's admin product-management UI doesn't exist yet to
  * drive this through the browser) — requires the Firebase Local Emulator
  * Suite running with `FIRESTORE_EMULATOR_HOST` set in this Playwright
- * run's environment, and `scripts/seed.ts` already applied.
+ * run's environment, and `scripts/seed.ts` already applied (the delivery
+ * regions the checkout form needs).
  */
 
 // Talks to the Admin SDK directly (never `@/lib/firebase/firestore`, which
@@ -24,18 +25,70 @@ async function getTestFirestore() {
   return getFirestore(app);
 }
 
-async function setProductStock(slug: string, stock: number) {
-  const { FieldValue } = await import("firebase-admin/firestore");
+/**
+ * This file's own product — never a seeded one.
+ *
+ * Proving checkout-time revalidation *requires* dropping a product's stock
+ * to 1 and to 0 mid-test. On a seeded product that is shared state: the
+ * emulator/Firestore data is common to the whole run, so with more than one
+ * Playwright worker those writes land while `cart`, `checkout`,
+ * `checkout-ar`, `account-orders`, `browse`, `wishlist` … are adding the
+ * very same product to a cart, and they fail on a genuinely Sold Out
+ * button that this file made Sold Out. A dedicated, uniquely-named product
+ * (as `concurrent-checkout.spec.ts` and `special-offers.spec.ts` already
+ * use) keeps the scenario identical and the blast radius zero.
+ */
+const product = {
+  id: "",
+  name: "",
+  slug: "",
+  /** Ample starting stock, so only this file's deliberate reductions matter. */
+  stock: 12,
+};
+
+async function createTestProduct() {
   const db = await getTestFirestore();
-  const snapshot = await db.collection("products").where("slug", "==", slug).limit(1).get();
-  if (snapshot.empty) throw new Error(`Seed product not found: ${slug}`);
-  await snapshot.docs[0].ref.update({ stock, updatedAt: FieldValue.serverTimestamp() });
+  const ref = db.collection("products").doc();
+  const stamp = Date.now();
+  product.id = ref.id;
+  product.name = `E2E Stock Revalidation ${stamp}`;
+  product.slug = `e2e-stock-revalidation-${stamp}`;
+  const now = new Date();
+  await ref.set({
+    id: ref.id,
+    name: { en: product.name, ar: null },
+    slug: product.slug,
+    description: { en: "A dedicated stock-revalidation test product.", ar: null },
+    price: 4500,
+    categoryId: "bracelets",
+    images: [],
+    material: { en: "Test Material", ar: null },
+    options: [],
+    stock: product.stock,
+    availability: true,
+    isNewArrival: false,
+    isBestSeller: false,
+    salesCount: 0,
+    searchTerms: [],
+    isOnSale: false,
+    salePrice: null,
+    saleStartAt: null,
+    saleEndAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
 }
 
-async function getProductStock(slug: string): Promise<number> {
+async function setProductStock(stock: number) {
+  const { FieldValue } = await import("firebase-admin/firestore");
   const db = await getTestFirestore();
-  const snapshot = await db.collection("products").where("slug", "==", slug).limit(1).get();
-  return snapshot.empty ? -1 : (snapshot.docs[0].data().stock ?? -1);
+  await db.collection("products").doc(product.id).update({ stock, updatedAt: FieldValue.serverTimestamp() });
+}
+
+async function getProductStock(): Promise<number> {
+  const db = await getTestFirestore();
+  const snapshot = await db.collection("products").doc(product.id).get();
+  return snapshot.exists ? (snapshot.data()!.stock ?? -1) : -1;
 }
 
 async function addToCartWithQuantity(page: Page, quantity: number) {
@@ -46,7 +99,7 @@ async function addToCartWithQuantity(page: Page, quantity: number) {
   // checkout.spec.ts — critically, `goto` happens once, not inside the
   // retry loop, so a retry only re-clicks rather than paying a full page
   // reload's cost each time.
-  await page.goto("/en/shop/golden-bangle-bracelet");
+  await page.goto(`/en/shop/${product.slug}`);
   const addButton = page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first();
 
   for (let i = 0; i < quantity; i++) {
@@ -58,7 +111,7 @@ async function addToCartWithQuantity(page: Page, quantity: number) {
 
   await expect(async () => {
     await page.goto("/en/cart");
-    await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText(product.name)).toBeVisible({ timeout: 2000 });
   }).toPass({ timeout: 20000 });
 }
 
@@ -71,30 +124,30 @@ async function goToCheckoutAndFillForm(page: Page) {
   await expect(async () => {
     const options = await page.getByLabel("City / Area").locator("option").count();
     expect(options).toBeGreaterThan(1);
-  }).toPass({ timeout: 10000 });
+  }).toPass({ timeout: 30000 });
   await page.getByLabel("City / Area").selectOption({ index: 1 });
   await page.getByLabel("Full Address").fill("123 Main Street");
 }
 
 test.describe("checkout — stock/Sold Out revalidation at order-creation time", () => {
-  // Belt-and-suspenders alongside the existing per-test `afterEach` reset
-  // below: guarantees a known starting stock even if an earlier spec file
-  // left this product in an unexpected state before this file's first test.
-  test.beforeAll(async () => {
-    await setProductStock("golden-bangle-bracelet", 12);
+  test.beforeAll(createTestProduct);
+
+  test.afterAll(async () => {
+    const db = await getTestFirestore();
+    await db.collection("products").doc(product.id).delete();
   });
 
   test.afterEach(async () => {
-    // Always restore the seeded stock afterward so this test never leaks
-    // state into other e2e specs sharing the same emulator/seed data.
-    await setProductStock("golden-bangle-bracelet", 12).catch(() => undefined);
+    // Back to the known starting stock, so each test in this file starts
+    // from the same state regardless of what the previous one reduced it to.
+    await setProductStock(product.stock).catch(() => undefined);
   });
 
   test("stock reduced below the cart quantity after add-to-cart is rejected safely, cart and stock untouched", async ({
     page,
   }) => {
     await page.context().clearCookies();
-    await setProductStock("golden-bangle-bracelet", 5);
+    await setProductStock(5);
     await addToCartWithQuantity(page, 2);
 
     // Reach the checkout page (and fill the form) while stock is still
@@ -108,28 +161,28 @@ test.describe("checkout — stock/Sold Out revalidation at order-creation time",
 
     // Simulate an admin reducing stock to below the cart's quantity while
     // she is filling out the form.
-    await setProductStock("golden-bangle-bracelet", 1);
+    await setProductStock(1);
 
     await page.getByRole("button", { name: "Place Order" }).click();
 
     await expect(page).toHaveURL(/\/checkout/); // no redirect to a confirmation page
     await expect(page.getByRole("alert")).toBeVisible();
 
-    expect(await getProductStock("golden-bangle-bracelet")).toBe(1); // untouched, not decremented
+    expect(await getProductStock()).toBe(1); // untouched, not decremented
 
     await page.goto("/en/cart");
-    await expect(page.getByText("Golden Bangle Bracelet")).toBeVisible(); // cart line still present
+    await expect(page.getByText(product.name)).toBeVisible(); // cart line still present
   });
 
   test("stock reduced to 0 (Sold Out) after add-to-cart is rejected, and the cart page reflects Sold Out on next view", async ({
     page,
   }) => {
     await page.context().clearCookies();
-    await setProductStock("golden-bangle-bracelet", 5);
+    await setProductStock(5);
     await addToCartWithQuantity(page, 1);
 
     await goToCheckoutAndFillForm(page);
-    await setProductStock("golden-bangle-bracelet", 0);
+    await setProductStock(0);
     await page.getByRole("button", { name: "Place Order" }).click();
 
     await expect(page).toHaveURL(/\/checkout/);

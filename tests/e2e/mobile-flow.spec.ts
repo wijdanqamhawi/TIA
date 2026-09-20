@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 
 /**
  * T239 (quickstart Scenarios 1 + 9 combined): the full guest commerce
@@ -65,6 +66,10 @@ test.describe("mobile commerce flow (English/LTR)", () => {
   });
 
   test("guest browses, adds to cart, and completes COD checkout on a mobile viewport", async ({ page }) => {
+    // This flow is specific to the mobile layout (its navigation differs by
+    // breakpoint), so it sets that viewport itself rather than inheriting
+    // whichever device project runs it.
+    await page.setViewportSize({ width: 390, height: 844 });
     // 1. Home
     await page.goto("/en");
     await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
@@ -97,10 +102,7 @@ test.describe("mobile commerce flow (English/LTR)", () => {
     // desktop purchase panel and the mobile sticky bar, both present in
     // the DOM regardless of viewport) — `.first()` resolves the
     // strict-mode ambiguity.
-    const addToCartButton = page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
-    await addToCartButton.click();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
+    await addDetailToCart(page);
 
     // 5. Cart.
     await expect(async () => {
@@ -121,7 +123,7 @@ test.describe("mobile commerce flow (English/LTR)", () => {
     await expect(async () => {
       const options = await page.getByLabel("City / Area").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("City / Area").selectOption({ index: 1 });
     await page.getByLabel("Full Address").fill("1 Test Street");
 

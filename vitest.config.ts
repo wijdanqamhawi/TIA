@@ -35,6 +35,16 @@ export default defineConfig({
           globals: true,
           include: ["tests/integration/**/*.test.ts"],
           testTimeout: 20000,
+          // Every integration file talks to the *same* emulator database,
+          // so running files in parallel lets one file's writes land in
+          // the middle of another's read. `export-sold-out.test.ts`, for
+          // instance, asserts the SOLD OUT export matches the whole
+          // `products` collection exactly — true of any single consistent
+          // state, but not of a collection another worker is mutating
+          // mid-assertion. One file at a time keeps the shared database a
+          // sequence of known states (the same reason e2e runs
+          // `--workers=1`); the whole project is only a few seconds.
+          fileParallelism: false,
         },
       },
     ],

@@ -105,7 +105,7 @@ export default async function ShopPage({
     <main className="bg-brand-ivory">
       {/* 2 — centred Shop intro */}
       <header className={`${CONTAINER} flex flex-col items-center gap-2 pb-7 pt-9 text-center sm:pb-8 sm:pt-10`}>
-        <p className="font-body text-[0.6875rem] font-medium uppercase tracking-[0.24em] text-brand-gold rtl:text-[0.8125rem] rtl:normal-case rtl:tracking-normal">
+        <p className="font-body text-[0.6875rem] font-medium uppercase tracking-[0.24em] text-brand-gold-ink rtl:text-[0.8125rem] rtl:normal-case rtl:tracking-normal">
           {t("eyebrow")}
         </p>
         <span aria-hidden="true" className="block h-px w-9 bg-brand-gold/60" />

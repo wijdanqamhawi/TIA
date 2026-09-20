@@ -27,7 +27,7 @@ export function EditorialRowHeading({
 }) {
   return (
     <div className="mb-3">
-      <p className="mb-1.5 flex items-center gap-3 font-body text-[0.625rem] font-medium uppercase tracking-[0.22em] text-brand-gold rtl:text-[0.8125rem] rtl:normal-case rtl:tracking-normal">
+      <p className="mb-1.5 flex items-center gap-3 font-body text-[0.625rem] font-medium uppercase tracking-[0.22em] text-brand-gold-ink rtl:text-[0.8125rem] rtl:normal-case rtl:tracking-normal">
         {eyebrow}
         <span aria-hidden="true" className="block h-px w-8 bg-brand-gold/60" />
       </p>

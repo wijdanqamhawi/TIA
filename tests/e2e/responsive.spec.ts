@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "./fixtures/base";
 import { loginAsAdmin } from "./admin-helpers";
+import { addCardToCart } from "./fixtures/add-to-cart";
 
 /**
  * T187 (quickstart Scenario 9): the responsive pass across storefront +
@@ -83,13 +84,11 @@ test.describe("responsive — storefront (LTR)", () => {
 
   test("Cart page line items stack below md and lay out inline at md and above", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
+    // The Golden Bangle Bracelet card specifically: a no-options product adds
+    // directly from its card, while the with-options Aurelia Signature Cuff in
+    // the same grid opens Quick View instead (see fixtures/product-card.ts).
     await page.goto("/en/shop/category/bracelets");
-    await expect(async () => {
-      await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
-      await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-        timeout: 2000,
-      });
-    }).toPass({ timeout: 20000 });
+    await addCardToCart(page, "Golden Bangle Bracelet");
 
     await page.setViewportSize(MOBILE);
     await page.goto("/en/cart");

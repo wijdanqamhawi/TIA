@@ -1,6 +1,7 @@
 import path from "node:path";
 import { test, expect } from "./fixtures/base";
 import { loginAsAdmin, getTestFirestore } from "./admin-helpers";
+import { adminRow } from "./fixtures/admin-table";
 
 /**
  * T177 (quickstart Scenario 12 step 5): admin edits a homepage showcase's
@@ -20,7 +21,7 @@ test.describe("admin — homepage showcase management", () => {
     }
   });
 
-  test("admin edits a showcase's bilingual title and uploads a new desktop image; the homepage reflects it live", async ({
+  test("admin edits a showcase's bilingual title and uploads a new desktop image; the homepage hero reflects it live", async ({
     page,
   }) => {
     const db = await getTestFirestore();
@@ -35,7 +36,10 @@ test.describe("admin — homepage showcase management", () => {
       cta: { en: "Shop Now", ar: null },
       desktopImage: { url: "/brand/logo.svg", storagePath: "showcases/original.png" },
       mobileImage: null,
-      displayOrder: 1,
+      // 0, so this showcase is unambiguously the first active one — the
+      // homepage hero reads `showcases[0]` (`(storefront)/page.tsx`), and the
+      // seeded showcases start at 1.
+      displayOrder: 0,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -47,8 +51,11 @@ test.describe("admin — homepage showcase management", () => {
     const newTitle = `Updated Showcase ${Date.now()}`;
     // Seeding already creates a "bracelets" showcase, so more than one row's
     // Category button reads "Bracelets" — scope to the row containing this
-    // test's own showcase by its (unique) title text instead.
-    await page.getByRole("row").filter({ hasText: "Original Title" }).getByRole("button").click();
+    // test's own showcase by its (unique) title text instead. By
+    // `admin-row`, not `role=row`: `DataTable` renders a phone card list
+    // *and* a table at once (one hidden by a CSS breakpoint), and below
+    // `md` there is no table — so there is no row role to find.
+    await adminRow(page, "Original Title").getByRole("button").first().click();
     await page.getByLabel("Title — English", { exact: true }).fill(newTitle);
     await page.getByLabel("Title — Arabic", { exact: true }).fill("عنوان محدث");
 
@@ -61,14 +68,25 @@ test.describe("admin — homepage showcase management", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10000 });
     }).toPass({ timeout: 20000 });
 
-    await expect(page.getByText(newTitle).last()).toBeVisible();
+    // The visible row, not `.last()`: `DataTable` keeps both the phone card
+    // and the desktop table in the DOM, so `.last()` picked the one this
+    // viewport hides.
+    await expect(adminRow(page, newTitle)).toBeVisible();
 
     const updated = await ref.get();
     expect(updated.data()?.title.en).toBe(newTitle);
     expect(updated.data()?.desktopImage.storagePath).not.toBe("showcases/original.png");
 
-    // The homepage reflects the change without any redeploy.
+    // The homepage reflects the change without any redeploy. The approved
+    // homepage composition doesn't print showcase titles any more; the first
+    // active showcase supplies the hero artwork, so the newly uploaded image
+    // is what must appear there (directly, or through next/image's
+    // encoded `url` parameter).
+    const uploadedUrl = updated.data()!.desktopImage.url as string;
     await page.goto("/en");
-    await expect(page.getByText(newTitle)).toBeVisible({ timeout: 10000 });
+    await expect(async () => {
+      const html = await page.content();
+      expect(html.includes(uploadedUrl) || html.includes(encodeURIComponent(uploadedUrl))).toBe(true);
+    }).toPass({ timeout: 15000 });
   });
 });

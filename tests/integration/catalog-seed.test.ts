@@ -61,13 +61,36 @@ describe.skipIf(!hasEmulator)("catalog seed (Firebase Local Emulator Suite)", ()
     }
   });
 
-  it("includes at least one English-only product to exercise the Arabic fallback path", async () => {
+  // The TIA catalog is fully bilingual: every seeded product carries both
+  // English and Arabic copy. (The Arabic→English fallback for a missing
+  // translation is covered by `tests/unit/localized-string.test.ts`.)
+  it("seeds every product with complete English and Arabic copy", async () => {
     const { productsCollection } = await import("@/lib/firebase/firestore");
-    const snapshot = await productsCollection().where("name.en", "==", "Pearl Tennis Bracelet").get();
+    // Only the seeded catalog (its images live under `seed/`): other
+    // integration suites share this emulator and insert their own fixtures.
+    const products = (await productsCollection().get()).docs
+      .map((doc) => doc.data())
+      .filter((product) => product.images.some((image) => image.storagePath.startsWith("seed/")));
 
-    expect(snapshot.empty).toBe(false);
+    expect(products.length).toBe(6);
+    for (const product of products) {
+      expect(product.name.en.length, `${product.slug} name.en`).toBeGreaterThan(0);
+      expect(product.name.ar, `${product.slug} name.ar`).toBeTruthy();
+      expect(product.description.en.length, `${product.slug} description.en`).toBeGreaterThan(0);
+      expect(product.description.ar, `${product.slug} description.ar`).toBeTruthy();
+    }
+  });
+
+  it("keeps the renamed Pearl & Turquoise Ring Set on its original slug, in Rings, sold out, with its pinned image", async () => {
+    const { productsCollection } = await import("@/lib/firebase/firestore");
+    const snapshot = await productsCollection().where("slug", "==", "pearl-tennis-bracelet").get();
+
+    expect(snapshot.size).toBe(1);
     const product = snapshot.docs[0].data();
-    expect(product.name.ar).toBeNull();
-    expect(product.description.ar).toBeNull();
+    expect(product.name.en).toBe("Pearl & Turquoise Ring Set");
+    expect(product.name.ar).toBeTruthy();
+    expect(product.categoryId).toBe("rings");
+    expect(product.stock).toBe(0);
+    expect(product.images[0]?.url).toBe("/images/demo/product-02.jpg");
   });
 });

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "./fixtures/base";
+import { addCardToCart } from "./fixtures/add-to-cart";
 
 /**
  * T212 (quickstart Scenario 11): footer/Contact-page/floating Instagram +
@@ -6,7 +7,8 @@ import { test, expect, type Page } from "./fixtures/base";
  * attributes, never overlap primary actions, are keyboard-accessible,
  * fail safely when unconfigured, and use the correct localized greeting
  * per locale. The header and the phone/tablet menu deliberately carry no
- * social links.
+ * social links (the header's announcement bar carries only the delivery
+ * location and EN | AR controls, from `lg` up).
  *
  * All placements resolve their href server-side from the single
  * centralized config (`lib/config/social.ts`), so these assertions run
@@ -44,7 +46,7 @@ function menuDrawer(page: Page) {
 }
 
 test.describe("social contact — navbar", () => {
-  test("desktop header carries only the main nav, logo and Search/Wishlist/Account/Cart — no social, location or language controls", async ({
+  test("desktop header carries the main nav, logo and Search/Wishlist/Account/Cart, with location + EN | AR on the announcement bar — no social links", async ({
     page,
   }) => {
     await page.setViewportSize(DESKTOP);
@@ -57,9 +59,16 @@ test.describe("social contact — navbar", () => {
       await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
     }
 
+    // The approved reference puts the delivery-location trigger and the
+    // EN | AR switch on the announcement bar above the header, from `lg`
+    // up (`AnnouncementBar.tsx`) — exactly one of each.
+    await expect(header.getByRole("button", { name: "Select delivery location" })).toHaveCount(1);
+    await expect(header.getByRole("button", { name: "Select delivery location" })).toBeVisible();
+    await expect(header.getByRole("button", { name: "EN", exact: true })).toBeVisible();
+    await expect(header.getByRole("button", { name: "AR", exact: true })).toBeVisible();
+
+    // Social links live in the footer / Contact page / floating button only.
     await expect(header.locator('a[href*="instagram.com"], a[href*="wa.me"]')).toHaveCount(0);
-    await expect(header.getByRole("button", { name: /^(EN|AR)$/ })).toHaveCount(0);
-    await expect(header.getByRole("button", { name: /Select delivery location/ })).toHaveCount(0);
   });
 
   test("phone/tablet menu carries only Collections, About and Contact — no social, location or language controls", async ({
@@ -150,14 +159,12 @@ test.describe("social contact — floating WhatsApp button", () => {
     test.skip(!configured.whatsapp, "WhatsApp is unconfigured on this server instance.");
 
     await page.setViewportSize(MOBILE);
-    // Reaching checkout requires a non-empty cart.
+    // Reaching checkout requires a non-empty cart. The Golden Bangle
+    // Bracelet card specifically: a no-options product adds directly from
+    // its card (the with-options Aurelia cuff in the same grid opens Quick
+    // View instead).
     await page.goto("/en/shop/category/bracelets");
-    await expect(async () => {
-      await page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first().click();
-      await expect(page.getByRole("main").getByRole("button", { name: "Add to Cart" }).first()).toBeEnabled({
-        timeout: 2000,
-      });
-    }).toPass({ timeout: 20000 });
+    await addCardToCart(page, "Golden Bangle Bracelet");
 
     await page.goto("/en/checkout");
     await expect(page.getByLabel("Full Name")).toBeVisible({ timeout: 15000 });

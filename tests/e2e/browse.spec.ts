@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures/base";
 import { resetSeededStock } from "./fixtures/catalog-reset";
+import { selectShopCategory, shopSearchBox } from "./fixtures/shop-filters";
 import { switchToArabicWithAvailableControl } from "./fixtures/language";
 
 /**
@@ -21,12 +22,27 @@ test.describe("guest browsing", () => {
     // Scoped to the hero's `h1`: the brand-statement band further down the
     // page carries the same phrase as its own `h2`.
     await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Shop Bracelets" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Shop Rings" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Shop Earrings" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Shop Watches" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "New Arrivals" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Best Sellers" })).toBeVisible();
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: "Shop Now" })).toHaveAttribute("href", /\/en\/shop$/);
+
+    // The approved homepage composition (see `(storefront)/page.tsx`): a
+    // New Arrivals row of real products, then "Shop by Category" with one
+    // tile per category. Best Sellers and the per-category showcase grid are
+    // deliberately not part of it any more.
+    await expect(main.getByRole("heading", { name: "New Arrivals", level: 2 })).toBeVisible();
+    await expect(main.getByRole("link", { name: "Golden Bangle Bracelet" }).first()).toBeVisible();
+    await expect(main.getByRole("heading", { name: "Shop by Category", level: 2 })).toBeVisible();
+    for (const [name, slug] of [
+      ["Bracelets", "bracelets"],
+      ["Rings", "rings"],
+      ["Earrings", "earrings"],
+      ["Watches", "watches"],
+    ]) {
+      await expect(main.getByRole("link", { name, exact: true })).toHaveAttribute(
+        "href",
+        new RegExp(`/en/shop/category/${slug}$`),
+      );
+    }
   });
 
   test("Home -> Shop -> category page -> product detail", async ({ page }) => {
@@ -37,12 +53,14 @@ test.describe("guest browsing", () => {
     await expect(page.getByRole("heading", { name: "All Accessories", level: 1 })).toBeVisible();
 
     // The Shop page now filters by category in place rather than linking to
-    // the dedicated category route: the sidebar (desktop) and the filter
-    // drawer (below `lg`) render the same control, so this is not scoped to
-    // either one. The category route itself still exists and is covered by
-    // its own test below.
-    await page.getByRole("button", { name: "Bracelets", exact: true }).first().click();
-    await expect(page).toHaveURL(/\/en\/shop\?category=bracelets$/);
+    // the dedicated category route. Below `lg` that control lives in the
+    // filter drawer rather than the sidebar, so it has to be opened first
+    // (see fixtures/shop-filters.ts). The category route itself still
+    // exists and is covered by its own test below.
+    await expect(async () => {
+      await selectShopCategory(page, "Bracelets");
+      await expect(page).toHaveURL(/\/en\/shop\?category=bracelets$/, { timeout: 10000 });
+    }).toPass({ timeout: 40000 });
 
     const main = page.getByRole("main");
     await expect(main.getByRole("link", { name: "Golden Bangle Bracelet" }).first()).toBeVisible();
@@ -57,16 +75,23 @@ test.describe("guest browsing", () => {
   test("search and sort controls update the Shop page results", async ({ page }) => {
     await page.goto("/en/shop");
 
-    const searchInput = page.getByPlaceholder("Search products…");
     // Retry the interaction: on a slower engine (WebKit/iPad), a click
     // landing before client-side hydration completes hits inert
-    // server-rendered markup with no event handlers attached yet.
+    // server-rendered markup with no event handlers attached yet. Below
+    // `lg` the search box is in the filter drawer, not the sidebar — the
+    // helper opens it (and re-opens it on a retry, since submitting
+    // navigates and closes it).
     await expect(async () => {
-      await searchInput.fill("gold");
+      const searchInput = await shopSearchBox(page);
+      await searchInput.fill("watch");
       await searchInput.press("Enter");
-      await expect(page).toHaveURL(/q=gold/, { timeout: 1000 });
-    }).toPass({ timeout: 15000 });
-    await expect(page.getByRole("main").getByRole("link", { name: "Classic Gold Watch" }).first()).toBeVisible();
+      await expect(page).toHaveURL(/q=watch/, { timeout: 10000 });
+    }).toPass({ timeout: 40000 });
+    // Search matches whole keyword tokens (searchTokens.ts): "watch" is a
+    // token of the seeded "Classic Watch" only.
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: "Classic Watch" }).first()).toBeVisible();
+    await expect(main.getByRole("link", { name: "Golden Bangle Bracelet" })).toHaveCount(0);
   });
 
   test("language switcher renders Arabic RTL content", async ({ page }) => {

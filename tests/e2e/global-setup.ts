@@ -55,4 +55,76 @@ export default async function globalSetup() {
         `"${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}". Nothing was run.\n`,
     );
   }
+
+  await warmRoutes();
+}
+
+/**
+ * The E2E server runs `next dev`, which compiles a route the first time it
+ * is requested. That cost lands on whichever test happens to touch the
+ * route first — one arbitrary test pays tens of seconds for work that has
+ * nothing to do with what it asserts, and with several workers the same
+ * test also competes for the compiler. Requesting every route once here,
+ * before any test starts, moves that cost into setup where it belongs and
+ * takes a whole class of "timed out on page.goto" flakes with it.
+ *
+ * One request per route *pattern* is enough — a dynamic segment compiles
+ * once for every parameter — so a 404 or a redirect (an admin route with
+ * no session, a confirmation page for an order that doesn't exist) warms
+ * it just as well as a hit. Failures are ignored on purpose: this is a
+ * warm-up, never a check.
+ */
+async function warmRoutes(): Promise<void> {
+  const localized = [
+    "",
+    "/about",
+    "/account",
+    "/account/orders",
+    "/account/orders/ELR-00000000-0000",
+    "/cart",
+    "/checkout",
+    "/contact",
+    "/login",
+    "/order-confirmation/ELR-00000000-0000",
+    "/privacy-policy",
+    "/register",
+    "/returns-exchange",
+    "/shipping-delivery",
+    "/shop",
+    "/shop/category/bracelets",
+    "/shop/golden-bangle-bracelet",
+    "/terms-conditions",
+    "/wishlist",
+  ];
+  const paths = [
+    ...["en", "ar"].flatMap((locale) => localized.map((path) => `/${locale}${path}`)),
+    "/admin",
+    "/admin/categories",
+    "/admin/customers",
+    "/admin/exports",
+    "/admin/locations",
+    "/admin/customers/warm-up",
+    "/admin/orders",
+    "/admin/orders/warm-up",
+    "/admin/products",
+    "/admin/products/new",
+    "/admin/products/warm-up/edit",
+    "/admin/showcases",
+    "/admin/team",
+    "/manifest.webmanifest",
+    "/robots.txt",
+    "/sitemap.xml",
+  ];
+
+  // Sequential, not parallel: the point is to let the dev compiler work
+  // through the graph once without contention, exactly as a single early
+  // test would have made it do.
+  for (const path of paths) {
+    try {
+      const response = await fetch(`${E2E_BASE_URL}${path}`, { redirect: "manual" });
+      await response.arrayBuffer();
+    } catch {
+      // Ignored — warming only.
+    }
+  }
 }

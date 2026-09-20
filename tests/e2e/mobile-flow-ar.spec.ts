@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/base";
+import { addDetailToCart } from "./fixtures/add-to-cart";
 
 /**
  * T240 (quickstart Scenario 13 step 12, combined with Scenarios 1 + 9):
@@ -65,6 +66,10 @@ test.describe("mobile commerce flow (Arabic/RTL)", () => {
   test("guest browses, adds to cart, and completes COD checkout on a mobile viewport, in Arabic", async ({
     page,
   }) => {
+    // This flow is specific to the mobile layout (its navigation differs by
+    // breakpoint), so it sets that viewport itself rather than inheriting
+    // whichever device project runs it.
+    await page.setViewportSize({ width: 390, height: 844 });
     // 1. Home.
     await page.goto("/ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
@@ -77,7 +82,10 @@ test.describe("mobile commerce flow (Arabic/RTL)", () => {
     //    destinations, so there is exactly one visible Shop control.
     const openMenu = page.getByRole("button", { name: "فتح القائمة" });
     await expect(openMenu).toBeVisible();
-    const shopLink = page.getByRole("navigation").getByRole("link", { name: "المتجر", exact: true });
+    // Two navigations carry a Shop link at this width (the bottom tab bar
+    // and the menu drawer's own nav) — the tab bar's comes first, and is the
+    // primary mobile Shop entry this flow exercises (mirrors mobile-flow.spec.ts).
+    const shopLink = page.getByRole("navigation").getByRole("link", { name: "المتجر", exact: true }).first();
     await expect(shopLink).toBeVisible();
     await shopLink.click();
     await expect(page).toHaveURL(/\/ar\/shop$/, { timeout: 10000 });
@@ -93,10 +101,7 @@ test.describe("mobile commerce flow (Arabic/RTL)", () => {
     // desktop purchase panel and the mobile sticky bar, both present in
     // the DOM regardless of viewport) — `.first()` resolves the
     // strict-mode ambiguity.
-    const addToCartButton = page.getByRole("main").getByRole("button", { name: "أضف إلى السلة" }).first();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
-    await addToCartButton.click();
-    await expect(addToCartButton).toBeEnabled({ timeout: 15000 });
+    await addDetailToCart(page);
 
     // 5. Cart.
     await expect(async () => {
@@ -117,7 +122,7 @@ test.describe("mobile commerce flow (Arabic/RTL)", () => {
     await expect(async () => {
       const options = await page.getByLabel("المدينة / الحي").locator("option").count();
       expect(options).toBeGreaterThan(1);
-    }).toPass({ timeout: 10000 });
+    }).toPass({ timeout: 30000 });
     await page.getByLabel("المدينة / الحي").selectOption({ index: 1 });
     await page.getByLabel("العنوان الكامل").fill("شارع تجريبي ١");
 
