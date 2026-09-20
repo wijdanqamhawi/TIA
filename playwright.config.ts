@@ -1,6 +1,28 @@
 import { defineConfig, devices } from "@playwright/test";
 import { assertEmulatorOnly, buildE2EEnv, E2E_BASE_URL, E2E_DIST_DIR, E2E_PORT } from "./tests/e2e/emulator-env";
 
+/**
+ * Whether to serve the suite from a real production server rather than
+ * `next dev`.
+ *
+ * On CI, always. `next dev` compiles each route on first request and runs
+ * the development image optimizer, and in run 35519263633 that optimizer
+ * wedged on one cache key —
+ * `/_next/image?url=/images/demo/splash-model-desktop-lit.jpg&w=2048&q=75`,
+ * the srcset candidate only the iPad viewport asks for. It never answered
+ * again, so every subsequent `page.goto('/en')` on the `tablet` project
+ * waited forever for `load` and timed out: 11 failures, not one of them an
+ * assertion. The same dev server later hit its memory ceiling, restarted,
+ * and left a truncated JSON cache behind. None of that exists in
+ * `next build && next start`, which also removes the per-route compile
+ * that the suite's timeouts were inflated to absorb.
+ *
+ * Locally the default stays `next dev`, because rebuilding for every run
+ * would make iterating on a single spec far slower. Set
+ * `E2E_PRODUCTION_SERVER=true` to reproduce CI's setup exactly.
+ */
+const useProductionServer = !!process.env.CI || process.env.E2E_PRODUCTION_SERVER === "true";
+
 // E2E is Firebase-emulator-only. `.env.local` now holds the REAL
 // tia-jewllery configuration, so it is never loaded here: the environment
 // comes from `.env.emulator` (local) or from the CI job's emulator variables,
@@ -48,10 +70,21 @@ export default defineConfig({
     // Its own server on its own port and build directory, started with the
     // emulator environment only. Never reused: if something else already
     // holds the port, the run fails instead of testing against it.
-    command: `npx next dev -p ${E2E_PORT}`,
+    //
+    // Both the build and the server it serves inherit `env` below, so the
+    // production bundle is compiled with the emulator configuration — which
+    // is what `global-setup.ts` then re-verifies by reading the served
+    // JavaScript. `NEXT_DIST_DIR` keeps that build in `.next-e2e`, never in
+    // the `.next` a developer's own `next dev`/`next start` on port 3000 is
+    // using.
+    command: useProductionServer
+      ? `npx next build && npx next start -p ${E2E_PORT}`
+      : `npx next dev -p ${E2E_PORT}`,
     url: E2E_BASE_URL,
     reuseExistingServer: false,
-    timeout: 180_000,
+    // A production build is minutes of work before the server can listen;
+    // `next dev` listens immediately.
+    timeout: useProductionServer ? 900_000 : 180_000,
     env: { ...e2eEnv, NEXT_DIST_DIR: E2E_DIST_DIR },
   },
 });
