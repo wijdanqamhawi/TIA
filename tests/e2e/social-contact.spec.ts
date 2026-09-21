@@ -27,6 +27,9 @@ const MOBILE = { width: 390, height: 844 };
 async function socialIsConfigured(page: Page): Promise<{ instagram: boolean; whatsapp: boolean }> {
   await page.goto("/en");
   const footer = page.getByRole("contentinfo");
+  // Counting links in a footer that has not rendered yet would read zero
+  // and silently skip the caller, so wait for the footer itself first.
+  await expect(footer.getByRole("heading", { name: "Shop" })).toBeVisible();
   return {
     instagram: (await footer.locator('a[href*="instagram.com"]').count()) > 0,
     whatsapp: (await footer.locator('a[href*="wa.me"]').count()) > 0,

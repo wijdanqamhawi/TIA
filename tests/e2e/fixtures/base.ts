@@ -51,7 +51,7 @@ export type { Page } from "@playwright/test";
  */
 
 const SPLASH_APPEAR_TIMEOUT_MS = 1500;
-const SPLASH_DISMISS_TIMEOUT_MS = 3000;
+const SPLASH_DISMISS_TIMEOUT_MS = 15000;
 const SPLASH_HYDRATION_TIMEOUT_MS = 15000;
 const PATCHED = Symbol("elora-welcome-splash-dismiss-patched");
 
@@ -101,10 +101,24 @@ async function dismissWelcomeSplashIfPresent(page: Page): Promise<void> {
   // (the EN | AR switch buttons follow it in the DOM) — located
   // structurally so this works identically under English and Arabic
   // without hardcoding either locale's text.
+  //
+  // Clicked once the screen reports itself hydrated, then waited out its
+  // closing animation. A fire-and-forget click was enough while navigation
+  // waited for `load`; settling on `domcontentloaded` lets that click land
+  // on inert markup, do nothing, and leave a full-screen dialog to swallow
+  // the test's first real click (`desktop-flow` timed out on the header's
+  // Shop link with the splash's own container named as the interceptor).
+  // Re-clicking blindly is worse: the screen sets `data-leaving` while it
+  // fades, and clicking again during that restarts the close and the
+  // dialog never goes away.
+  await page
+    .locator("dialog[data-welcome-splash][data-ready]")
+    .waitFor({ state: "visible", timeout: SPLASH_HYDRATION_TIMEOUT_MS })
+    .catch(() => {});
   await dialog
     .locator("button")
     .first()
-    .click({ timeout: 2000 })
+    .click({ timeout: 5000 })
     .catch(() => {});
   await dialog.waitFor({ state: "hidden", timeout: SPLASH_DISMISS_TIMEOUT_MS }).catch(() => {});
 }
@@ -138,17 +152,46 @@ async function gotoWithAbortRetry(
   throw lastError;
 }
 
+/**
+ * Every navigation in this suite settles on `domcontentloaded`, not `load`.
+ *
+ * `load` waits for the last subresource — including decorative imagery
+ * served through `/_next/image`. On WebKit against a 2-vCPU CI runner one
+ * of those occasionally never settles, and the event then never fires: 24
+ * failures in run 35576930578, 7 more in 35591830915 (the second with a
+ * single worker, which ruled out contention). Each time the pending
+ * request was a different image at a different width — the constant was
+ * the wait, not the picture.
+ *
+ * No test needs that wait. Every one of them follows its navigation with
+ * explicit, auto-retrying assertions on the UI it is about to interrogate,
+ * which is both a stronger readiness signal and the one the test actually
+ * depends on. Waiting for a hero photograph to finish decoding proved
+ * nothing and could only fail. An explicit `waitUntil` passed by a caller
+ * still wins — `pwa.spec.ts` relies on that.
+ */
+const DEFAULT_WAIT_UNTIL = "domcontentloaded" as const;
+
 function patchPageGoto(page: Page): void {
   const tagged = page as Page & { [PATCHED]?: true };
   if (tagged[PATCHED]) return;
   tagged[PATCHED] = true;
 
   const originalGoto = page.goto.bind(page);
-  page.goto = (async (...args: Parameters<Page["goto"]>) => {
-    const response = await gotoWithAbortRetry(originalGoto, args);
+  page.goto = (async (url: string, options?: Parameters<Page["goto"]>[1]) => {
+    const response = await gotoWithAbortRetry(originalGoto, [url, { waitUntil: DEFAULT_WAIT_UNTIL, ...options }]);
     await dismissWelcomeSplashIfPresent(page);
     return response;
   }) as Page["goto"];
+
+  // `reload` was never patched, so it both waited for `load` and skipped
+  // the splash dismissal every `goto` gets. Same treatment, same reasons.
+  const originalReload = page.reload.bind(page);
+  page.reload = (async (options?: Parameters<Page["reload"]>[0]) => {
+    const response = await originalReload({ waitUntil: DEFAULT_WAIT_UNTIL, ...options });
+    await dismissWelcomeSplashIfPresent(page);
+    return response;
+  }) as Page["reload"];
 }
 
 function patchContextNewPage(context: BrowserContext): void {

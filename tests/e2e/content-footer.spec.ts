@@ -110,12 +110,15 @@ test.describe("content pages — Footer", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/en");
+    // The footer is what this test measures, so wait for the footer — not
+    // for the page's last image to decode (see fixtures/base.ts).
+    const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("heading", { name: "Shop" })).toBeVisible();
+
     const overflowMobile = await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
     );
     expect(overflowMobile).toBe(true);
-
-    const footer = page.getByRole("contentinfo");
     const logoBox = await footer.getByRole("link", { name: "TIA — Home" }).boundingBox();
     const shopHeadingBox = await footer.getByRole("heading", { name: "Shop" }).boundingBox();
     // Stacked: the second column's heading starts below the first column's logo.
@@ -123,6 +126,8 @@ test.describe("content pages — Footer", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.reload();
+    await expect(footer.getByRole("heading", { name: "Shop" })).toBeVisible();
+
     const overflowDesktop = await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
     );
@@ -141,6 +146,8 @@ test.describe("content pages — Footer", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/en");
     const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("heading", { name: "Shop" })).toBeVisible();
+
     const columns = await footer.locator(":scope > div").first().evaluate((el) => {
       const style = window.getComputedStyle(el);
       return style.gridTemplateColumns.split(" ").length;

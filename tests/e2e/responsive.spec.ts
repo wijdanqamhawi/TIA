@@ -83,7 +83,12 @@ test.describe("responsive — storefront (LTR)", () => {
   });
 
   test("Cart page line items stack below md and lay out inline at md and above", async ({ page }) => {
-    await page.setViewportSize(DESKTOP);
+    // Seed the cart at the project's own viewport. This test is about the
+    // *cart page's* layout at each breakpoint, and forcing a desktop
+    // viewport onto a touch device only to press a grid card's Add to Cart
+    // made that press unreliable on WebKit — the step contributed nothing
+    // to what is asserted below, where the breakpoints are set explicitly.
+    //
     // The Golden Bangle Bracelet card specifically: a no-options product adds
     // directly from its card, while the with-options Aurelia Signature Cuff in
     // the same grid opens Quick View instead (see fixtures/product-card.ts).
