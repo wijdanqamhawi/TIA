@@ -110,17 +110,27 @@ jobs:
       # One device failing must not cancel the evidence from the other four.
       fail-fast: false
       matrix:
+        # `workers` per device, because the two WebKit projects are not the
+        # same workload as the Chromium ones: on identical 2-vCPU runners
+        # they took ~20 minutes against ~6.4, and every hard failure in run
+        # 35576930578 was WebKit navigating with two workers in flight.
+        # Serialising them trades job time for headroom; Chromium keeps two.
         include:
           - project: mobile
             browser: chromium
+            workers: 2
           - project: mobile-ios
             browser: webkit
+            workers: 1
           - project: tablet
             browser: webkit
+            workers: 1
           - project: laptop
             browser: chromium
+            workers: 2
           - project: desktop
             browser: chromium
+            workers: 2
     # Firebase Local Emulator Suite configuration (demo project only).
     env:
       FIREBASE_PROJECT_ID: demo-elora
@@ -165,7 +175,7 @@ jobs:
           npx wait-on tcp:8080 tcp:9099 tcp:9199
           npm run seed
           npm run create-admin
-          npx playwright test --project=${{ matrix.project }}
+          npx playwright test --project=${{ matrix.project }} --workers=${{ matrix.workers }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
