@@ -9,13 +9,8 @@ import { MobileNav } from "./MobileNav";
 import { NavbarShell } from "./NavbarShell";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { CartBadge } from "./CartBadge";
+import { HeaderActionLink } from "./HeaderActionLink";
 import { getCartItemCount } from "@/lib/domain/cart/cart-count";
-
-// Circular icon affordances. Controls inherit their colour from the header
-// rather than naming one, so the whole set stays deep navy on the warm-white
-// bar and needs no per-route variant.
-const ICON_LINK_CLASS =
-  "flex min-h-11 min-w-11 items-center justify-center rounded-full text-current opacity-85 transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current";
 
 // Clean sans navigation, matching the reference: sentence case, no tracking,
 // a underline drawn on hover. Nothing is uppercased or letter-spaced, so
@@ -95,25 +90,25 @@ export async function Navbar({ locale }: { locale: string }) {
           </Link>
         </nav>
 
-        {/* END — the four shopping utilities only. */}
+        {/* END — the four shopping utilities only. Same icons, same
+            destinations, same labels; `HeaderActionLink` adds only the
+            hover affordance and the active indicator. Search has no
+            `activePath`: it is a link to the catalogue, not a toggle for
+            a search overlay (there is none), so it is never "open". */}
         <div className="col-start-3 flex items-center justify-end gap-0.5 justify-self-end">
-          <Link href="/shop" aria-label={t("search")} className={ICON_LINK_CLASS}>
+          <HeaderActionLink href="/shop" label={t("search")}>
             <Search aria-hidden="true" size={18} strokeWidth={1.5} />
-          </Link>
-          <Link href="/wishlist" aria-label={t("wishlist")} className={`hidden sm:flex ${ICON_LINK_CLASS}`}>
+          </HeaderActionLink>
+          <HeaderActionLink href="/wishlist" label={t("wishlist")} activePath="/wishlist" className="hidden sm:flex">
             <Heart aria-hidden="true" size={18} strokeWidth={1.5} />
-          </Link>
-          <Link href={accountHref} aria-label={t("account")} className={`hidden sm:flex ${ICON_LINK_CLASS}`}>
+          </HeaderActionLink>
+          <HeaderActionLink href={accountHref} label={t("account")} activePath="/account" className="hidden sm:flex">
             <User aria-hidden="true" size={18} strokeWidth={1.5} />
-          </Link>
-          <Link
-            href="/cart"
-            aria-label={t("cartWithCount", { count: cartCount })}
-            className={`relative ${ICON_LINK_CLASS}`}
-          >
+          </HeaderActionLink>
+          <HeaderActionLink href="/cart" label={t("cartWithCount", { count: cartCount })} activePath="/cart">
             <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.5} />
             <CartBadge count={cartCount} />
-          </Link>
+          </HeaderActionLink>
         </div>
       </div>
     </NavbarShell>
