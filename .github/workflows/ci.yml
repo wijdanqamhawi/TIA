@@ -96,8 +96,31 @@ jobs:
         run: firebase emulators:exec --project demo-elora "npm run test:integration"
 
   e2e:
-    name: Playwright (mobile/tablet/desktop, EN/AR)
+    # One runner per device project, rather than all 700 tests in a single
+    # opaque job. Each entry is fully self-contained — its own emulators,
+    # its own seed, its own production E2E server — so a device's failure
+    # neither blocks nor is blocked by the others, its report is its own
+    # artifact, and a WebKit project no longer shares two vCPUs with a
+    # Chromium project and the server. Separate runners mean the fixed
+    # emulator and 3100 ports never collide.
+    name: Playwright (${{ matrix.project }})
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      # One device failing must not cancel the evidence from the other four.
+      fail-fast: false
+      matrix:
+        include:
+          - project: mobile
+            browser: chromium
+          - project: mobile-ios
+            browser: webkit
+          - project: tablet
+            browser: webkit
+          - project: laptop
+            browser: chromium
+          - project: desktop
+            browser: chromium
     # Firebase Local Emulator Suite configuration (demo project only).
     env:
       FIREBASE_PROJECT_ID: demo-elora
@@ -130,22 +153,24 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm install -g firebase-tools
       # `playwright.config.ts` builds and starts the E2E server itself (on CI
       # that is `next build && next start` on port 3100, in `.next-e2e`), so
       # the emulators must already be up: the build renders pages that read
       # Firestore.
-      - name: Seed the emulator and run the full Playwright suite
+      - name: Seed the emulator and run this device's Playwright project
         run: |
           firebase emulators:start --project demo-elora &
           npx wait-on tcp:8080 tcp:9099 tcp:9199
           npm run seed
           npm run create-admin
-          npx playwright test
+          npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: playwright-report-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 14

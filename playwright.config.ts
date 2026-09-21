@@ -51,7 +51,11 @@ export default defineConfig({
   // generous enough that a failure means something is genuinely wrong,
   // while still bounding a hang.
   timeout: 120_000,
-  reporter: "html",
+  // `list` on CI as well as the HTML report: a job that prints nothing for
+  // an hour cannot be judged from the outside — run 35529297026 gave no
+  // sign of progress at all until it finished, and its log was unreadable
+  // until then. `list` puts one line per test in the live GitHub log.
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "html",
   globalSetup: "./tests/e2e/global-setup.ts",
   use: {
     // Always the dedicated emulator-backed E2E server — never the

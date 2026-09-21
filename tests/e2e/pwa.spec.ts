@@ -78,7 +78,20 @@ test.describe("PWA — service worker (requires a production build: next build &
     expect(registered).toBe(true);
   });
 
-  test("offline shows the branded /offline fallback in English and Arabic", async ({ page, context }) => {
+  test("offline shows the branded /offline fallback in English and Arabic", async ({ page, context, browserName }) => {
+    // Chromium only, and not because the feature is Chromium-only.
+    // Playwright's WebKit offline emulation fails a navigation inside the
+    // browser ("WebKit encountered an internal error") before the service
+    // worker's fetch handler ever runs, so there is nothing for the
+    // fallback to answer. Measured directly: with the worker registered
+    // *and* controlling the page (`navigator.serviceWorker.controller`
+    // true, one cache present), Chromium serves `/offline` on an offline
+    // navigation while WebKit returns that internal error and stays put.
+    // The same worker, the same build. Asserting this on WebKit would test
+    // Playwright, not TIA — every other PWA test in this file still runs on
+    // every project.
+    test.skip(browserName === "webkit", "Playwright's WebKit offline emulation never reaches the service worker.");
+
     await page.goto("/en");
     const supported = await page.evaluate(() => "serviceWorker" in navigator);
     test.skip(!supported, "serviceWorker unsupported in this browser context");
