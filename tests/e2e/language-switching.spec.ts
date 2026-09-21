@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures/base";
-import { switchToArabicWithAvailableControl } from "./fixtures/language";
+import { startFreshSession, switchToArabicWithAvailableControl } from "./fixtures/language";
 
 /**
  * T244 (quickstart Scenario 13 steps 1-3, 13): the language switcher
@@ -44,6 +44,11 @@ test.describe("language switching", () => {
     await drawer.getByRole("button", { name: "Close menu" }).last().click();
     await expect(drawer).toBeHidden();
 
+    // This test is specifically about the welcome screen's EN | AR being
+    // the phone's only language control, so put the session back to a
+    // first-visit state and assert the screen really is there before the
+    // helper uses it — rather than letting the helper decide.
+    await startFreshSession(page);
     await switchToArabicWithAvailableControl(page);
 
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

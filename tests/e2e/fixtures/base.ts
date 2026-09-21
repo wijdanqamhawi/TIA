@@ -184,13 +184,16 @@ function patchPageGoto(page: Page): void {
     return response;
   }) as Page["goto"];
 
-  // `reload` was never patched, so it both waited for `load` and skipped
-  // the splash dismissal every `goto` gets. Same treatment, same reasons.
+  // `reload` gets the same `domcontentloaded` default and, deliberately,
+  // *not* the splash dismissal. `fixtures/language.ts` brings the welcome
+  // screen back the only way a shopper could — clear its session flag and
+  // reload — because below `lg` its EN | AR is the sole language control
+  // in the approved design. Dismissing on reload as well removed that
+  // control before the test could use it and took out four tests on every
+  // Chromium project in run 35615438938.
   const originalReload = page.reload.bind(page);
   page.reload = (async (options?: Parameters<Page["reload"]>[0]) => {
-    const response = await originalReload({ waitUntil: DEFAULT_WAIT_UNTIL, ...options });
-    await dismissWelcomeSplashIfPresent(page);
-    return response;
+    return originalReload({ waitUntil: DEFAULT_WAIT_UNTIL, ...options });
   }) as Page["reload"];
 }
 
