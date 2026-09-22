@@ -422,7 +422,17 @@
     "channelsHeading": "Get in Touch",
     "noChannelsConfigured": "Our contact channels are being set up — please check back soon.",
     "instagramCta": "Message us on Instagram",
-    "whatsappCta": "Chat with us on WhatsApp"
+    "whatsappCta": "Chat with us on WhatsApp",
+    "eyebrow": "We'd love to hear from you",
+    "lede": "Have a question, a special request, or just want to say hi? We're always here for you. Reach out through any of the channels below, and we'll get back to you as soon as possible.",
+    "featureQuickTitle": "Quick Response",
+    "featureQuickBody": "We usually reply within a few hours",
+    "featurePersonalTitle": "Personalized Support",
+    "featurePersonalBody": "We're here to help",
+    "featureServiceTitle": "Same Elegant Service",
+    "featureServiceBody": "Online & Offline",
+    "signature": "Thank you for being part of our story",
+    "heroImageAlt": "A handwritten card and a gold cuff bracelet resting on travertine stone and soft ivory fabric"
   },
   "Legal": {
     "pendingNoticeTitle": "Content Pending",

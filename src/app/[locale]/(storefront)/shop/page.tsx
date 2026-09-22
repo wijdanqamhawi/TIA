@@ -54,6 +54,12 @@ export async function generateMetadata({
  *
  * Every filter lives in the URL, so the same object drives the first server
  * render *and* the pagination Server Action; the two can never disagree.
+ *
+ * ── NEW ARRIVALS IS THIS ROUTE, SCOPED ───────────────────────────────────
+ * A Collection is a derived query over a Product flag (data-model.md), not a
+ * separate catalogue, so New Arrivals has no route of its own: it is this page
+ * under `?collection=new-arrivals`, which adds `isNewArrival == true` to the
+ * listing query. The scope is exclusive — see `parseShopQuery`.
  */
 export default async function ShopPage({
   params,
@@ -64,10 +70,13 @@ export default async function ShopPage({
 }) {
   const { locale } = await params;
   const sp = await searchParams;
-  const { search, sort, categorySlug, minPrice, maxPrice, priceDisabled } = parseShopQuery(sp);
+  const { search, sort, categorySlug, minPrice, maxPrice, isNewArrivals, priceDisabled } = parseShopQuery(sp);
 
-  const [t, categories] = await Promise.all([
+  const [t, tHome, categories] = await Promise.all([
     getTranslations({ locale, namespace: "Shop" }),
+    // The New Arrivals label is the collection's own name, already translated
+    // for the homepage row and the navigation — not a second Shop string.
+    getTranslations({ locale, namespace: "Home" }),
     getActiveCategories(),
   ]);
 
@@ -79,6 +88,7 @@ export default async function ShopPage({
   const filters = {
     categoryId: activeCategory?.id,
     search: search || undefined,
+    isNewArrival: isNewArrivals || undefined,
     sort,
     minPrice,
     maxPrice,
@@ -96,6 +106,7 @@ export default async function ShopPage({
   const activeCategoryLabel = activeCategory ? resolveLocalizedString(activeCategory.name, locale) : null;
 
   const chips: ActiveChip[] = [];
+  if (isNewArrivals) chips.push({ key: "collection", label: tHome("newArrivals") });
   if (search) chips.push({ key: "q", label: search });
   if (activeCategoryLabel) chips.push({ key: "category", label: activeCategoryLabel });
   if (minPrice !== undefined) chips.push({ key: "min", label: `${t("minPrice")}: ${formatCurrency(minPrice, locale)}` });
@@ -110,7 +121,7 @@ export default async function ShopPage({
         </p>
         <span aria-hidden="true" className="block h-px w-9 bg-brand-gold/60" />
         <h1 className="font-display text-[clamp(1.875rem,3.3vw,2.875rem)] font-normal leading-tight text-text-primary">
-          {activeCategoryLabel ?? t("allTitle")}
+          {isNewArrivals ? tHome("newArrivals") : activeCategoryLabel ?? t("allTitle")}
         </h1>
         <p className="max-w-[34rem] text-[0.8125rem] leading-relaxed text-text-secondary">{t("allDescription")}</p>
       </header>
@@ -122,7 +133,7 @@ export default async function ShopPage({
           current={sp}
           categories={filterCategories}
           activeCategorySlug={activeCategory?.slug ?? ""}
-          activeCategoryLabel={activeCategoryLabel}
+          activeCategoryLabel={isNewArrivals ? tHome("newArrivals") : activeCategoryLabel}
           priceDisabled={priceDisabled}
           sort={sort}
           resultCount={products.length}

@@ -1,0 +1,444 @@
+/*
+ * Contact page geometry, written to the approved reference.
+ *
+ * ── CONVENTIONS ──────────────────────────────────────────────────────────
+ * Colour comes only from the site tokens in `globals.css` — the reference's
+ * "Deep Navy #101C36" is `--brand-burgundy`, its "Champagne Gold #C4A46B" is
+ * `--brand-gold` (see the naming note at the top of `globals.css`). Nothing
+ * here introduces a one-off hex value.
+ *
+ * Every horizontal offset is a logical property (`padding-inline-start`,
+ * `border-inline-start`, `margin-inline-*`), so the whole page mirrors under
+ * `dir="rtl"` without a single Arabic-specific rule beyond the two
+ * typographic ones at the bottom — Arabic is never uppercased, letter-spaced
+ * or italicised, matching the site-wide `rtl:` utilities.
+ */
+
+.page {
+  background: var(--color-brand-ivory);
+}
+
+/* ── HERO ──────────────────────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--color-brand-ivory);
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    /* The reference's split is a shade wider than half: its two 355px CTAs
+       need ~726px of measure, which an even split cannot give back once the
+       5vw start gutter is taken out. */
+    grid-template-columns: 53% 47%;
+    /* The reference's 560–610px band, tied to the viewport so the two
+       columns stay in proportion rather than growing apart. */
+    min-height: clamp(560px, 42vw, 610px);
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 3rem;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding-block: 3.5rem;
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding-block: 2.25rem;
+    padding-inline-start: 5vw;
+    /* Smaller than the start gutter on purpose: the column's end edge is the
+       image, not the page edge, so the measure is spent on the CTA row. */
+    padding-inline-end: 2vw;
+  }
+}
+
+.inner {
+  width: 100%;
+  max-width: 740px;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  /* The reference's champagne gold as *text*. `--brand-gold` itself sits at
+     roughly 2.3:1 on this ground and cannot carry copy, so the site's
+     dedicated text-gold token is used — the same rule every other eyebrow on
+     the storefront follows. Gold at full chroma still appears here, as the
+     support-feature icon stroke below. */
+  color: var(--color-brand-gold-ink);
+}
+
+@media (min-width: 640px) {
+  .eyebrow {
+    font-size: 0.875rem;
+  }
+}
+
+.heading {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.625rem, 4.4vw, 4rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.lede {
+  margin-top: 1.625rem;
+  max-width: 600px;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--brand-text-primary) 82%, transparent);
+}
+
+/* The opening question owns its own line, as in the reference; the remaining
+   sentences flow under it. Below `sm` it rejoins the flow so a phone never
+   strands a short line — and then it needs the word space the split removed.
+   A trailing space in a block box collapses, so the rule needs no breakpoint
+   of its own. */
+.ledeOpening {
+  display: inline;
+}
+
+.ledeOpening::after {
+  content: " ";
+}
+
+@media (min-width: 640px) {
+  .ledeOpening {
+    display: block;
+  }
+}
+
+/* ── CTA BUTTONS ───────────────────────────────────────────────────────── */
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.625rem;
+}
+
+@media (min-width: 1024px) {
+  .ctaRow {
+    margin-top: 2.5rem;
+  }
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-height: 64px;
+  padding-inline: 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+@media (min-width: 480px) {
+  .cta {
+    /* Side by side once the column can hold both at a legible width, and a
+       clean stack below that (the two are never squeezed into unreadable
+       halves). `max-width` keeps the reference's 355px as the ceiling. */
+    flex: 1 1 310px;
+    width: auto;
+    max-width: 355px;
+  }
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--color-brand-burgundy);
+  outline-offset: 3px;
+}
+
+.ctaPrimary {
+  background: var(--color-brand-burgundy);
+  color: var(--color-text-on-dark);
+}
+
+.ctaPrimary:hover {
+  background: var(--color-brand-burgundy-dark);
+}
+
+.ctaSecondary {
+  background: var(--color-brand-ivory);
+  border-color: var(--color-hairline-strong);
+  color: var(--color-text-primary);
+}
+
+.ctaSecondary:hover {
+  background: var(--color-brand-cream);
+  border-color: var(--color-text-primary);
+}
+
+.ctaIcon {
+  flex-shrink: 0;
+}
+
+.ctaLabel {
+  min-width: 0;
+}
+
+/* Pushed to the far end of the button, and mirrored under RTL so the arrow
+   always points *away* from the reading direction. */
+.ctaChevron {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  transition: transform 180ms ease;
+}
+
+.cta:hover .ctaChevron {
+  transform: translateX(3px);
+}
+
+/* ── SUPPORT FEATURES ──────────────────────────────────────────────────── */
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 2rem;
+  list-style: none;
+  padding: 0;
+}
+
+.feature {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding-block: 0.875rem;
+}
+
+/* Phone/tablet: a compact stack divided by hairlines across, since three
+   columns of two-line copy cannot hold their measure at these widths. */
+.feature + .feature {
+  border-block-start: 1px solid var(--color-hairline);
+}
+
+@media (min-width: 900px) {
+  /* Three equal columns rather than flex bases, so the row divides the
+     available measure evenly at any width.
+     
+     ── WHY SUBGRID ─────────────────────────────────────────────────────────
+     The two text rows belong to the *row*, not to each column: as the columns
+     narrow, "Personalized Support" wraps to two lines before its neighbours
+     do, and with three independent stacks that one wrap dropped its own
+     description a line below the other two. Declaring the title row and the
+     body row on `.features` and having each `.feature` adopt them via
+     `grid-template-rows: subgrid` keeps all three titles on one baseline and
+     all three descriptions on another, whatever any of them does. */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    align-content: start;
+    margin-top: 2.25rem;
+  }
+
+  .feature {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    grid-template-columns: auto minmax(0, 1fr);
+    /* Both axes explicitly: the stacked layout's shorthand `gap` would
+       otherwise survive here as a row gap and, because a subgrid overrides
+       its parent's gaps, open a 10px seam between every title and its
+       description. */
+    gap: 0 0.625rem;
+    align-items: start;
+    padding-block: 0;
+    padding-inline-end: 1rem;
+  }
+
+  /* Lets the title and body become items of `.feature`'s own subgrid. */
+  .featureText {
+    display: contents;
+  }
+
+  .featureIcon {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .featureTitle {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .featureBody {
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  /* The divider is a short, centred hairline rather than a full-height
+     border, so it reads as a tick between columns instead of a rule. */
+  .feature + .feature {
+    border-block-start: 0;
+    padding-inline-start: 1.25rem;
+  }
+
+  /* Spans both rows: a pseudo-element of a grid box is itself a grid item,
+     and left to auto-placement this 34px rule sized the title row to its own
+     height and pushed every description down a third of a line. */
+  .feature + .feature::before {
+    content: "";
+    grid-row: 1 / -1;
+    grid-column: 1;
+    position: absolute;
+    inset-inline-start: 0;
+    top: 50%;
+    width: 1px;
+    height: 2.125rem;
+    transform: translateY(-50%);
+    background: var(--color-hairline);
+  }
+}
+
+.featureIcon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  /* Gold at full chroma, as a stroke rather than as text — the one place the
+     reference's champagne gold appears literally. */
+  color: var(--color-brand-gold);
+}
+
+.featureTitle {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-primary);
+}
+
+.featureBody {
+  margin-top: 0.125rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* ── EDITORIAL SIGNATURE ───────────────────────────────────────────────── */
+
+/*
+ * The reference sets this in a hand-lettered script. The project loads
+ * Playfair Display, Inter and the two Noto Arabic faces and nothing else, and
+ * a new font was ruled out, so this uses the existing display serif in italic
+ * — the documented fallback. It is decorative, so it stays quiet.
+ */
+.signature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2.25rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--color-brand-gold-ink);
+  opacity: 0.85;
+}
+
+@media (min-width: 1024px) {
+  .signature {
+    font-size: 1.6875rem;
+  }
+}
+
+.signatureHeart {
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+/* ── HERO IMAGE ────────────────────────────────────────────────────────── */
+
+.media {
+  position: relative;
+  /* Reserved before the image loads, so the hero never shifts (CLS). */
+  height: clamp(350px, 62vw, 450px);
+  overflow: hidden;
+  background: var(--color-brand-cream);
+}
+
+@media (min-width: 1024px) {
+  .media {
+    height: auto;
+    min-height: 100%;
+  }
+}
+
+.mediaImage {
+  object-fit: cover;
+  /* The reference crop: flowers upper-middle, card centre, cuff lower-end. */
+  object-position: center;
+}
+
+/* ── ARABIC TYPOGRAPHY ─────────────────────────────────────────────────── */
+
+/*
+ * Arabic is never uppercased, letter-spaced or italicised — the same two
+ * adjustments the site's `rtl:` utility classes make everywhere else. The
+ * layout itself needs no RTL rule: every offset above is already logical.
+ */
+[dir="rtl"] .eyebrow {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.9375rem;
+}
+
+[dir="rtl"] .signature {
+  font-style: normal;
+}
+
+[dir="rtl"] .ctaChevron {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .cta:hover .ctaChevron {
+  transform: scaleX(-1) translateX(3px);
+}
+
+/* ── REDUCED MOTION ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .ctaChevron {
+    transition: none;
+  }
+
+  .cta:hover .ctaChevron {
+    transform: none;
+  }
+
+  [dir="rtl"] .cta:hover .ctaChevron {
+    transform: scaleX(-1);
+  }
+}

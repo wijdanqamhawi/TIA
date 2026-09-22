@@ -10,6 +10,7 @@ import {
   listProducts,
   toProductCardData,
 } from "@/lib/domain/catalog/product.service";
+import { isSoldOut } from "@/lib/domain/catalog/soldOut";
 import { getWishlistedProductIds } from "@/lib/domain/wishlist/wishlist.service";
 import type { Product } from "@/types/product";
 import { Hero } from "@/components/storefront/Hero";
@@ -109,9 +110,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // popularity-ordered catalogue (then Best Sellers) so the row reads as
   // complete — distinct real products only, never a duplicate, and no data
   // is changed.
+  //
+  // Sold Out products are excluded here too. `getNewArrivals` already drops
+  // them, but the two fallback sets are ordinary catalogue reads that rightly
+  // include them (spec FR-015a), so without this the padding could put an
+  // unbuyable piece into the row the collection just took it out of. Same
+  // single derivation (`isSoldOut`), same rule as the collection.
   const newArrivalIds = new Set<string>();
   const newArrivalDisplay = [...newArrivals, ...popular.products, ...bestSellers]
     .filter((product) => {
+      if (isSoldOut(product)) return false;
       if (newArrivalIds.has(product.id)) return false;
       newArrivalIds.add(product.id);
       return true;

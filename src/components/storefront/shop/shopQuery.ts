@@ -18,6 +18,16 @@ export const PRICE_BANDS = [
   { id: "above-300", min: 30000 as number | undefined, max: undefined as number | undefined, labelKey: "priceAbove" },
 ] as const;
 
+/**
+ * The one collection scope the Shop route understands: New Arrivals.
+ *
+ * Collections are derived queries over a `Product` flag (data-model.md
+ * "Collection"), not a curated membership list, so New Arrivals needs no route
+ * of its own — it is the Shop listing scoped by `isNewArrival == true`, which
+ * is exactly what `getNewArrivals` does for the homepage row.
+ */
+export const NEW_ARRIVALS_COLLECTION = "new-arrivals";
+
 /** The raw query string this page reads. */
 export type ShopSearchParams = {
   q?: string;
@@ -25,6 +35,8 @@ export type ShopSearchParams = {
   category?: string;
   min?: string;
   max?: string;
+  /** Collection scope — currently only `NEW_ARRIVALS_COLLECTION`. */
+  collection?: string;
 };
 
 export type ShopQuery = {
@@ -34,6 +46,8 @@ export type ShopQuery = {
   categorySlug: string;
   minPrice?: number;
   maxPrice?: number;
+  /** True while the listing is scoped to the New Arrivals collection. */
+  isNewArrivals: boolean;
 };
 
 /**
@@ -72,6 +86,26 @@ function parsePrice(value: string | undefined): number | undefined {
  * controls disable themselves against it.
  */
 export function parseShopQuery(sp: ShopSearchParams): ShopQuery & { priceDisabled: boolean } {
+  // ── THE COLLECTION SCOPE IS EXCLUSIVE ──────────────────────────────────
+  // `isNewArrival` is indexed only as `isNewArrival ASC, availability ASC,
+  // createdAt DESC`; there is no composite index pairing it with a category,
+  // a price range, a search or another sort. Rather than issue a query
+  // Firestore would reject, the collection scope simply wins and the other
+  // filters are read as absent — and `buildShopHref` below drops `collection`
+  // as soon as the shopper touches any of them, so the two can never disagree.
+  const isNewArrivals = sp.collection?.trim() === NEW_ARRIVALS_COLLECTION;
+  if (isNewArrivals) {
+    return {
+      search: "",
+      sort: "newest",
+      categorySlug: "",
+      minPrice: undefined,
+      maxPrice: undefined,
+      isNewArrivals: true,
+      priceDisabled: false,
+    };
+  }
+
   const search = sp.q?.trim() ?? "";
   const sort: ProductSort = VALID_SORTS.includes(sp.sort as ProductSort) ? (sp.sort as ProductSort) : "newest";
   const priceDisabled = search.length > 0;
@@ -82,18 +116,32 @@ export function parseShopQuery(sp: ShopSearchParams): ShopQuery & { priceDisable
     categorySlug: sp.category?.trim() ?? "",
     minPrice: priceDisabled ? undefined : parsePrice(sp.min),
     maxPrice: priceDisabled ? undefined : parsePrice(sp.max),
+    isNewArrivals: false,
     priceDisabled,
   };
 }
 
-/** Rebuilds a Shop URL from a partial change, dropping empty/default values. */
+/**
+ * Rebuilds a Shop URL from a partial change, dropping empty/default values.
+ *
+ * Changing any ordinary filter leaves the collection scope (see
+ * `parseShopQuery`): picking a category while browsing New Arrivals returns the
+ * full catalogue for that category rather than silently keeping a scope the
+ * query cannot honour alongside it.
+ */
 export function buildShopHref(
   pathname: string,
   current: ShopSearchParams,
   next: Partial<ShopSearchParams>,
 ): string {
-  const merged = { ...current, ...next };
+  const leavesCollection = Object.keys(next).some((key) => key !== "collection");
+  const merged: ShopSearchParams = {
+    ...current,
+    ...next,
+    ...(leavesCollection ? { collection: undefined } : null),
+  };
   const params = new URLSearchParams();
+  if (merged.collection) params.set("collection", merged.collection);
   if (merged.q) params.set("q", merged.q);
   if (merged.sort && merged.sort !== "newest") params.set("sort", merged.sort);
   if (merged.category) params.set("category", merged.category);

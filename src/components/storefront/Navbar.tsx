@@ -75,7 +75,7 @@ export async function Navbar({ locale }: { locale: string }) {
           <Link href="/shop" className={NAV_LINK_CLASS}>
             {t("shop")}
           </Link>
-          <Link href="/shop?sort=newest" className={NAV_LINK_CLASS}>
+          <Link href="/shop?collection=new-arrivals" className={NAV_LINK_CLASS}>
             {tHome("newArrivals")}
           </Link>
           {/* No "Collections" entry: the store has no /collections route,

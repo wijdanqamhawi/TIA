@@ -61,7 +61,7 @@ export async function Footer({ locale }: { locale: string }) {
   // second label.
   const shopLinks = [
     { href: "/shop", label: tNav("shop") },
-    { href: "/shop?sort=newest", label: tHome("newArrivals") },
+    { href: "/shop?collection=new-arrivals", label: tHome("newArrivals") },
     { href: "/about", label: t("aboutUs") },
     { href: "/contact", label: t("contact") },
   ];

@@ -42,7 +42,7 @@ export async function NewArrivalsStrip({
           eyebrow={tHome("discover")}
           title={tHome("newArrivals")}
           actionLabel={tHome("viewAll")}
-          actionHref="/shop?sort=newest"
+          actionHref="/shop?collection=new-arrivals"
         />
 
         <CarouselRow

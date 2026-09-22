@@ -102,6 +102,21 @@ export type ListProductsParams = {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
+  /**
+   * Scopes the listing to the New Arrivals collection (`isNewArrival == true`,
+   * data-model.md "Collection" — a derived query over a Product flag, not a
+   * curated membership list).
+   *
+   * Only the standalone form is indexed: `isNewArrival ASC, availability ASC,
+   * createdAt DESC` (firestore.indexes.json). Combining it with a category, a
+   * price range, a search or a non-`createdAt` sort would need a composite
+   * index per combination, none of which exist — so `parseShopQuery` treats the
+   * collection as an exclusive scope and never sends those combinations here.
+   *
+   * Sold Out products are excluded from the collection — see
+   * `excludeSoldOut` below.
+   */
+  isNewArrival?: boolean;
   sort?: ProductSort;
   pageSize?: number;
   /** The last product id from the previous page, for cursor-based pagination. */
@@ -117,11 +132,32 @@ const DEFAULT_PAGE_SIZE = 12;
 const MAX_SEARCH_TOKENS = 10; // Firestore's array-contains-any limit
 
 /**
+ * Drops Sold Out products from a **collection** result set.
+ *
+ * ── WHY IN MEMORY, AND WHY ONLY FOR COLLECTIONS ──────────────────────────
+ * Sold Out is derived live from `stock`, never stored (`isSoldOut`, spec
+ * FR-015a), so Firestore cannot be asked for it without adding a `stock`
+ * inequality to every collection query — a second inventory rule, a new
+ * composite index per collection, and a value that could drift from the
+ * derivation. This reuses the one existing rule instead.
+ *
+ * It applies to the New Arrivals collection only, not to the catalogue: a
+ * Sold Out product stays browsable on `/shop`, on its category page and on its
+ * own detail page exactly as FR-015a requires. New Arrivals is a curated
+ * merchandising selection — showing an unbuyable piece as the store's newest
+ * is the thing this excludes.
+ */
+function excludeSoldOut(products: Product[]): Product[] {
+  return products.filter((product) => !isSoldOut(product));
+}
+
+/**
  * The product listing query (Shop page, category pages, spec FR-007a/
  * FR-007b): search, category filter, price filter, newest/price/
  * popularity sort, cursor-based pagination. Filters only on
  * `availability` — never `stock` — so a Sold Out product stays browsable
- * (spec FR-015a).
+ * (spec FR-015a). The single exception is the New Arrivals collection scope,
+ * which is merchandising rather than the catalogue — see `excludeSoldOut`.
  *
  * A keyword search and a price-range filter are not combined in the same
  * request: `array-contains-any` (search) cannot share a composite index
@@ -138,6 +174,7 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Lis
     search,
     minPrice,
     maxPrice,
+    isNewArrival,
     sort = "newest",
     pageSize = DEFAULT_PAGE_SIZE,
     cursorId,
@@ -154,6 +191,10 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Lis
 
   if (categoryId) {
     query = query.where("categoryId", "==", categoryId);
+  }
+
+  if (isNewArrival) {
+    query = query.where("isNewArrival", "==", true);
   }
 
   query = query.where("availability", "==", true);
@@ -177,8 +218,15 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Lis
   }
 
   const snapshot = await query.limit(pageSize).get();
-  const products = snapshot.docs.map((doc) => doc.data());
-  const nextCursorId = products.length === pageSize ? products[products.length - 1].id : null;
+  const fetched = snapshot.docs.map((doc) => doc.data());
+
+  // The cursor is taken from the *raw* page, before any in-memory filtering,
+  // so paging still walks whole Firestore pages and no product is skipped or
+  // repeated. A collection page can therefore render fewer than `pageSize`
+  // items — correct, and preferable to a second round-trip per page at this
+  // catalogue's scale (research.md §17).
+  const nextCursorId = fetched.length === pageSize ? fetched[fetched.length - 1].id : null;
+  const products = isNewArrival ? excludeSoldOut(fetched) : fetched;
 
   return { products, nextCursorId };
 }
@@ -222,16 +270,26 @@ export async function getProductById(productId: string): Promise<Product | null>
 
 const COLLECTION_SECTION_LIMIT = 8;
 
-/** Most-recently-created available products (homepage "New Arrivals" section). */
+/** Over-fetches so filtering Sold Out products out still leaves a full row. */
+const COLLECTION_CANDIDATE_MULTIPLIER = 3;
+
+/**
+ * Most-recently-created available, in-stock products (homepage "New Arrivals"
+ * section, and the `/shop?collection=new-arrivals` view's own query).
+ *
+ * Over-fetches candidates so dropping the Sold Out ones (`excludeSoldOut`)
+ * still leaves up to `limit` results — the same shape `getSpecialOffers` uses
+ * for its own post-query filtering.
+ */
 export async function getNewArrivals(limit = COLLECTION_SECTION_LIMIT): Promise<Product[]> {
   const snapshot = await productsCollection()
     .where("isNewArrival", "==", true)
     .where("availability", "==", true)
     .orderBy("createdAt", "desc")
-    .limit(limit)
+    .limit(limit * COLLECTION_CANDIDATE_MULTIPLIER)
     .get();
 
-  return snapshot.docs.map((doc) => doc.data());
+  return excludeSoldOut(snapshot.docs.map((doc) => doc.data())).slice(0, limit);
 }
 
 /** Top-selling available products by cumulative quantity sold (homepage "Best Sellers" section). */

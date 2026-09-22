@@ -24,7 +24,9 @@ vi.mock("@/lib/firebase/firestore", () => ({
   productsCollection: () => fakeCollection(),
 }));
 
-const { listProducts, getSpecialOffers } = await import("@/lib/domain/catalog/product.service");
+const { listProducts, getNewArrivals, getSpecialOffers } = await import(
+  "@/lib/domain/catalog/product.service"
+);
 const { getFeaturedProductsForCategory } = await import("@/lib/domain/catalog/categoryShowcase.service");
 
 function makeOfferProduct(id: string, overrides: Record<string, unknown> = {}) {
@@ -125,12 +127,107 @@ describe("listProducts query builder", () => {
     expect(calls.some((c) => c.method === "where" && c.args[0] === "price")).toBe(false);
   });
 
+  it("scopes the listing to the New Arrivals collection on `isNewArrival`", async () => {
+    await listProducts({ isNewArrival: true });
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "isNewArrival" && c.args[2] === true)).toBe(true);
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "availability" && c.args[2] === true)).toBe(true);
+    // The one indexed form: isNewArrival ASC, availability ASC, createdAt DESC.
+    expect(calls.some((c) => c.method === "orderBy" && c.args[0] === "createdAt" && c.args[1] === "desc")).toBe(true);
+  });
+
+  it("does not filter on `isNewArrival` unless the collection scope is asked for", async () => {
+    for (const params of [{}, { isNewArrival: false }, { categoryId: "rings" }]) {
+      calls.length = 0;
+      await listProducts(params);
+      expect(calls.some((c) => c.method === "where" && c.args[0] === "isNewArrival")).toBe(false);
+    }
+  });
+
+  it("drops Sold Out products from the New Arrivals collection, keeping the cursor on raw pages", async () => {
+    const docs = [
+      { data: () => makeOfferProduct("in-stock", { stock: 4, isNewArrival: true }) },
+      { data: () => makeOfferProduct("sold-out", { stock: 0, isNewArrival: true }) },
+    ];
+    fakeCollection.mockImplementation(() => {
+      const query = createFakeQuery(calls);
+      query.get = vi.fn().mockResolvedValue({ docs });
+      return query;
+    });
+
+    const result = await listProducts({ isNewArrival: true, pageSize: 2 });
+    expect(result.products.map((p) => p.id)).toEqual(["in-stock"]);
+    // Sold Out is derived in memory, never asked of Firestore (FR-015a).
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "stock")).toBe(false);
+    // The cursor comes from the raw page, so paging skips nothing.
+    expect(result.nextCursorId).toBe("sold-out");
+  });
+
+  it("keeps Sold Out products in the ordinary catalogue (spec FR-015a)", async () => {
+    const docs = [
+      { data: () => makeOfferProduct("in-stock", { stock: 4 }) },
+      { data: () => makeOfferProduct("sold-out", { stock: 0 }) },
+    ];
+    fakeCollection.mockImplementation(() => {
+      const query = createFakeQuery(calls);
+      query.get = vi.fn().mockResolvedValue({ docs });
+      return query;
+    });
+
+    for (const params of [{}, { categoryId: "rings" }, { sort: "price" as const }]) {
+      const result = await listProducts(params);
+      expect(result.products.map((p) => p.id)).toEqual(["in-stock", "sold-out"]);
+    }
+  });
+
   it("T086: never filters on `stock` — a Sold Out product must stay browsable in every listing", async () => {
     for (const params of [{}, { categoryId: "bracelets" }, { search: "gold" }, { sort: "price" as const }]) {
       calls.length = 0;
       await listProducts(params);
       expect(calls.some((c) => c.method === "where" && c.args[0] === "stock")).toBe(false);
     }
+  });
+});
+
+describe("getNewArrivals (homepage New Arrivals row)", () => {
+  beforeEach(() => {
+    calls.length = 0;
+  });
+
+  it("filters on isNewArrival + availability and drops Sold Out products", async () => {
+    const docs = [
+      { data: () => makeOfferProduct("cuff", { stock: 15, isNewArrival: true }) },
+      { data: () => makeOfferProduct("ring-set", { stock: 0, isNewArrival: true }) },
+      { data: () => makeOfferProduct("solitaire", { stock: 6, isNewArrival: true }) },
+    ];
+    fakeCollection.mockImplementation(() => {
+      const query = createFakeQuery(calls);
+      query.get = vi.fn().mockResolvedValue({ docs });
+      return query;
+    });
+
+    const results = await getNewArrivals();
+    expect(results.map((p) => p.id)).toEqual(["cuff", "solitaire"]);
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "isNewArrival" && c.args[2] === true)).toBe(true);
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "availability" && c.args[2] === true)).toBe(true);
+    expect(calls.some((c) => c.method === "where" && c.args[0] === "stock")).toBe(false);
+  });
+
+  it("over-fetches candidates so a Sold Out product cannot shorten the row", async () => {
+    fakeCollection.mockImplementation(() => createFakeQuery(calls));
+    await getNewArrivals(8);
+    const limitCall = calls.find((c) => c.method === "limit");
+    expect(limitCall?.args[0]).toBeGreaterThan(8);
+  });
+
+  it("still returns at most the requested number of products", async () => {
+    const docs = [1, 2, 3, 4].map((n) => ({ data: () => makeOfferProduct(`p${n}`, { stock: 5 }) }));
+    fakeCollection.mockImplementation(() => {
+      const query = createFakeQuery(calls);
+      query.get = vi.fn().mockResolvedValue({ docs });
+      return query;
+    });
+
+    expect(await getNewArrivals(2)).toHaveLength(2);
   });
 });
 
