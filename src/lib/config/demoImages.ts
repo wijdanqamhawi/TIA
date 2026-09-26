@@ -84,10 +84,19 @@ export const DEMO_SPLASH = {
   mobileUrl: "/images/demo/splash-model-portrait.jpg",
 } as const;
 
-/** Wide + portrait hero artwork. */
-export const DEMO_HERO = {
-  desktopUrl: "/images/demo/hero-editorial-desktop.jpg",
-  mobileUrl: "/images/demo/hero-editorial-mobile.jpg",
+/**
+ * The homepage hero artwork — the store owner's **approved** TIA campaign
+ * photograph, not demo imagery: a 2172x724 navy frame with the model and
+ * the gold jewellery on the end side and an empty navy field on the start
+ * side for the hero copy. One landscape file serves both breakpoints; the
+ * crop is steered per breakpoint by `object-position` in `Hero.tsx`.
+ *
+ * This is the only place the hero file path is written. Swapping the hero
+ * later means replacing the file at this path (or changing this one line).
+ */
+export const HOME_HERO = {
+  desktopUrl: "/images/home/tia-navy-model-hero.png",
+  mobileUrl: "/images/home/tia-navy-model-hero.png",
 } as const;
 
 /**
@@ -156,7 +165,8 @@ export function nextDemoProductImage(anchorUrl: string, offset: number): string 
 
 /**
  * Hero artwork. Prefers the store's real Category Showcase imagery; falls
- * back to the demo hero only when none has been uploaded.
+ * back to the approved TIA hero photograph (`HOME_HERO`) when none has
+ * been uploaded.
  *
  * Call site: `src/app/[locale]/(storefront)/page.tsx`.
  */
@@ -164,7 +174,7 @@ export function resolveHeroImage(
   real: { desktopUrl: string; mobileUrl: string } | null,
 ): { desktopUrl: string; mobileUrl: string; isDemo: boolean } {
   if (real && !isPlaceholderUrl(real.desktopUrl)) return { ...real, isDemo: false };
-  return { ...DEMO_HERO, isDemo: true };
+  return { ...HOME_HERO, isDemo: false };
 }
 
 /**

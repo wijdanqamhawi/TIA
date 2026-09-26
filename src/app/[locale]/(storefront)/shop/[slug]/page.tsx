@@ -20,6 +20,7 @@ import { SelectedVariantProvider } from "@/components/storefront/product/Selecte
 import { Badge } from "@/components/ui/Badge";
 import { buildLocalizedMetadata } from "@/lib/seo/metadata";
 import { getBaseUrl } from "@/lib/config/site";
+import { STORE_CURRENCY } from "@/lib/utils/currency";
 import type { Locale } from "@/lib/i18n/routing";
 
 // Reads live pricing/stock/Sold-Out data on every request (Constitution
@@ -138,7 +139,7 @@ export default async function ProductDetailPage({
     offers: {
       "@type": "Offer",
       url: `${getBaseUrl()}/${locale}/shop/${slug}`,
-      priceCurrency: "USD",
+      priceCurrency: STORE_CURRENCY,
       price: (effectivePrice / 100).toFixed(2),
       availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     },

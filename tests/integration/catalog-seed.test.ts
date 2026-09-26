@@ -72,7 +72,7 @@ describe.skipIf(!hasEmulator)("catalog seed (Firebase Local Emulator Suite)", ()
       .map((doc) => doc.data())
       .filter((product) => product.images.some((image) => image.storagePath.startsWith("seed/")));
 
-    expect(products.length).toBe(6);
+    expect(products.length).toBe(22);
     for (const product of products) {
       expect(product.name.en.length, `${product.slug} name.en`).toBeGreaterThan(0);
       expect(product.name.ar, `${product.slug} name.ar`).toBeTruthy();

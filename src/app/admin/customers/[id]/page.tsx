@@ -4,6 +4,7 @@ import { getCustomerById, getOrdersForCustomerAdmin } from "@/lib/domain/admin/c
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/utils/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
               ),
             },
             { header: "Date", render: (row) => row.createdAt.toDate().toLocaleDateString("en-US") },
-            { header: "Total", render: (row) => (row.total / 100).toFixed(2) },
+            { header: "Total", render: (row) => formatCurrency(row.total, "en-US") },
             { header: "Status", render: (row) => <Badge>{row.status}</Badge> },
           ]}
         />

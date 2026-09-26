@@ -62,7 +62,7 @@ test.describe("Special Offers end-to-end", () => {
       name: { en: uniqueName, ar: null },
       slug: uniqueName.toLowerCase().replace(/\s+/g, "-"),
       description: { en: "desc", ar: null },
-      price: 15000, // $150.00
+      price: 15000, // ₪150.00
       categoryId: "bracelets",
       images: [],
       material: { en: "Gold", ar: null },
@@ -171,13 +171,13 @@ test.describe("Special Offers end-to-end", () => {
     // Shop / category page shows the same pricing for the same product.
     await page.goto("/en/shop/category/bracelets");
     const shopCard = page.getByRole("main").locator("div").filter({ hasText: uniqueName }).first();
-    await expect(visiblePrice(shopCard, "$99.99")).toBeVisible();
-    await expect(visiblePrice(shopCard, "$150.00")).toBeVisible();
+    await expect(visiblePrice(shopCard, "₪99.99")).toBeVisible();
+    await expect(visiblePrice(shopCard, "₪150.00")).toBeVisible();
 
     // Product detail page shows the same pricing.
     await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
-    await expect(visiblePrice(page.getByRole("main"), "$99.99")).toBeVisible();
-    await expect(visiblePrice(page.getByRole("main"), "$150.00")).toBeVisible();
+    await expect(visiblePrice(page.getByRole("main"), "₪99.99")).toBeVisible();
+    await expect(visiblePrice(page.getByRole("main"), "₪150.00")).toBeVisible();
 
     // Add to cart — the cart shows the effective (sale) price, never the regular one.
     // Generous per-attempt sub-timeouts (not the 1000ms used elsewhere in
@@ -189,7 +189,7 @@ test.describe("Special Offers end-to-end", () => {
     await expect(async () => {
       await page.goto("/en/cart");
       await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 3000 });
-      await expect(visiblePrice(page.getByRole("main"), "$99.99")).toBeVisible({ timeout: 3000 });
+      await expect(visiblePrice(page.getByRole("main"), "₪99.99")).toBeVisible({ timeout: 3000 });
     }).toPass({ timeout: 30000 });
 
     // Complete checkout — the order is priced at the sale price, an
@@ -218,11 +218,11 @@ test.describe("Special Offers end-to-end", () => {
 
     await expect(page.getByRole("heading", { name: "Order Confirmed" })).toBeVisible();
     await expect(page.getByText(uniqueName)).toBeVisible();
-    // The order snapshot is priced at the sale price ($99.99), not the
-    // regular $150.00 — the crossed-out treatment is a live-pricing display
+    // The order snapshot is priced at the sale price (₪99.99), not the
+    // regular ₪150.00 — the crossed-out treatment is a live-pricing display
     // concern (OfferPrice), not applicable to an immutable order snapshot.
-    await expect(page.getByText("$99.99").first()).toBeVisible();
-    await expect(page.getByText("$150.00")).toHaveCount(0);
+    await expect(page.getByText("₪99.99").first()).toBeVisible();
+    await expect(page.getByText("₪150.00")).toHaveCount(0);
 
     // Admin disables the offer.
     await setOfferViaAdminForm(page, ref.id, false);
@@ -230,8 +230,8 @@ test.describe("Special Offers end-to-end", () => {
     // A freshly loaded product page and a freshly added cart line now both
     // revert to the regular price — never a stale sale price anywhere.
     await page.goto(`/en/shop/${(await ref.get()).data()!.slug}`);
-    await expect(page.getByText("$150.00").first()).toBeVisible();
-    await expect(page.getByText("$99.99")).toHaveCount(0);
+    await expect(page.getByText("₪150.00").first()).toBeVisible();
+    await expect(page.getByText("₪99.99")).toHaveCount(0);
   });
 
   test("a Sold Out product on an active offer still shows SOLD OUT and cannot be added to cart (spec FR-122)", async ({

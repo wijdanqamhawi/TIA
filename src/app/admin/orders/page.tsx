@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { ordersCollection } from "@/lib/firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/utils/currency";
 import { DataTable } from "@/components/admin/DataTable";
 import { ORDER_STATUSES, type OrderStatus } from "@/types/order";
 
@@ -86,7 +87,7 @@ export default async function AdminOrdersPage({
           },
           { header: "Customer", render: (row) => row.customerSnapshot.fullName },
           { header: "Date", render: (row) => row.createdAt.toDate().toLocaleDateString("en-US") },
-          { header: "Total", render: (row) => (row.total / 100).toFixed(2) },
+          { header: "Total", render: (row) => formatCurrency(row.total, "en-US") },
           { header: "Status", render: (row) => <Badge variant={STATUS_BADGE[row.status]}>{row.status}</Badge> },
         ]}
       />

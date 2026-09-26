@@ -30,7 +30,9 @@ test.describe("guest browsing", () => {
     // tile per category. Best Sellers and the per-category showcase grid are
     // deliberately not part of it any more.
     await expect(main.getByRole("heading", { name: "New Arrivals", level: 2 })).toBeVisible();
-    await expect(main.getByRole("link", { name: "Golden Bangle Bracelet" }).first()).toBeVisible();
+    // The newest seeded New Arrival — the row is `createdAt`-descending and
+    // the seed now carries more in-stock New Arrivals than the row shows.
+    await expect(main.getByRole("link", { name: "Luna Mesh Watch" }).first()).toBeVisible();
     await expect(main.getByRole("heading", { name: "Shop by Category", level: 2 })).toBeVisible();
     for (const [name, slug] of [
       ["Bracelets", "bracelets"],

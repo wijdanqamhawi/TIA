@@ -16,7 +16,7 @@ import { getSocialConfig, buildInstagramHref, buildWhatsAppHref, type SocialConf
 
 function makeConfig(overrides: Partial<SocialConfig> = {}): SocialConfig {
   return {
-    instagramUrl: "https://www.instagram.com/elorajewellery",
+    instagramUrl: "https://www.instagram.com/tia.jewellery/",
     whatsappPhone: "+15551234567",
     whatsappDefaultMessage: { en: "Hello ELORA!", ar: "مرحبا إيلورا!" },
     ...overrides,
@@ -25,7 +25,7 @@ function makeConfig(overrides: Partial<SocialConfig> = {}): SocialConfig {
 
 describe("buildInstagramHref", () => {
   it("returns the configured URL unmodified", () => {
-    expect(buildInstagramHref(makeConfig())).toBe("https://www.instagram.com/elorajewellery");
+    expect(buildInstagramHref(makeConfig())).toBe("https://www.instagram.com/tia.jewellery/");
   });
 
   it("returns null when unconfigured", () => {
@@ -118,11 +118,11 @@ describe("getSocialConfig", () => {
   });
 
   it("reads and trims configured values", () => {
-    process.env.NEXT_PUBLIC_INSTAGRAM_URL = "  https://instagram.com/elora  ";
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL = "  https://instagram.com/tia.jewellery  ";
     process.env.NEXT_PUBLIC_WHATSAPP_PHONE = "+15551234567";
     process.env.NEXT_PUBLIC_WHATSAPP_DEFAULT_MESSAGE_EN = "Hello";
     const config = getSocialConfig();
-    expect(config.instagramUrl).toBe("https://instagram.com/elora");
+    expect(config.instagramUrl).toBe("https://instagram.com/tia.jewellery");
     expect(config.whatsappPhone).toBe("+15551234567");
     expect(config.whatsappDefaultMessage.en).toBe("Hello");
     expect(config.whatsappDefaultMessage.ar).toBeNull();

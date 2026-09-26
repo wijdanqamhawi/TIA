@@ -34,8 +34,9 @@ const rise = (ms: number) => ({ "--hero-delay": `${ms}ms` }) as CSSProperties;
  * ── THE IMAGE SLOT ───────────────────────────────────────────────────────
  * `image` is fed by the homepage from the first active Category Showcase's
  * uploaded artwork (managed at `/admin/showcases`), falling back to the
- * local demo hero only while the store has none — real store imagery always
- * wins. When `image` is `null` a composed navy ground renders instead.
+ * approved TIA hero photograph (`HOME_HERO`) only while the store has none
+ * — real store imagery always wins. When `image` is `null` a composed navy
+ * ground renders instead.
  *
  * The photograph is never recoloured: the navy field is a scrim over it
  * (`.hero-scrim`), so skin tones and gold jewellery stay warm. The artwork
@@ -63,6 +64,33 @@ export async function Hero({ locale, image }: { locale: string; image?: HeroImag
       <div className="relative h-[23rem] w-full sm:h-[19rem] lg:h-[clamp(17rem,19.65vw,19.5rem)]">
         {image ? (
           <div className="hero-image absolute inset-0">
+            {/* The approved photograph is a 3:1 landscape frame, so
+                `object-cover` crops it on a different axis at each width
+                and only one half of each `object-position` pair is ever
+                doing work:
+
+                  · tablet (band taller than 3:1) — the frame overflows
+                    horizontally, so *x* picks the window. 62% holds the
+                    model and all four pieces (earring, ring, necklace,
+                    bracelet) while leaving the navy field on the start
+                    side, under the copy.
+                  · desktop (band flatter than 3:1) — the frame overflows
+                    vertically instead and *y* picks the window, with less
+                    of the frame surviving the wider the viewport gets. At
+                    ~1024px the whole set still fits; by 1440px the band
+                    shows ~59% of the frame and by 1920px only ~49%, which
+                    is narrower than the earring-to-bracelet span. 45%
+                    therefore keeps the three pieces the eye lands on —
+                    ring, pendant, bracelet charm — and lets the earring go
+                    with the top of the face rather than clipping the
+                    necklace, which is the hero of the shot.
+                  · 2xl and up — the band is flattest here, so the window
+                    drops to 58% to hold the bracelet, which 45% would
+                    otherwise cut.
+
+                Both halves ride on one class so a single file behaves at
+                every width. The frame is never mirrored under RTL (see the
+                note above). */}
             <Image
               src={image.desktopUrl}
               alt=""
@@ -70,8 +98,11 @@ export async function Hero({ locale, image }: { locale: string; image?: HeroImag
               fill
               sizes="100vw"
               priority
-              className="hidden object-cover object-[72%_center] sm:block"
+              className="hidden object-cover object-[62%_45%] sm:block 2xl:object-[62%_58%]"
             />
+            {/* Phones: the band is nearly square, so the frame overflows
+                horizontally by a wide margin — x alone chooses the window,
+                and 62% centres it on the jewellery. */}
             <Image
               src={image.mobileUrl}
               alt=""
@@ -79,7 +110,7 @@ export async function Hero({ locale, image }: { locale: string; image?: HeroImag
               fill
               sizes="100vw"
               priority
-              className="object-cover object-[center_20%] sm:hidden"
+              className="object-cover object-[62%_center] sm:hidden"
             />
           </div>
         ) : (

@@ -324,6 +324,351 @@ const PRODUCTS: SeedProduct[] = [
       },
     ],
   },
+
+  // ── Shop expansion: 16 additive products (6 → 22) ──────────────────────
+  // Existing categories only — there is deliberately no Necklaces category.
+  // Every product has its own photograph under `public/images/products/`,
+  // named after its slug, so no two products share a frame and none falls
+  // through to the hashed demo pool. Six of those files are byte-identical
+  // copies of previously unused `public/images/demo/product-0N.jpg` shots;
+  // the demo pool itself is left untouched. All sixteen are in stock.
+
+  // Bracelets
+  {
+    categoryId: "bracelets",
+    name: { en: "Étoile Charm Bracelet", ar: "سوار إيتوال بالتعليقات" },
+    description: {
+      en: "A fine gold chain hung with star, clover and pearl charms — a little constellation for the wrist.",
+      ar: "سلسلة ذهبية رقيقة تتدلى منها تعليقات على شكل نجمة وبرسيم ولؤلؤة، كأنها كوكبة صغيرة على المعصم.",
+    },
+    material: {
+      en: "18k Gold-Plated Brass, Enamel, Crystal & Pearl",
+      ar: "نحاس مطلي بالذهب عيار 18 ومينا وكريستال ولؤلؤ",
+    },
+    price: 11800,
+    stock: 18,
+    isNewArrival: true,
+    images: [
+      {
+        url: "/images/products/etoile-charm-bracelet.jpg",
+        storagePath: "seed/products/etoile-charm-bracelet.jpg",
+        alt: "Étoile Charm Bracelet with star, clover and pearl charms",
+      },
+    ],
+  },
+  {
+    categoryId: "bracelets",
+    name: { en: "Serene Tennis Bracelet", ar: "سوار سيرين تنس" },
+    description: {
+      en: "A continuous line of brilliant-cut stones set in warm gold, made to be worn every day.",
+      ar: "صف متصل من الأحجار اللامعة مرصعة بالذهب الدافئ، مصمم ليُرتدى كل يوم.",
+    },
+    material: {
+      en: "Gold-Plated Sterling Silver & Cubic Zirconia",
+      ar: "فضة إسترليني مطلية بالذهب وزركونيا مكعبة",
+    },
+    price: 21000,
+    stock: 7,
+    images: [
+      {
+        url: "/images/products/serene-tennis-bracelet.jpg",
+        storagePath: "seed/products/serene-tennis-bracelet.jpg",
+        alt: "Serene Tennis Bracelet with a continuous line of stones",
+      },
+    ],
+  },
+  {
+    categoryId: "bracelets",
+    name: { en: "Lumière Dome Cuff", ar: "سوار لوميير العريض" },
+    description: {
+      en: "A bold, high-polish domed cuff that catches the light from every angle.",
+      ar: "سوار عريض مقبب بلمعة عالية يعكس الضوء من كل زاوية.",
+    },
+    material: { en: "18k Gold-Plated Brass", ar: "نحاس مطلي بالذهب عيار 18" },
+    price: 17500,
+    stock: 12,
+    isBestSeller: true,
+    images: [
+      {
+        url: "/images/products/lumiere-dome-cuff.jpg",
+        storagePath: "seed/products/lumiere-dome-cuff.jpg",
+        alt: "Lumière Dome Cuff worn on the wrist",
+      },
+    ],
+  },
+  {
+    categoryId: "bracelets",
+    name: { en: "Amour Knot Bangle", ar: "سوار أمور بعقدة" },
+    description: {
+      en: "A slender gold bangle tied in a single love knot — understated and easy to stack.",
+      ar: "سوار ذهبي نحيف معقود بعقدة حب واحدة، بسيط وسهل التنسيق مع غيره.",
+    },
+    material: { en: "18k Gold-Plated Brass", ar: "نحاس مطلي بالذهب عيار 18" },
+    price: 10500,
+    stock: 20,
+    images: [
+      {
+        url: "/images/products/amour-knot-bangle.jpg",
+        storagePath: "seed/products/amour-knot-bangle.jpg",
+        alt: "Amour Knot Bangle worn on the wrist",
+      },
+    ],
+  },
+  {
+    categoryId: "bracelets",
+    name: { en: "Amara Beaded Bracelet", ar: "سوار أمارا بالخرز" },
+    description: {
+      en: "Polished gold beads alternating with pearls, finished with a small engraved medallion.",
+      ar: "خرزات ذهبية مصقولة تتناوب مع اللؤلؤ، تنتهي بميدالية صغيرة محفورة.",
+    },
+    material: {
+      en: "18k Gold-Plated Brass & Freshwater Pearl",
+      ar: "نحاس مطلي بالذهب عيار 18 ولؤلؤ طبيعي",
+    },
+    price: 9200,
+    stock: 16,
+    isNewArrival: true,
+    images: [
+      {
+        url: "/images/products/amara-beaded-bracelet.jpg",
+        storagePath: "seed/products/amara-beaded-bracelet.jpg",
+        alt: "Amara Beaded Bracelet with gold beads, pearls and a medallion",
+      },
+    ],
+  },
+
+  // Rings
+  {
+    categoryId: "rings",
+    name: { en: "Éclat Halo Ring", ar: "خاتم إيكلا بالكريستال" },
+    description: {
+      en: "A delicate rose-gold band crowned with a centre stone in a sparkling halo.",
+      ar: "خاتم رقيق بلون الذهب الوردي يعلوه حجر مركزي تحيط به هالة لامعة.",
+    },
+    material: {
+      en: "Rose Gold-Plated Sterling Silver & Cubic Zirconia",
+      ar: "فضة إسترليني مطلية بالذهب الوردي وزركونيا مكعبة",
+    },
+    price: 19500,
+    stock: 8,
+    isBestSeller: true,
+    images: [
+      {
+        url: "/images/products/eclat-halo-ring.jpg",
+        storagePath: "seed/products/eclat-halo-ring.jpg",
+        alt: "Éclat Halo Ring worn on the hand",
+      },
+    ],
+  },
+  {
+    categoryId: "rings",
+    name: { en: "Celeste Signet Ring", ar: "خاتم سيليست المنقوش" },
+    description: {
+      en: "A classic engraved signet with a softly worn, heirloom character.",
+      ar: "خاتم ختم كلاسيكي منقوش بطابع عتيق يوحي بالقطع الموروثة.",
+    },
+    material: { en: "Gold-Plated Sterling Silver", ar: "فضة إسترليني مطلية بالذهب" },
+    price: 13500,
+    stock: 13,
+    images: [
+      {
+        url: "/images/products/celeste-signet-ring.jpg",
+        storagePath: "seed/products/celeste-signet-ring.jpg",
+        alt: "Celeste Signet Ring worn on the hand",
+      },
+    ],
+  },
+  {
+    categoryId: "rings",
+    name: { en: "Amour Band Ring", ar: "خاتم أمور الحلقي" },
+    description: {
+      en: "A slim gold band set with a row of bright stones — lovely alone or stacked.",
+      ar: "خاتم ذهبي نحيف مرصع بصف من الأحجار اللامعة، جميل وحده أو مع خواتم أخرى.",
+    },
+    material: {
+      en: "Gold-Plated Sterling Silver & Cubic Zirconia",
+      ar: "فضة إسترليني مطلية بالذهب وزركونيا مكعبة",
+    },
+    price: 8800,
+    stock: 24,
+    images: [
+      {
+        url: "/images/products/amour-band-ring.jpg",
+        storagePath: "seed/products/amour-band-ring.jpg",
+        alt: "Amour Band Ring set with a row of stones",
+      },
+    ],
+  },
+  {
+    categoryId: "rings",
+    name: { en: "Double Pearl Ring", ar: "خاتم اللؤلؤ المزدوج" },
+    description: {
+      en: "An open gold wrap ring finished with a lustrous pearl at each end.",
+      ar: "خاتم ذهبي مفتوح ملتف تزين طرفيه حبتا لؤلؤ لامعتان.",
+    },
+    material: {
+      en: "18k Gold-Plated Brass & Freshwater Pearl",
+      ar: "نحاس مطلي بالذهب عيار 18 ولؤلؤ طبيعي",
+    },
+    price: 11500,
+    stock: 10,
+    images: [
+      {
+        url: "/images/products/double-pearl-ring.jpg",
+        storagePath: "seed/products/double-pearl-ring.jpg",
+        alt: "Double Pearl Ring with a pearl at each end",
+      },
+    ],
+  },
+  {
+    categoryId: "rings",
+    name: { en: "Celeste Statement Ring", ar: "خاتم سيليست البارز" },
+    description: {
+      en: "A radiant cut-crystal centre framed in pavé, on a split gold shank.",
+      ar: "حجر كريستال مشع في المنتصف تحيط به أحجار صغيرة مرصوصة، على حلقة ذهبية مزدوجة.",
+    },
+    material: {
+      en: "Gold-Plated Sterling Silver & Cubic Zirconia",
+      ar: "فضة إسترليني مطلية بالذهب وزركونيا مكعبة",
+    },
+    price: 16800,
+    stock: 9,
+    isNewArrival: true,
+    images: [
+      {
+        url: "/images/products/celeste-statement-ring.jpg",
+        storagePath: "seed/products/celeste-statement-ring.jpg",
+        alt: "Celeste Statement Ring with a large cut-crystal centre",
+      },
+    ],
+  },
+
+  // Earrings
+  {
+    categoryId: "earrings",
+    name: { en: "Luna Drop Earrings", ar: "أقراط لونا المتدلية" },
+    description: {
+      en: "A soft green teardrop suspended from a vintage-inspired silver setting.",
+      ar: "حجر أخضر ناعم على شكل دمعة يتدلى من قاعدة فضية مستوحاة من الطراز العتيق.",
+    },
+    material: {
+      en: "Sterling Silver & Green Crystal",
+      ar: "فضة إسترليني وكريستال أخضر",
+    },
+    price: 9800,
+    stock: 15,
+    isBestSeller: true,
+    images: [
+      {
+        url: "/images/products/luna-drop-earrings.jpg",
+        storagePath: "seed/products/luna-drop-earrings.jpg",
+        alt: "Luna Drop Earrings worn on the ear",
+      },
+    ],
+  },
+  {
+    categoryId: "earrings",
+    name: { en: "Étoile Chandelier Earrings", ar: "أقراط إيتوال الثريا" },
+    description: {
+      en: "Ornate gold bell-shaped chandeliers with finely worked detail and gentle movement.",
+      ar: "أقراط ذهبية مزخرفة على شكل جرس بتفاصيل دقيقة وحركة ناعمة.",
+    },
+    material: { en: "18k Gold-Plated Brass", ar: "نحاس مطلي بالذهب عيار 18" },
+    price: 12500,
+    stock: 9,
+    images: [
+      {
+        url: "/images/products/etoile-chandelier-earrings.jpg",
+        storagePath: "seed/products/etoile-chandelier-earrings.jpg",
+        alt: "Étoile Chandelier Earrings worn on the ear",
+      },
+    ],
+  },
+  {
+    categoryId: "earrings",
+    name: { en: "Celeste Hoop Earrings", ar: "أقراط سيليست الحلقية" },
+    description: {
+      en: "Chunky, high-shine gold hoops with a softly rounded profile.",
+      ar: "أقراط حلقية ذهبية عريضة بلمعة عالية وانحناءة ناعمة.",
+    },
+    material: { en: "18k Gold-Plated Brass", ar: "نحاس مطلي بالذهب عيار 18" },
+    price: 7800,
+    stock: 22,
+    isNewArrival: true,
+    images: [
+      {
+        url: "/images/products/celeste-hoop-earrings.jpg",
+        storagePath: "seed/products/celeste-hoop-earrings.jpg",
+        alt: "Celeste Hoop Earrings in polished gold",
+      },
+    ],
+  },
+  {
+    categoryId: "earrings",
+    name: { en: "Pearl Bloom Earrings", ar: "أقراط زهرة اللؤلؤ" },
+    description: {
+      en: "A flower of pearls around a crystal centre, with a pearl teardrop falling below.",
+      ar: "زهرة من اللؤلؤ حول قلب من الكريستال، تتدلى منها لؤلؤة على شكل دمعة.",
+    },
+    material: {
+      en: "Gold-Plated Brass, Pearl & Crystal",
+      ar: "نحاس مطلي بالذهب ولؤلؤ وكريستال",
+    },
+    price: 9200,
+    stock: 17,
+    images: [
+      {
+        url: "/images/products/pearl-bloom-earrings.jpg",
+        storagePath: "seed/products/pearl-bloom-earrings.jpg",
+        alt: "Pearl Bloom Earrings with a pearl flower and teardrop",
+      },
+    ],
+  },
+
+  // Watches
+  {
+    categoryId: "watches",
+    name: { en: "Élan Classic Watch", ar: "ساعة إيلان الكلاسيكية" },
+    description: {
+      en: "A rectangular ivory dial on a polished gold link bracelet — refined, everyday elegance.",
+      ar: "ميناء عاجي مستطيل على سوار ذهبي مصقول بحلقات، أناقة راقية لكل يوم.",
+    },
+    material: {
+      en: "Gold-Tone Stainless Steel",
+      ar: "ستانلس ستيل بلون ذهبي",
+    },
+    price: 26500,
+    stock: 6,
+    images: [
+      {
+        url: "/images/products/elan-classic-watch.jpg",
+        storagePath: "seed/products/elan-classic-watch.jpg",
+        alt: "Élan Classic Watch with a rectangular ivory dial and gold link bracelet",
+      },
+    ],
+  },
+  {
+    categoryId: "watches",
+    name: { en: "Luna Mesh Watch", ar: "ساعة لونا بسوار شبكي" },
+    description: {
+      en: "A round ivory dial on a fine gold mesh strap that sits lightly on the wrist.",
+      ar: "ميناء عاجي دائري على سوار ذهبي شبكي ناعم يستقر بخفة على المعصم.",
+    },
+    material: {
+      en: "Gold-Tone Stainless Steel",
+      ar: "ستانلس ستيل بلون ذهبي",
+    },
+    price: 24000,
+    stock: 8,
+    isNewArrival: true,
+    images: [
+      {
+        url: "/images/products/luna-mesh-watch.jpg",
+        storagePath: "seed/products/luna-mesh-watch.jpg",
+        alt: "Luna Mesh Watch with a round ivory dial and gold mesh strap",
+      },
+    ],
+  },
 ];
 
 export async function seedCategories(): Promise<void> {

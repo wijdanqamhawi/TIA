@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/utils/currency";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/admin/DataTable";
 import { setProductFlagAction, updateProductAction, deleteProductAction } from "@/actions/admin/product.actions";
@@ -75,7 +76,7 @@ export function AdminProductsTable({ products }: { products: AdminProductRow[] }
           ),
         },
         { header: "Category", render: (row) => row.categoryNameEn },
-        { header: "Price", render: (row) => (row.price / 100).toFixed(2) },
+        { header: "Price", render: (row) => formatCurrency(row.price, "en-US") },
         {
           header: "Stock",
           render: (row) => (row.isSoldOut ? <Badge variant="danger">Sold Out</Badge> : row.stock),

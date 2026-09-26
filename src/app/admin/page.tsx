@@ -3,6 +3,7 @@ import { getDashboardStats, getRecentOrders } from "@/lib/domain/admin/dashboard
 import { StatCard } from "@/components/admin/StatCard";
 import { DataTable } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/utils/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function AdminDashboardPage() {
       <h1 className="font-display text-2xl">Dashboard</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Total Sales (excl. cancelled)" value={(stats.totalSales / 100).toFixed(2)} />
+        <StatCard label="Total Sales (excl. cancelled)" value={formatCurrency(stats.totalSales, "en-US")} />
         <StatCard label="Total Orders (excl. cancelled)" value={stats.totalOrders} />
         <StatCard label="Pending Orders" value={stats.pendingOrders} />
         <StatCard label="Total Products" value={stats.totalProducts} />
@@ -40,7 +41,7 @@ export default async function AdminDashboardPage() {
                 ),
               },
               { header: "Customer", render: (row) => row.customerSnapshot.fullName },
-              { header: "Total", render: (row) => (row.total / 100).toFixed(2) },
+              { header: "Total", render: (row) => formatCurrency(row.total, "en-US") },
               { header: "Status", render: (row) => <Badge>{row.status}</Badge> },
             ]}
           />
