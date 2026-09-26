@@ -4,10 +4,17 @@ import { productCard } from "./fixtures/product-card";
 
 // The card heart toggles the wishlist directly only for a no-options product
 // (a with-options product's heart opens its detail page instead — see
-// `ProductCard`), so every test here uses the seeded Golden Bangle Bracelet
-// card rather than whichever card happens to come first in the grid.
-const PRODUCT_EN = "Golden Bangle Bracelet";
-const PRODUCT_AR = "سوار ذهبي";
+// `ProductCard`), so every test here targets one named seeded card rather
+// than whichever card happens to come first in the grid.
+//
+// That card must also render on the Shop page's *first* page: `/shop` lists
+// newest-first, 12 per page, over a 22-product seed. The seed writes products
+// one at a time in list order, so Luna Mesh Watch — the last seeded, no
+// options, in stock and untouched by other specs — is the newest seeded
+// product and leads the grid. (The first-seeded Golden Bangle Bracelet is now
+// the oldest and falls onto page 2.)
+const PRODUCT_EN = "Luna Mesh Watch";
+const PRODUCT_AR = "ساعة لونا بسوار شبكي";
 
 test("heart toggles add/remove with visual state, and the wishlist page reflects it — EN", async ({ page }) => {
   await registerNewCustomer(page, "Heart Verify Tester", `heart-verify-en-${Date.now()}`);
