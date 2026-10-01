@@ -15,7 +15,19 @@ export type AdminLocale = (typeof ADMIN_LOCALES)[number];
 export const ADMIN_LOCALE_COOKIE = "tia_admin_locale";
 
 /** The message namespaces the admin dashboard uses. */
-const ADMIN_NAMESPACES = ["AdminShell", "AdminTeam"] as const;
+const ADMIN_NAMESPACES = [
+  "AdminShell",
+  "AdminDashboard",
+  "AdminProducts",
+  "AdminProductForm",
+  "AdminCategories",
+  "AdminShowcases",
+  "AdminOrders",
+  "AdminCustomers",
+  "AdminOffers",
+  "AdminExports",
+  "AdminTeam",
+] as const;
 type AdminNamespace = (typeof ADMIN_NAMESPACES)[number];
 
 export function isAdminLocale(value: unknown): value is AdminLocale {

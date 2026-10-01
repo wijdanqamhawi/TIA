@@ -6,7 +6,7 @@ import type { OrderStatus } from "@/types/order";
  * status (`DELIVERED`/`CANCELLED`) has no further allowed transitions —
  * once cancelled or delivered, an order's status can never change again.
  * This is the single source of truth both `order-status.service.ts`
- * (server-only) and `OrderStatusSelect` (Client Component, T172) consult,
+ * (server-only) and the Admin order-status controls (Client Components) consult,
  * so the two can never drift — deliberately kept free of any `server-only`/
  * Admin SDK import so a Client Component can import it directly.
  */

@@ -55,9 +55,16 @@ vi.mock("@/lib/firebase/guards", () => ({
   UnauthenticatedError: FakeUnauthenticatedError,
 }));
 
-type FakeCategory = { name: { en: string; ar: string | null }; slug: string; description: null; displayOrder: number; isActive: boolean };
+type FakeCategory = {
+  name: { en: string; ar: string | null };
+  slug: string;
+  description: null;
+  displayOrder: number;
+  isActive: boolean;
+};
 const docs = new Map<string, FakeCategory>();
 const updateMock = vi.fn();
+const createMock = vi.fn();
 const queryDocs: { id: string }[] = [];
 
 vi.mock("@/lib/firebase/firestore", () => ({
@@ -68,6 +75,7 @@ vi.mock("@/lib/firebase/firestore", () => ({
         return { exists: Boolean(data), data: () => data, id };
       },
       update: (patch: unknown) => updateMock(id, patch),
+      create: (data: unknown) => createMock(id, data),
     }),
     where: () => ({
       limit: () => ({
@@ -77,7 +85,8 @@ vi.mock("@/lib/firebase/firestore", () => ({
   }),
 }));
 
-const { updateCategoryAction } = await import("@/actions/admin/category.actions");
+const { createCategoryAction, updateCategoryAction } =
+  await import("@/actions/admin/category.actions");
 
 describe("updateCategoryAction", () => {
   beforeEach(() => {
@@ -101,12 +110,102 @@ describe("updateCategoryAction", () => {
   });
 
   it("updates displayOrder/isActive without touching name/slug when name is omitted", async () => {
-    docs.set("c1", { name: { en: "Bracelets", ar: null }, slug: "bracelets", description: null, displayOrder: 1, isActive: true });
+    docs.set("c1", {
+      name: { en: "Bracelets", ar: null },
+      slug: "bracelets",
+      description: null,
+      displayOrder: 1,
+      isActive: true,
+    });
 
     const result = await updateCategoryAction({ categoryId: "c1", isActive: false });
 
     expect(result.ok).toBe(true);
     const [, patch] = updateMock.mock.calls[0];
     expect(patch).toMatchObject({ isActive: false, slug: "bracelets" });
+  });
+});
+
+describe("createCategoryAction", () => {
+  const valid = {
+    name: { en: "Necklaces", ar: "قلائد" },
+    description: null,
+    displayOrder: 5,
+    isActive: true,
+  };
+
+  beforeEach(() => {
+    docs.clear();
+    queryDocs.length = 0;
+    createMock.mockReset().mockResolvedValue(undefined);
+    requireAdminMock.mockReset().mockResolvedValue({ uid: "admin-1", role: "ADMIN" });
+  });
+
+  it("rejects a non-admin caller without writing", async () => {
+    requireAdminMock.mockRejectedValue(new FakeForbiddenError());
+    const result = await createCategoryAction(valid);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("FORBIDDEN");
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("requires both the English and the Arabic name", async () => {
+    for (const name of [
+      { en: "", ar: "قلائد" },
+      { en: "Necklaces", ar: "  " },
+      { en: "Necklaces", ar: null },
+    ]) {
+      const result = await createCategoryAction({ ...valid, name });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("VALIDATION_ERROR");
+    }
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid display order", async () => {
+    for (const displayOrder of [-1, 1.5, Number.NaN]) {
+      const result = await createCategoryAction({ ...valid, displayOrder });
+      expect(result.ok).toBe(false);
+    }
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an English name with no letters or numbers", async () => {
+    const result = await createCategoryAction({ ...valid, name: { en: "***", ar: "قلائد" } });
+    expect(result.ok).toBe(false);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("creates the category under its slug, with the seeded categories' shape", async () => {
+    const result = await createCategoryAction({
+      ...valid,
+      name: { en: "  Necklaces ", ar: " قلائد " },
+    });
+    expect(result).toEqual({ ok: true, data: { categoryId: "necklaces" } });
+    const [id, data] = createMock.mock.calls[0];
+    expect(id).toBe("necklaces");
+    expect(data).toMatchObject({
+      id: "necklaces",
+      name: { en: "Necklaces", ar: "قلائد" },
+      slug: "necklaces",
+      description: null,
+      displayOrder: 5,
+      isActive: true,
+    });
+  });
+
+  it("refuses a name whose slug is already taken", async () => {
+    queryDocs.push({ id: "rings" });
+    const result = await createCategoryAction({ ...valid, name: { en: "Rings", ar: "خواتم" } });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("CONFLICT");
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("reports CONFLICT when the document id already exists", async () => {
+    createMock.mockRejectedValue(Object.assign(new Error("exists"), { code: 6 }));
+    const result = await createCategoryAction(valid);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("CONFLICT");
   });
 });

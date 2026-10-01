@@ -93,7 +93,7 @@ export function QuickView({
           {soldOut ? (
             <Badge variant="danger">{t("soldOut")}</Badge>
           ) : product.offerStatus === "ACTIVE" ? (
-            <Badge variant="burgundy">{t("onSale")}</Badge>
+            <Badge variant="gold">{t("onSale")}</Badge>
           ) : null}
           <FormError message={error} />
           <div className="mt-auto flex w-full flex-col gap-3 pt-2 sm:flex-row">

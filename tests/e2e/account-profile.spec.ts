@@ -22,6 +22,7 @@ async function registerNewCustomer(page: Page, name: string, emailPrefix: string
     await page.getByLabel("Full Name").fill(name);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByLabel("Mobile Phone Number").fill("+970599123456");
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
   }).toPass({ timeout: 75000 });

@@ -38,7 +38,7 @@ const SESSION_COOKIE_OPTIONS = {
 /**
  * Verifies a client-obtained Firebase ID token, mints a session cookie,
  * and creates/syncs the `users/{uid}` Firestore document (`role:
- * "CUSTOMER"` on first sign-up — there is no public admin-registration
+ * "CUSTOMER"` and the register form's `phone` on first sign-up — there is no public admin-registration
  * path, research.md §21). Used by both /login and /register after the
  * client SDK step completes (contracts/server-actions.md).
  *
@@ -82,7 +82,7 @@ export async function createSessionAction(input: unknown): Promise<ActionResult<
       uid,
       name: name ?? "Customer",
       email: email ?? "",
-      phone: null,
+      phone: parsed.data.phone ?? null,
       role: "CUSTOMER",
       profile: { address: null },
       createdAt: FieldValue.serverTimestamp(),

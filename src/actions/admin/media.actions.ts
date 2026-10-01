@@ -5,8 +5,14 @@ import { FieldValue } from "firebase-admin/firestore";
 import { productsCollection } from "@/lib/firebase/firestore";
 import { ForbiddenError, requireAdmin, UnauthenticatedError } from "@/lib/firebase/guards";
 import { productImageSchema } from "@/lib/validation/product.schema";
-import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
+import {
+  actionError,
+  actionOk,
+  actionValidationError,
+  type ActionResult,
+} from "@/lib/validation/common";
 import { invalidateStorefrontCatalog } from "@/lib/cache/invalidate";
+import { cleanupProductImages } from "@/lib/domain/admin/product-images";
 import type { ProductImage } from "@/types/product";
 
 async function guardAdmin(): Promise<ActionResult<never> | null> {
@@ -47,7 +53,10 @@ export async function attachUploadedImageAction(input: unknown): Promise<ActionR
   const snapshot = await ref.get();
   if (!snapshot.exists) return actionError("NOT_FOUND", "This product no longer exists.");
 
-  const images: ProductImage[] = [...snapshot.data()!.images, { ...image, position: snapshot.data()!.images.length }];
+  const images: ProductImage[] = [
+    ...snapshot.data()!.images,
+    { ...image, position: snapshot.data()!.images.length },
+  ];
   await ref.update({ images, updatedAt: FieldValue.serverTimestamp() });
   invalidateStorefrontCatalog();
   return actionOk(null);
@@ -103,21 +112,19 @@ export async function removeProductImageAction(input: unknown): Promise<ActionRe
   const snapshot = await ref.get();
   if (!snapshot.exists) return actionError("NOT_FOUND", "This product no longer exists.");
 
-  const images = snapshot
-    .data()!
-    .images.filter((img) => img.storagePath !== storagePath)
+  const current = snapshot.data()!.images;
+  const removed = current.filter((img) => img.storagePath === storagePath);
+  const images = current
+    .filter((img) => img.storagePath !== storagePath)
     .map((img, index) => ({ ...img, position: index }));
 
   await ref.update({ images, updatedAt: FieldValue.serverTimestamp() });
 
-  try {
-    const { getAdminStorage } = await import("@/lib/firebase/admin");
-    await getAdminStorage().bucket().file(storagePath).delete({ ignoreNotFound: true });
-  } catch {
-    // Firestore metadata is already updated; a leftover Storage object is
-    // not a correctness issue (never re-surfaced anywhere), so a delete
-    // failure here is not returned as an action error.
-  }
+  // Delete the file only if it was really one of THIS product's own images and nothing else references it
+  // (the shared cleanup proves that). A `storagePath` that is not in the product is never deleted — it used to
+  // be passed straight to Storage. A leftover file is not a correctness issue, so a failure is logged by the
+  // cleanup and not returned as an action error.
+  if (removed.length > 0) await cleanupProductImages([{ productId, images: removed }]);
 
   invalidateStorefrontCatalog();
   return actionOk(null);

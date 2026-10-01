@@ -72,6 +72,7 @@ export async function registerNewCustomer(page: Page, name: string, emailPrefix:
     await page.getByLabel("Full Name").fill(name);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(CUSTOMER_PASSWORD);
+    await page.getByLabel("Mobile Phone Number").fill("+970599123456");
     await expect(page.getByLabel("Full Name")).toHaveValue(name);
     await expect(page.getByLabel("Email")).toHaveValue(email);
     await expect(page.getByLabel("Password")).toHaveValue(CUSTOMER_PASSWORD);

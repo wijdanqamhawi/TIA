@@ -39,6 +39,7 @@ type FakeProduct = {
 
 const docs = new Map<string, FakeProduct>();
 const updateMock = vi.fn();
+const assertSlugMock = vi.fn();
 
 vi.mock("@/lib/firebase/firestore", () => ({
   productsCollection: () => ({
@@ -58,7 +59,7 @@ vi.mock("@/lib/domain/catalog/category.service", () => ({
 
 vi.mock("@/lib/domain/catalog/product.service", () => ({
   deriveProductSlug: (nameEn: string) => nameEn.toLowerCase().replace(/\s+/g, "-"),
-  assertUniqueProductSlug: async () => {},
+  assertUniqueProductSlug: async (...args: unknown[]) => assertSlugMock(...args),
 }));
 
 const { updateProductAction } = await import("@/actions/admin/product.actions");
@@ -154,6 +155,64 @@ describe("updateProductAction — Special Offers fields", () => {
     const result = await updateProductAction({ productId: "p1", price: 5000, isOnSale: true, salePrice: 6000 });
 
     expect(result.ok).toBe(false);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateProductAction — the slug (public URL) is only re-derived when the name changes", () => {
+  beforeEach(() => {
+    docs.clear();
+    updateMock.mockReset();
+    assertSlugMock.mockReset();
+    requireAdminMock.mockReset().mockResolvedValue({ uid: "admin-1", role: "ADMIN" });
+    // A deliberately pinned slug: it does NOT match what the name would derive ("gold-ring").
+    docs.set("p1", baseProduct({ slug: "pinned-url-slug" }));
+  });
+
+  const writtenSlug = () => updateMock.mock.calls[0]![1].slug;
+
+  it("keeps a pinned slug on a partial update such as a visibility toggle", async () => {
+    const result = await updateProductAction({ productId: "p1", availability: false });
+    expect(result.ok).toBe(true);
+    expect(writtenSlug()).toBe("pinned-url-slug");
+    expect(assertSlugMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps it on an offer edit", async () => {
+    await updateProductAction({ productId: "p1", isOnSale: true, salePrice: 8000 });
+    expect(writtenSlug()).toBe("pinned-url-slug");
+  });
+
+  it("keeps it on a full product-form save that leaves the name unchanged", async () => {
+    await updateProductAction({
+      productId: "p1",
+      name: { en: "Gold Ring", ar: null },
+      description: { en: "A ring", ar: null },
+      material: { en: "Gold", ar: null },
+      price: 10000,
+      stock: 5,
+    });
+    expect(writtenSlug()).toBe("pinned-url-slug");
+    expect(assertSlugMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps it when only the Arabic name changes", async () => {
+    await updateProductAction({ productId: "p1", name: { en: "Gold Ring", ar: "خاتم ذهبي" } });
+    expect(writtenSlug()).toBe("pinned-url-slug");
+  });
+
+  it("re-derives it, after a uniqueness check, when the English name actually changes", async () => {
+    const result = await updateProductAction({ productId: "p1", name: { en: "Silver Ring", ar: null } });
+    expect(result.ok).toBe(true);
+    expect(writtenSlug()).toBe("silver-ring");
+    expect(assertSlugMock).toHaveBeenCalledWith("silver-ring", { excludeProductId: "p1" });
+  });
+
+  it("refuses a rename whose new slug is already taken, writing nothing", async () => {
+    assertSlugMock.mockRejectedValue(new Error("taken"));
+    const result = await updateProductAction({ productId: "p1", name: { en: "Silver Ring", ar: null } });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("CONFLICT");
     expect(updateMock).not.toHaveBeenCalled();
   });
 });

@@ -4,10 +4,20 @@ import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { categoryShowcasesCollection } from "@/lib/firebase/firestore";
 import { ForbiddenError, requireAdmin, UnauthenticatedError } from "@/lib/firebase/guards";
-import { updateCategoryShowcaseSchema, categoryShowcaseSchema } from "@/lib/validation/categoryShowcase.schema";
+import {
+  updateCategoryShowcaseSchema,
+  categoryShowcaseSchema,
+} from "@/lib/validation/categoryShowcase.schema";
 import { categoryExists } from "@/lib/domain/catalog/category.service";
-import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
-import { invalidateStorefrontCatalog } from "@/lib/cache/invalidate";
+import {
+  actionError,
+  actionOk,
+  actionValidationError,
+  type ActionResult,
+} from "@/lib/validation/common";
+import { invalidateAdminShowcases, invalidateStorefrontCatalog } from "@/lib/cache/invalidate";
+
+const DUPLICATE_SHOWCASE_MESSAGE = "This category already has a homepage showcase.";
 
 async function guardAdmin(): Promise<ActionResult<never> | null> {
   try {
@@ -49,6 +59,19 @@ export async function updateCategoryShowcaseAction(input: unknown): Promise<Acti
     }
   }
 
+  // Moving a showcase to a different category must not give that category a second showcase.
+  if (rest.categoryId && rest.categoryId !== current.categoryId) {
+    const taken = await categoryShowcasesCollection()
+      .where("categoryId", "==", rest.categoryId)
+      .limit(1)
+      .get();
+    if (taken.docs.some((doc) => doc.id !== showcaseId)) {
+      return actionError("CONFLICT", DUPLICATE_SHOWCASE_MESSAGE, {
+        categoryId: [DUPLICATE_SHOWCASE_MESSAGE],
+      });
+    }
+  }
+
   await ref.update({
     categoryId: rest.categoryId ?? current.categoryId,
     title: rest.title ?? current.title,
@@ -62,14 +85,20 @@ export async function updateCategoryShowcaseAction(input: unknown): Promise<Acti
   });
 
   invalidateStorefrontCatalog();
+  invalidateAdminShowcases();
   return actionOk(null);
 }
 
 /**
  * `createCategoryShowcaseAction`: admin-only creation of a new homepage
- * showcase section, for a category that doesn't yet have one.
+ * showcase section, for a category that doesn't yet have one. Each category
+ * has at most one showcase (data-model.md: one document per category's
+ * homepage section) — the "already has one?" check and the write run in one
+ * transaction, so two concurrent creates can't both succeed.
  */
-export async function createCategoryShowcaseAction(input: unknown): Promise<ActionResult<{ showcaseId: string }>> {
+export async function createCategoryShowcaseAction(
+  input: unknown,
+): Promise<ActionResult<{ showcaseId: string }>> {
   const guardResult = await guardAdmin();
   if (guardResult) return guardResult;
 
@@ -84,22 +113,34 @@ export async function createCategoryShowcaseAction(input: unknown): Promise<Acti
     });
   }
 
-  const ref = categoryShowcasesCollection().doc();
-  await ref.set({
-    id: ref.id,
-    categoryId: data.categoryId,
-    title: data.title,
-    subtitle: data.subtitle ?? null,
-    cta: data.cta,
-    desktopImage: data.desktopImage,
-    mobileImage: data.mobileImage ?? null,
-    displayOrder: data.displayOrder,
-    isActive: data.isActive,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
+  const collection = categoryShowcasesCollection();
+  const ref = collection.doc();
+  const created = await collection.firestore.runTransaction(async (tx) => {
+    const existing = await tx.get(collection.where("categoryId", "==", data.categoryId).limit(1));
+    if (!existing.empty) return false;
+    tx.set(ref, {
+      id: ref.id,
+      categoryId: data.categoryId,
+      title: data.title,
+      subtitle: data.subtitle ?? null,
+      cta: data.cta,
+      desktopImage: data.desktopImage,
+      mobileImage: data.mobileImage ?? null,
+      displayOrder: data.displayOrder,
+      isActive: data.isActive,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return true;
   });
+  if (!created) {
+    return actionError("CONFLICT", DUPLICATE_SHOWCASE_MESSAGE, {
+      categoryId: [DUPLICATE_SHOWCASE_MESSAGE],
+    });
+  }
 
   invalidateStorefrontCatalog();
+  invalidateAdminShowcases();
   return actionOk({ showcaseId: ref.id });
 }
 
@@ -134,5 +175,6 @@ export async function attachShowcaseImageAction(input: unknown): Promise<ActionR
   });
 
   invalidateStorefrontCatalog();
+  invalidateAdminShowcases();
   return actionOk(null);
 }

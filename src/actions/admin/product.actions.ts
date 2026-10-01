@@ -9,8 +9,14 @@ import { validateOfferInput } from "@/lib/domain/catalog/offer";
 import { deriveProductSlug, assertUniqueProductSlug } from "@/lib/domain/catalog/product.service";
 import { categoryExists } from "@/lib/domain/catalog/category.service";
 import { buildSearchTerms } from "@/lib/utils/searchTokens";
-import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
+import {
+  actionError,
+  actionOk,
+  actionValidationError,
+  type ActionResult,
+} from "@/lib/validation/common";
 import { invalidateStorefrontCatalog } from "@/lib/cache/invalidate";
+import { deleteProductWithImages } from "@/lib/domain/admin/product-images";
 import type { Product } from "@/types/product";
 
 async function guardAdmin(): Promise<ActionResult<never> | null> {
@@ -39,7 +45,9 @@ async function guardAdmin(): Promise<ActionResult<never> | null> {
  * to scope a Storage upload path to. The admin adds images on the edit page
  * immediately after creation (T148/T149).
  */
-export async function createProductAction(input: unknown): Promise<ActionResult<{ productId: string }>> {
+export async function createProductAction(
+  input: unknown,
+): Promise<ActionResult<{ productId: string }>> {
   const guardResult = await guardAdmin();
   if (guardResult) return guardResult;
 
@@ -61,7 +69,12 @@ export async function createProductAction(input: unknown): Promise<ActionResult<
     return actionError("CONFLICT", "A product with this name already exists.");
   }
 
-  const searchTerms = buildSearchTerms(data.name.en, data.name.ar, data.material.en, data.material.ar);
+  const searchTerms = buildSearchTerms(
+    data.name.en,
+    data.name.ar,
+    data.material.en,
+    data.material.ar,
+  );
 
   const ref = productsCollection().doc();
   await ref.set({
@@ -141,7 +154,12 @@ export async function updateProductAction(input: unknown): Promise<ActionResult<
 
   const mergedName = rest.name ?? current.name;
   const mergedMaterial = rest.material ?? current.material;
-  const newSlug = deriveProductSlug(mergedName.en);
+  // The slug is the product's public URL (and its image storage prefix), so it is re-derived ONLY
+  // when this update actually changes the English name. Any other save — a visibility toggle, an
+  // offer edit, a full product-form save that leaves the name alone — keeps the stored slug, which
+  // includes a deliberately pinned one that no longer matches its name.
+  const nameEnChanged = rest.name !== undefined && rest.name.en !== current.name.en;
+  const newSlug = nameEnChanged ? deriveProductSlug(mergedName.en) : current.slug;
   if (newSlug !== current.slug) {
     try {
       await assertUniqueProductSlug(newSlug, { excludeProductId: productId });
@@ -149,7 +167,12 @@ export async function updateProductAction(input: unknown): Promise<ActionResult<
       return actionError("CONFLICT", "A product with this name already exists.");
     }
   }
-  const searchTerms = buildSearchTerms(mergedName.en, mergedName.ar, mergedMaterial.en, mergedMaterial.ar);
+  const searchTerms = buildSearchTerms(
+    mergedName.en,
+    mergedName.ar,
+    mergedMaterial.en,
+    mergedMaterial.ar,
+  );
 
   const updatePayload: FirebaseFirestore.UpdateData<Product> = {
     name: mergedName,
@@ -173,7 +196,11 @@ export async function updateProductAction(input: unknown): Promise<ActionResult<
           : null
         : current.saleStartAt,
     saleEndAt:
-      rest.saleEndAt !== undefined ? (rest.saleEndAt ? Timestamp.fromDate(rest.saleEndAt) : null) : current.saleEndAt,
+      rest.saleEndAt !== undefined
+        ? rest.saleEndAt
+          ? Timestamp.fromDate(rest.saleEndAt)
+          : null
+        : current.saleEndAt,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
@@ -190,18 +217,24 @@ export async function updateProductAction(input: unknown): Promise<ActionResult<
  * already handled as "silently absent" by `getProductsByIds` (data-model.md
  * "Cart/wishlist referential cleanup").
  */
-const deleteProductInputSchema = z.object({ productId: z.string().trim().min(1, "productId is required.") });
+const deleteProductInputSchema = z.object({
+  productId: z.string().trim().min(1, "productId is required."),
+});
 
-export async function deleteProductAction(input: unknown): Promise<ActionResult<null>> {
+export async function deleteProductAction(
+  input: unknown,
+): Promise<ActionResult<{ imagesFailed: number }>> {
   const guardResult = await guardAdmin();
   if (guardResult) return guardResult;
 
   const parsed = deleteProductInputSchema.safeParse(input);
   if (!parsed.success) return actionValidationError(parsed.error);
 
-  await productsCollection().doc(parsed.data.productId).delete();
+  // The document first, then the product's own Storage images through the same safe cleanup Delete All
+  // uses. `imagesFailed` > 0 means the product IS deleted but some of its image files remain in Storage.
+  const images = await deleteProductWithImages(parsed.data.productId);
   invalidateStorefrontCatalog();
-  return actionOk(null);
+  return actionOk({ imagesFailed: images.failed });
 }
 
 /**

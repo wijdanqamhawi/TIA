@@ -19,15 +19,23 @@ export { getAllowedNextStatuses, isValidOrderStatusTransition } from "./order-st
  * incremented it by, so it is not expected to go negative in normal
  * operation.
  */
-export async function restockForCancellation(transaction: Transaction, lines: OrderLine[]): Promise<void> {
-  for (const line of lines) {
-    const ref = productsCollection().doc(line.productId);
-    transaction.update(ref, {
+export async function restockForCancellation(
+  transaction: Transaction,
+  lines: OrderLine[],
+): Promise<void> {
+  // A product deleted since the order was placed has nothing to restock — and updating a missing
+  // document would fail the whole transaction, making such an order impossible to cancel. So read
+  // first (every read before any write), then restock only the products that still exist.
+  const refs = lines.map((line) => productsCollection().doc(line.productId));
+  const snapshots = await Promise.all(refs.map((ref) => transaction.get(ref)));
+  lines.forEach((line, index) => {
+    if (!snapshots[index].exists) return;
+    transaction.update(refs[index], {
       stock: FieldValue.increment(line.quantity),
       salesCount: FieldValue.increment(-line.quantity),
       updatedAt: FieldValue.serverTimestamp(),
     });
-  }
+  });
 }
 
 export type OrderStatusTransitionResult =
@@ -67,7 +75,10 @@ export async function transitionOrderStatus(
     }
 
     if (nextStatus === "CANCELLED") {
-      const lines: OrderLine[] = order.items.map((item) => ({ productId: item.productId, quantity: item.quantity }));
+      const lines: OrderLine[] = order.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
       await restockForCancellation(transaction, lines);
     }
 

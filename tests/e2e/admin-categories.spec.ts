@@ -50,7 +50,7 @@ test.describe("admin — category management", () => {
 
     // Deactivate via the admin UI.
     await page.getByRole("button", { name: categoryName }).click();
-    await page.getByLabel(/Active \(visible on storefront\)/).uncheck();
+    await page.getByRole("checkbox", { name: "Active", exact: true }).uncheck();
     await expect(async () => {
       await page.getByRole("button", { name: "Save" }).click();
       await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10000 });
@@ -67,7 +67,7 @@ test.describe("admin — category management", () => {
     // Reactivate and change display order.
     await page.goto("/admin/categories");
     await page.getByRole("button", { name: categoryName }).click();
-    await page.getByLabel(/Active \(visible on storefront\)/).check();
+    await page.getByRole("checkbox", { name: "Active", exact: true }).check();
     await page.locator('label:has-text("Display order") input').fill("1");
     await expect(async () => {
       await page.getByRole("button", { name: "Save" }).click();

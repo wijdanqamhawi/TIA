@@ -12,10 +12,30 @@ export const VALID_SORTS: ProductSort[] = ["newest", "price", "popularity"];
  * invented for the design.
  */
 export const PRICE_BANDS = [
-  { id: "under-100", min: undefined as number | undefined, max: 10000 as number | undefined, labelKey: "priceUnder" },
-  { id: "100-200", min: 10000 as number | undefined, max: 20000 as number | undefined, labelKey: "priceBetween" },
-  { id: "200-300", min: 20000 as number | undefined, max: 30000 as number | undefined, labelKey: "priceBetween" },
-  { id: "above-300", min: 30000 as number | undefined, max: undefined as number | undefined, labelKey: "priceAbove" },
+  {
+    id: "under-100",
+    min: undefined as number | undefined,
+    max: 10000 as number | undefined,
+    labelKey: "priceUnder",
+  },
+  {
+    id: "100-200",
+    min: 10000 as number | undefined,
+    max: 20000 as number | undefined,
+    labelKey: "priceBetween",
+  },
+  {
+    id: "200-300",
+    min: 20000 as number | undefined,
+    max: 30000 as number | undefined,
+    labelKey: "priceBetween",
+  },
+  {
+    id: "above-300",
+    min: 30000 as number | undefined,
+    max: undefined as number | undefined,
+    labelKey: "priceAbove",
+  },
 ] as const;
 
 /**
@@ -28,6 +48,14 @@ export const PRICE_BANDS = [
  */
 export const NEW_ARRIVALS_COLLECTION = "new-arrivals";
 
+/**
+ * The second collection scope: Special Offers. NOT a category and not stored
+ * anywhere — a virtual filter over products whose offer is ACTIVE right now,
+ * selected by the shared `getSpecialOffers` (the same selection the homepage
+ * row and `/offers` use). Like New Arrivals it is an exclusive scope.
+ */
+export const SPECIAL_OFFERS_COLLECTION = "special-offers";
+
 /** The raw query string this page reads. */
 export type ShopSearchParams = {
   q?: string;
@@ -35,7 +63,7 @@ export type ShopSearchParams = {
   category?: string;
   min?: string;
   max?: string;
-  /** Collection scope — currently only `NEW_ARRIVALS_COLLECTION`. */
+  /** Collection scope — `NEW_ARRIVALS_COLLECTION` or `SPECIAL_OFFERS_COLLECTION`. */
   collection?: string;
 };
 
@@ -48,6 +76,8 @@ export type ShopQuery = {
   maxPrice?: number;
   /** True while the listing is scoped to the New Arrivals collection. */
   isNewArrivals: boolean;
+  /** True while the listing is scoped to the Special Offers collection (ACTIVE offers only). */
+  isSpecialOffers: boolean;
 };
 
 /**
@@ -102,12 +132,31 @@ export function parseShopQuery(sp: ShopSearchParams): ShopQuery & { priceDisable
       minPrice: undefined,
       maxPrice: undefined,
       isNewArrivals: true,
+      isSpecialOffers: false,
+      priceDisabled: false,
+    };
+  }
+
+  // Special Offers is an exclusive scope for the same reason: it is answered by `getSpecialOffers`
+  // (ACTIVE offers, derived at request time), not by the category / price / search query, so the
+  // other filters are read as absent and `buildShopHref` drops the scope the moment one is touched.
+  if (sp.collection?.trim() === SPECIAL_OFFERS_COLLECTION) {
+    return {
+      search: "",
+      sort: "newest",
+      categorySlug: "",
+      minPrice: undefined,
+      maxPrice: undefined,
+      isNewArrivals: false,
+      isSpecialOffers: true,
       priceDisabled: false,
     };
   }
 
   const search = sp.q?.trim() ?? "";
-  const sort: ProductSort = VALID_SORTS.includes(sp.sort as ProductSort) ? (sp.sort as ProductSort) : "newest";
+  const sort: ProductSort = VALID_SORTS.includes(sp.sort as ProductSort)
+    ? (sp.sort as ProductSort)
+    : "newest";
   const priceDisabled = search.length > 0;
 
   return {
@@ -117,6 +166,7 @@ export function parseShopQuery(sp: ShopSearchParams): ShopQuery & { priceDisable
     minPrice: priceDisabled ? undefined : parsePrice(sp.min),
     maxPrice: priceDisabled ? undefined : parsePrice(sp.max),
     isNewArrivals: false,
+    isSpecialOffers: false,
     priceDisabled,
   };
 }

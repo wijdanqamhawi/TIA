@@ -33,3 +33,16 @@ export function invalidateStorefrontCatalog(): void {
     // the action over.
   }
 }
+
+/**
+ * Invalidates the admin Homepage Showcases page after a showcase mutation.
+ * The page is `force-dynamic` (and the client calls `router.refresh()`), so
+ * like `invalidateStorefrontCatalog` this is defense-in-depth.
+ */
+export function invalidateAdminShowcases(): void {
+  try {
+    revalidatePath("/admin/showcases");
+  } catch {
+    // No request-scoped store outside a Next.js request (e.g. unit tests).
+  }
+}

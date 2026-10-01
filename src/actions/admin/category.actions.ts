@@ -3,9 +3,14 @@
 import { categoriesCollection } from "@/lib/firebase/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 import { ForbiddenError, requireAdmin, UnauthenticatedError } from "@/lib/firebase/guards";
-import { updateCategorySchema } from "@/lib/validation/category.schema";
+import { createCategorySchema, updateCategorySchema } from "@/lib/validation/category.schema";
 import { slugify } from "@/lib/utils/slugify";
-import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
+import {
+  actionError,
+  actionOk,
+  actionValidationError,
+  type ActionResult,
+} from "@/lib/validation/common";
 import { invalidateStorefrontCatalog } from "@/lib/cache/invalidate";
 
 async function guardAdmin(): Promise<ActionResult<never> | null> {
@@ -26,11 +31,61 @@ async function assertUniqueCategorySlug(slug: string, excludeCategoryId: string)
 }
 
 /**
+ * `createCategoryAction`: admin-only. Adds a new `categories/{categoryId}`
+ * document with the same shape as the seeded categories — the slug derived
+ * from `name.en` doubles as the document id (as it does for `bracelets`,
+ * `rings`, …), and `create()` refuses to overwrite an existing document.
+ * Categories are still never deleted; an unwanted one is deactivated.
+ */
+export async function createCategoryAction(
+  input: unknown,
+): Promise<ActionResult<{ categoryId: string }>> {
+  const guardResult = await guardAdmin();
+  if (guardResult) return guardResult;
+
+  const parsed = createCategorySchema.safeParse(input);
+  if (!parsed.success) return actionValidationError(parsed.error);
+  const { name, description, displayOrder, isActive } = parsed.data;
+
+  const slug = slugify(name.en);
+  if (!slug) {
+    return actionError("VALIDATION_ERROR", "The English name must contain letters or numbers.", {
+      name: ["The English name must contain letters or numbers."],
+    });
+  }
+  if (!(await assertUniqueCategorySlug(slug, ""))) {
+    return actionError("CONFLICT", "A category with this name already exists.");
+  }
+
+  const ref = categoriesCollection().doc(slug);
+  try {
+    await ref.create({
+      id: slug,
+      name,
+      slug,
+      description: description ?? null,
+      displayOrder,
+      isActive,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    // gRPC ALREADY_EXISTS — a category document with this id already exists.
+    if ((err as { code?: unknown }).code === 6) {
+      return actionError("CONFLICT", "A category with this name already exists.");
+    }
+    throw err;
+  }
+
+  invalidateStorefrontCatalog();
+  return actionOk({ categoryId: slug });
+}
+
+/**
  * `updateCategoryAction` (T155, spec FR-076): admin-only. Updates the
  * bilingual `name`/`description`, `isActive`, and/or `displayOrder` on an
- * **existing** `categories/{categoryId}` document only — this action never
- * creates or deletes a category (T155's explicit constraint; the storefront's
- * four core categories are fixed at seed time, T156). `slug` is re-derived
+ * **existing** `categories/{categoryId}` document only — it never creates
+ * (see `createCategoryAction`) or deletes a category. `slug` is re-derived
  * only when `name.en` actually changes.
  */
 export async function updateCategoryAction(input: unknown): Promise<ActionResult<null>> {

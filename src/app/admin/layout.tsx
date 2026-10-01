@@ -1,11 +1,36 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
+import { Inter, Noto_Kufi_Arabic, Noto_Sans_Arabic, Playfair_Display } from "next/font/google";
 import { ForbiddenError, requireAdmin, UnauthenticatedError } from "@/lib/firebase/guards";
-import { adminDirection, getAdminLocale, getAdminMessages, getAdminTranslator } from "@/lib/i18n/admin";
-import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
-import { AdminLanguageToggle } from "@/components/admin/AdminLanguageToggle";
+import type { SessionClaims } from "@/lib/firebase/auth";
+import { isStaffRole } from "@/lib/auth/roles";
+import { adminDirection, getAdminLocale, getAdminMessages } from "@/lib/i18n/admin";
+import { getCustomerById } from "@/lib/domain/admin/customer.service";
+import { AdminShell } from "@/components/admin/AdminShell";
+import type { AdminAccount } from "@/components/admin/AdminAccountMenu";
 import "../globals.css";
+
+// The same TIA type pairings the storefront loads in `[locale]/layout.tsx`
+// (the admin tree has its own root layout, so it must load them itself):
+// Playfair Display for display type, Inter for UI text, and the Noto
+// Arabic pair that `globals.css` swaps in under `dir="rtl"`.
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  display: "swap",
+});
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+const notoKufiArabic = Noto_Kufi_Arabic({
+  variable: "--font-noto-kufi-arabic",
+  subsets: ["arabic"],
+  display: "swap",
+});
+const notoSansArabic = Noto_Sans_Arabic({
+  variable: "--font-noto-sans-arabic",
+  subsets: ["arabic"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "TIA — Admin",
@@ -16,17 +41,16 @@ export const metadata: Metadata = {
 // session cookie; it must never be statically prerendered/cached.
 export const dynamic = "force-dynamic";
 
-const NAV_LINKS = [
-  { href: "/admin", key: "dashboard" },
-  { href: "/admin/products", key: "products" },
-  { href: "/admin/categories", key: "categories" },
-  { href: "/admin/showcases", key: "showcases" },
-  { href: "/admin/orders", key: "orders" },
-  { href: "/admin/customers", key: "customers" },
-  { href: "/admin/locations", key: "locations" },
-  { href: "/admin/exports", key: "exports" },
-  { href: "/admin/team", key: "team" },
-] as const;
+/** The signed-in staff member for the top bar — the display name is best-effort and never blocks the shell. */
+async function getAdminAccount(claims: SessionClaims): Promise<AdminAccount> {
+  const role = isStaffRole(claims.role) ? claims.role : "ADMIN";
+  try {
+    const user = await getCustomerById(claims.uid);
+    return { name: user?.name ?? null, email: claims.email ?? user?.email ?? null, role };
+  } catch {
+    return { name: null, email: claims.email, role };
+  }
+}
 
 /**
  * Server-side admin guard (defense layer 2 of 3, research.md §9) —
@@ -35,13 +59,15 @@ const NAV_LINKS = [
  * re-verified via the Admin SDK on every request to any `/admin/*` route.
  * ADMIN and OWNER both pass (`requireAdmin`).
  *
- * The shell (sidebar, header) and the Team page follow the admin language
- * chosen with the header toggle (EN/AR, stored in a cookie), including
- * `lang`/`dir`. The other admin pages' own content is still English.
+ * The shell (sidebar, header), the Dashboard and the Team page follow the
+ * admin language chosen with the header toggle (EN/AR, stored in a
+ * cookie), including `lang`/`dir`. The other admin pages' own content is
+ * still English.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  let claims: SessionClaims;
   try {
-    await requireAdmin();
+    claims = await requireAdmin();
   } catch (err) {
     if (err instanceof UnauthenticatedError || err instanceof ForbiddenError) {
       redirect("/en/login?next=/admin");
@@ -50,41 +76,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const locale = await getAdminLocale();
-  const messages = await getAdminMessages(locale);
-  const { t } = await getAdminTranslator("AdminShell");
+  const [messages, account] = await Promise.all([
+    getAdminMessages(locale),
+    getAdminAccount(claims),
+  ]);
 
   return (
-    <html lang={locale} dir={adminDirection(locale)}>
-      <body className="antialiased">
+    <html lang={locale} dir={adminDirection(locale)} className="[scrollbar-gutter:stable]">
+      <body
+        className={`${playfairDisplay.variable} ${inter.variable} ${notoKufiArabic.variable} ${notoSansArabic.variable} font-body antialiased`}
+      >
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <div className="flex min-h-screen flex-col bg-brand-ivory text-text-primary md:flex-row">
-            <aside className="border-b border-border-luxury bg-brand-burgundy text-text-on-dark md:min-h-screen md:w-60 md:border-b-0 md:border-e">
-              <div className="p-4">
-                <p className="font-display text-lg tracking-[0.3em]">{t("brand")}</p>
-                <p className="text-xs uppercase tracking-wide text-text-on-dark/70 rtl:normal-case rtl:tracking-normal">
-                  {t("area")}
-                </p>
-              </div>
-              <nav aria-label={t("menu")} className="flex flex-wrap gap-1 p-2 md:flex-col">
-                {NAV_LINKS.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="flex min-h-11 items-center rounded-md px-3 py-2 text-sm hover:bg-brand-burgundy-dark"
-                  >
-                    {t(`nav.${link.key}`)}
-                  </a>
-                ))}
-              </nav>
-            </aside>
-            <div className="flex-1">
-              <header className="flex items-center justify-end gap-2 border-b border-border-luxury p-4">
-                <AdminLanguageToggle />
-                <AdminLogoutButton />
-              </header>
-              <main className="p-4 md:p-6">{children}</main>
-            </div>
-          </div>
+          <AdminShell account={account}>{children}</AdminShell>
         </NextIntlClientProvider>
       </body>
     </html>

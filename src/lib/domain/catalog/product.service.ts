@@ -310,8 +310,9 @@ export async function getBestSellers(limit = COLLECTION_SECTION_LIMIT): Promise<
 const SPECIAL_OFFERS_CANDIDATE_MULTIPLIER = 3;
 
 /**
- * Live, currently-`ACTIVE` special offers for the homepage "Special Offers
- * / عروض خاصة" section (T320/T321). Firestore cannot combine the
+ * Live, currently-`ACTIVE` special offers — the one place the customer-facing
+ * offer list is decided. Both the homepage "Special Offers" section and the
+ * standalone `/[locale]/offers` page read this function (T320/T321). Firestore cannot combine the
  * `isOnSale == true` equality filter with independent range filters on
  * both `saleStartAt` and `saleEndAt` in one query, so this fetches a
  * bounded candidate set via `isOnSale == true AND availability == true`
@@ -328,10 +329,11 @@ export async function getSpecialOffers(limit = COLLECTION_SECTION_LIMIT): Promis
     .get();
 
   const now = Timestamp.now();
-  return snapshot.docs
-    .map((doc) => doc.data())
-    .filter((product) => getOfferStatus(product, now) === "ACTIVE")
-    .slice(0, limit);
+  // Scheduled, Expired and Disabled offers never pass `getOfferStatus`; Sold Out products are dropped
+  // too (FR-122), exactly as the New Arrivals / Best Sellers collections do.
+  return excludeSoldOut(
+    snapshot.docs.map((doc) => doc.data()).filter((product) => getOfferStatus(product, now) === "ACTIVE"),
+  ).slice(0, limit);
 }
 
 // --- Server → Client Component serialization boundary ---
@@ -450,6 +452,21 @@ const ADMIN_PRODUCT_LIST_LIMIT = 200;
  * hidden one. Not paginated/searchable; Phase 10's full admin product
  * management will supersede this with the real, filterable listing.
  */
+/**
+ * How many products each category holds, plus the catalog total — for the
+ * admin Categories page. One read that projects only `categoryId` (no
+ * per-category queries, no full product documents, no list limit).
+ */
+export async function getProductCountsByCategory(): Promise<{ total: number; byCategory: Record<string, number> }> {
+  const snapshot = await productsCollection().withConverter(null).select("categoryId").get();
+  const byCategory: Record<string, number> = {};
+  for (const doc of snapshot.docs) {
+    const categoryId = doc.get("categoryId");
+    if (typeof categoryId === "string") byCategory[categoryId] = (byCategory[categoryId] ?? 0) + 1;
+  }
+  return { total: snapshot.size, byCategory };
+}
+
 export async function getAllProductsForAdmin(limit = ADMIN_PRODUCT_LIST_LIMIT): Promise<Product[]> {
   const snapshot = await productsCollection().orderBy("createdAt", "desc").limit(limit).get();
   return snapshot.docs.map((doc) => doc.data());

@@ -1,4 +1,3 @@
-import { Timestamp } from "firebase-admin/firestore";
 import type { Product } from "@/types/product";
 
 /**
@@ -8,24 +7,29 @@ import type { Product } from "@/types/product";
  * it can never drift out of sync (Constitution Principle 10, mirrors
  * `soldOut.ts`; data-model.md "Offer status derivation", spec FR-115).
  *
- * Deliberately has NO `server-only` import (unlike the rest of
- * `lib/domain/catalog/*`) so both server code and Client Components
- * (ProductCard, QuickView, product detail page, Cart) can import this exact
- * function.
+ * Deliberately PURE — no `server-only` import and no runtime dependency on
+ * `firebase-admin` (its `Timestamp` appears only as a type, via `Product`) —
+ * so both server code and Client Components (the admin Special Offers page,
+ * ProductCard, QuickView, Cart) can import these exact functions without
+ * pulling the Admin SDK into the browser bundle. `tests/unit/client-bundle-
+ * boundary.test.ts` fails if that ever stops being true.
  */
+
+/** Anything that can report epoch milliseconds — a Firestore `Timestamp` on the server, or `{ toMillis }` around `Date.now()`. */
+export type InstantLike = { toMillis(): number };
 
 export type OfferStatus = "DISABLED" | "SCHEDULED" | "ACTIVE" | "EXPIRED";
 
 type OfferFields = Pick<Product, "isOnSale" | "salePrice" | "saleStartAt" | "saleEndAt">;
 
-export function getOfferStatus(product: OfferFields, now: Timestamp): OfferStatus {
+export function getOfferStatus(product: OfferFields, now: InstantLike): OfferStatus {
   if (!product.isOnSale || product.salePrice == null) return "DISABLED";
   if (product.saleStartAt && now.toMillis() < product.saleStartAt.toMillis()) return "SCHEDULED";
   if (product.saleEndAt && now.toMillis() >= product.saleEndAt.toMillis()) return "EXPIRED";
   return "ACTIVE";
 }
 
-export function getEffectivePrice(product: OfferFields & Pick<Product, "price">, now: Timestamp): number {
+export function getEffectivePrice(product: OfferFields & Pick<Product, "price">, now: InstantLike): number {
   return getOfferStatus(product, now) === "ACTIVE" ? product.salePrice! : product.price;
 }
 
@@ -38,7 +42,7 @@ export function getEffectivePrice(product: OfferFields & Pick<Product, "price">,
 export function resolveOfferPricing(
   product: OfferFields & Pick<Product, "price">,
 ): { offerStatus: OfferStatus; effectivePrice: number } {
-  const now = Timestamp.now();
+  const now: InstantLike = { toMillis: () => Date.now() };
   return { offerStatus: getOfferStatus(product, now), effectivePrice: getEffectivePrice(product, now) };
 }
 

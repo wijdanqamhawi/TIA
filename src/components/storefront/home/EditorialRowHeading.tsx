@@ -19,11 +19,14 @@ export function EditorialRowHeading({
   title,
   actionLabel,
   actionHref,
+  titleId,
 }: {
   eyebrow: string;
   title: string;
   actionLabel: string;
   actionHref: string;
+  /** Optional id for the `<h2>`, so the section can be labelled by it. */
+  titleId?: string;
 }) {
   return (
     <div className="mb-3">
@@ -33,7 +36,7 @@ export function EditorialRowHeading({
       </p>
 
       <div className="flex items-center gap-4">
-        <h2 className="shrink-0 font-display text-[clamp(1.375rem,2vw,1.8125rem)] font-normal leading-none text-text-primary">
+        <h2 id={titleId} className="shrink-0 font-display text-[clamp(1.375rem,2vw,1.8125rem)] font-normal leading-none text-text-primary">
           {title}
         </h2>
         <span aria-hidden="true" className="h-px w-12 shrink-0 bg-brand-gold/60 sm:w-16" />

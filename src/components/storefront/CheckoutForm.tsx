@@ -3,28 +3,48 @@
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import {
+  Banknote,
+  Building2,
+  House,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  StickyNote,
+  User,
+  Wallet,
+} from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import { FormError } from "@/components/ui/FormError";
 import { resolveLocalizedString, type LocalizedString } from "@/types/localizedString";
 import { checkoutSchema } from "@/lib/validation/checkout.schema";
-import { submitCheckoutAction, getDeliveryLocationsForRegionAction, type DeliveryLocationOption } from "@/actions/checkout.actions";
+import {
+  submitCheckoutAction,
+  getDeliveryLocationsForRegionAction,
+  type DeliveryLocationOption,
+} from "@/actions/checkout.actions";
 import { LocationSelectorDialog, type LocationOption } from "./LocationSelectorDialog";
+import {
+  Field,
+  INPUT_CLASS,
+  SectionHeading,
+  SelectChevron,
+  SELECT_CLASS,
+  TEXTAREA_CLASS,
+} from "./checkout/formControls";
 import type { DeliveryRegionId } from "@/types/deliveryRegion";
 
 export type CheckoutRegionOption = { id: DeliveryRegionId; name: LocalizedString };
 
-const ORDER_LINE_ISSUE_CODES = ["NOT_FOUND", "NOT_AVAILABLE", "SOLD_OUT", "INVALID_OPTION", "INSUFFICIENT_STOCK"] as const;
-
-const selectClassName =
-  "block w-full min-h-11 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary " +
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy " +
-  "disabled:cursor-not-allowed disabled:opacity-50";
-
-const textareaClassName =
-  "block w-full min-h-24 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary " +
-  "placeholder:text-text-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
-  "focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-50";
+const ORDER_LINE_ISSUE_CODES = [
+  "NOT_FOUND",
+  "NOT_AVAILABLE",
+  "SOLD_OUT",
+  "INVALID_OPTION",
+  "INSUFFICIENT_STOCK",
+] as const;
 
 /**
  * The checkout form (T125, spec FR-077/FR-091–FR-093): full name, a
@@ -106,7 +126,11 @@ export function CheckoutForm({
     setRegionId(nextRegionId);
     setLocationId(location.id);
     setLocations(
-      (locationsByRegionForDialog[nextRegionId] ?? []).map((loc) => ({ id: loc.id, name: loc.name, slug: loc.slug })),
+      (locationsByRegionForDialog[nextRegionId] ?? []).map((loc) => ({
+        id: loc.id,
+        name: loc.name,
+        slug: loc.slug,
+      })),
     );
     setLocationDialogOpen(false);
   }
@@ -200,131 +224,201 @@ export function CheckoutForm({
 
   return (
     <>
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 font-display text-lg text-text-primary">{t("contactInfo")}</legend>
-
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("fullNameLabel")}
-          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={isBusy} required />
-        </label>
-
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("phoneLabel")}
-          <Input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={isBusy}
-            required
-            aria-required="true"
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="flex flex-col gap-6 rounded-2xl border border-hairline bg-white p-5 shadow-elev-1 sm:p-7"
+      >
+        <section aria-labelledby="checkout-contact-title" className="flex flex-col gap-3.5">
+          <SectionHeading
+            id="checkout-contact-title"
+            icon={User}
+            title={t("contactInfo")}
+            hint={t("contactHint")}
           />
-        </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("emailLabel")}
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isBusy} required />
-        </label>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 font-display text-lg text-text-primary">{t("deliveryInfo")}</legend>
-
-        {selectedLocationLabel ? (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border-luxury bg-brand-beige/50 px-3 py-2 text-sm text-text-primary">
-            <span>{tLocation("selected", { location: selectedLocationLabel })}</span>
-            <button
-              type="button"
-              onClick={() => setLocationDialogOpen(true)}
+          <Field label={t("fullNameLabel")} icon={User} required>
+            <input
+              className={INPUT_CLASS}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               disabled={isBusy}
-              className="font-medium text-brand-burgundy hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy"
-            >
-              {tLocation("change")}
-            </button>
+              required
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <Field label={t("phoneLabel")} icon={Phone} required>
+              <input
+                type="tel"
+                className={INPUT_CLASS}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isBusy}
+                required
+                aria-required="true"
+              />
+            </Field>
+
+            <Field label={t("emailLabel")} icon={Mail} required>
+              <input
+                type="email"
+                className={INPUT_CLASS}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isBusy}
+                required
+              />
+            </Field>
           </div>
-        ) : null}
+        </section>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("regionLabel")}
-          <select
-            className={selectClassName}
-            value={regionId}
-            onChange={(e) => handleRegionChange(e.target.value)}
-            disabled={isBusy}
-            required
-          >
-            <option value="">{t("regionPlaceholder")}</option>
-            {regions.map((region) => (
-              <option key={region.id} value={region.id}>
-                {resolveLocalizedString(region.name, locale)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div aria-hidden="true" className="h-px bg-hairline" />
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("cityLabel")}
-          <select
-            className={selectClassName}
-            value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-            disabled={isBusy || !regionId || locationsPending}
-            required
-          >
-            <option value="">{t("cityPlaceholder")}</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {resolveLocalizedString(location.name, locale)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("addressLabel")}
-          <textarea
-            className={textareaClassName}
-            value={fullAddress}
-            onChange={(e) => setFullAddress(e.target.value)}
-            disabled={isBusy}
-            required
+        <section aria-labelledby="checkout-delivery-title" className="flex flex-col gap-3.5">
+          <SectionHeading
+            id="checkout-delivery-title"
+            icon={MapPin}
+            title={t("deliveryInfo")}
+            hint={t("deliveryHint")}
           />
-        </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-text-primary">
-          {t("notesLabel")}
-          <textarea
-            className={textareaClassName}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={isBusy}
+          {selectedLocationLabel ? (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-brand-cream/60 px-3.5 py-2 text-[0.8125rem] text-text-primary">
+              <span>{tLocation("selected", { location: selectedLocationLabel })}</span>
+              <button
+                type="button"
+                onClick={() => setLocationDialogOpen(true)}
+                disabled={isBusy}
+                className="font-medium text-brand-burgundy hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-burgundy"
+              >
+                {tLocation("change")}
+              </button>
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <Field label={t("regionLabel")} icon={MapPin} required>
+              <select
+                className={SELECT_CLASS}
+                value={regionId}
+                onChange={(e) => handleRegionChange(e.target.value)}
+                disabled={isBusy}
+                required
+              >
+                <option value="">{t("regionPlaceholder")}</option>
+                {regions.map((region) => (
+                  <option key={region.id} value={region.id}>
+                    {resolveLocalizedString(region.name, locale)}
+                  </option>
+                ))}
+              </select>
+              <SelectChevron />
+            </Field>
+
+            <Field label={t("cityLabel")} icon={Building2} required>
+              <select
+                className={SELECT_CLASS}
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                disabled={isBusy || !regionId || locationsPending}
+                required
+              >
+                <option value="">{t("cityPlaceholder")}</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {resolveLocalizedString(location.name, locale)}
+                  </option>
+                ))}
+              </select>
+              <SelectChevron />
+            </Field>
+          </div>
+
+          <Field label={t("addressLabel")} icon={House} required iconAtTop>
+            <textarea
+              rows={2}
+              className={cn(TEXTAREA_CLASS, "min-h-[4.25rem]")}
+              placeholder={t("addressPlaceholder")}
+              value={fullAddress}
+              onChange={(e) => setFullAddress(e.target.value)}
+              disabled={isBusy}
+              required
+            />
+          </Field>
+
+          <Field label={t("notesLabel")} icon={StickyNote} iconAtTop>
+            <textarea
+              rows={2}
+              className={cn(TEXTAREA_CLASS, "min-h-[3.75rem]")}
+              placeholder={t("notesPlaceholder")}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={isBusy}
+            />
+          </Field>
+        </section>
+
+        <div aria-hidden="true" className="h-px bg-hairline" />
+
+        <section aria-labelledby="checkout-payment-title" className="flex flex-col gap-3.5">
+          <SectionHeading
+            id="checkout-payment-title"
+            icon={Wallet}
+            title={t("paymentMethodLabel")}
+            hint={t("paymentHint")}
           />
-        </label>
-      </fieldset>
+          {/* Cash on Delivery is the only method; it is shown as the selected card. */}
+          <label className="flex cursor-default items-center gap-3 rounded-xl border border-brand-burgundy/70 bg-brand-ivory px-4 py-3 ring-1 ring-brand-burgundy/10">
+            <input
+              type="radio"
+              name="paymentMethod"
+              checked
+              readOnly
+              className="size-4 shrink-0 accent-brand-burgundy"
+            />
+            <Banknote
+              aria-hidden="true"
+              className="size-[22px] shrink-0 stroke-[1.4] text-brand-gold-ink"
+            />
+            <span className="flex min-w-0 flex-col">
+              <span className="text-[0.875rem] font-medium leading-snug text-text-primary">
+                {t("cashOnDelivery")}
+              </span>
+              <span className="text-[0.75rem] leading-snug text-text-secondary">
+                {t("codHint")}
+              </span>
+            </span>
+          </label>
+        </section>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 font-display text-lg text-text-primary">{t("paymentMethodLabel")}</legend>
-        <label className="flex items-center gap-2 rounded-md border border-brand-burgundy bg-brand-beige/50 p-3 text-sm font-medium text-text-primary">
-          <input type="radio" name="paymentMethod" checked readOnly />
-          {t("cashOnDelivery")}
-        </label>
-      </fieldset>
+        <div className="flex flex-col gap-3">
+          <FormError message={error} />
 
-      <FormError message={error} />
+          <button
+            type="submit"
+            disabled={isBusy}
+            className="inline-flex h-[50px] w-full items-center justify-center gap-2.5 rounded-lg bg-brand-burgundy px-6 text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-text-on-dark shadow-[0_10px_22px_-14px_rgba(16,28,54,0.75)] outline-none transition-colors hover:bg-brand-burgundy-light focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 rtl:text-[0.875rem] rtl:normal-case rtl:tracking-normal"
+          >
+            <Lock aria-hidden="true" className="size-[15px] stroke-[1.8]" />
+            {isBusy ? t("placingOrder") : t("placeOrder")}
+          </button>
 
-      <Button type="submit" disabled={isBusy} className="w-full">
-        {isBusy ? t("placingOrder") : t("placeOrder")}
-      </Button>
-    </form>
+          <p className="flex items-center justify-center gap-1.5 text-center text-[0.75rem] text-text-secondary">
+            <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0 stroke-[1.6]" />
+            {t("secureNote")}
+          </p>
+        </div>
+      </form>
 
-    <LocationSelectorDialog
-      open={locationDialogOpen}
-      onClose={() => setLocationDialogOpen(false)}
-      locale={locale}
-      regions={regions.map((region) => ({ regionId: region.id, name: region.name }))}
-      locationsByRegion={locationsByRegionForDialog}
-      onSelect={handleDialogSelect}
-    />
+      <LocationSelectorDialog
+        open={locationDialogOpen}
+        onClose={() => setLocationDialogOpen(false)}
+        locale={locale}
+        regions={regions.map((region) => ({ regionId: region.id, name: region.name }))}
+        locationsByRegion={locationsByRegionForDialog}
+        onSelect={handleDialogSelect}
+      />
     </>
   );
 }

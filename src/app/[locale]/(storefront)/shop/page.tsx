@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getActiveCategories } from "@/lib/domain/catalog/category.service";
-import { listProducts, toProductCardData } from "@/lib/domain/catalog/product.service";
+import {
+  getSpecialOffers,
+  listProducts,
+  toProductCardData,
+} from "@/lib/domain/catalog/product.service";
 import { getWishlistedProductIds } from "@/lib/domain/wishlist/wishlist.service";
 import { resolveLocalizedString } from "@/types/localizedString";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -22,6 +26,9 @@ export const dynamic = "force-dynamic";
  * gutters are added on top of that, so the sidebar + gap + grid resolve to
  * the reference's 243 / 46 / 1010 rather than being squeezed inside 1300.
  */
+/** One page of Special Offers — every ACTIVE offer the store has fits well inside it, so there is no paging. */
+const SPECIAL_OFFERS_LIMIT = 48;
+
 const CONTAINER = "mx-auto w-full max-w-[calc(81.25rem+2*1.5rem)] px-5 sm:px-6";
 
 /** T218: bilingual title/description, canonical, and hreflang alternates. */
@@ -60,6 +67,11 @@ export async function generateMetadata({
  * separate catalogue, so New Arrivals has no route of its own: it is this page
  * under `?collection=new-arrivals`, which adds `isNewArrival == true` to the
  * listing query. The scope is exclusive — see `parseShopQuery`.
+ *
+ * ── SPECIAL OFFERS IS A VIRTUAL COLLECTION ───────────────────────────────
+ * `?collection=special-offers` lists products whose offer is ACTIVE right now,
+ * straight from the shared `getSpecialOffers` — no category, no stored flag and
+ * no second copy of the offer rules. Also exclusive.
  */
 export default async function ShopPage({
   params,
@@ -70,7 +82,16 @@ export default async function ShopPage({
 }) {
   const { locale } = await params;
   const sp = await searchParams;
-  const { search, sort, categorySlug, minPrice, maxPrice, isNewArrivals, priceDisabled } = parseShopQuery(sp);
+  const {
+    search,
+    sort,
+    categorySlug,
+    minPrice,
+    maxPrice,
+    isNewArrivals,
+    isSpecialOffers,
+    priceDisabled,
+  } = parseShopQuery(sp);
 
   const [t, tHome, categories] = await Promise.all([
     getTranslations({ locale, namespace: "Shop" }),
@@ -83,7 +104,9 @@ export default async function ShopPage({
   // The URL carries the language-independent slug; the query needs the id.
   // An unknown slug falls back to "all" rather than 404 — a stale bookmark
   // should still show the catalogue.
-  const activeCategory = categorySlug ? categories.find((c) => c.slug === categorySlug) ?? null : null;
+  const activeCategory = categorySlug
+    ? (categories.find((c) => c.slug === categorySlug) ?? null)
+    : null;
 
   const filters = {
     categoryId: activeCategory?.id,
@@ -94,8 +117,16 @@ export default async function ShopPage({
     maxPrice,
   };
 
+  // Special Offers is a virtual collection: the SAME `getSpecialOffers` the homepage row and /offers
+  // read (ACTIVE offers only). Everything else is the unchanged catalogue query.
+  const listing = isSpecialOffers
+    ? getSpecialOffers(SPECIAL_OFFERS_LIMIT).then((offers) => ({
+        products: offers,
+        nextCursorId: null as string | null,
+      }))
+    : listProducts({ ...filters, pageSize: 12 });
   const [{ products, nextCursorId }, wishlistedProductIds] = await Promise.all([
-    listProducts({ ...filters, pageSize: 12 }),
+    listing,
     getWishlistedProductIds(),
   ]);
 
@@ -103,27 +134,40 @@ export default async function ShopPage({
     slug: category.slug,
     label: resolveLocalizedString(category.name, locale),
   }));
-  const activeCategoryLabel = activeCategory ? resolveLocalizedString(activeCategory.name, locale) : null;
+  const activeCategoryLabel = activeCategory
+    ? resolveLocalizedString(activeCategory.name, locale)
+    : null;
 
   const chips: ActiveChip[] = [];
   if (isNewArrivals) chips.push({ key: "collection", label: tHome("newArrivals") });
+  if (isSpecialOffers) chips.push({ key: "collection", label: t("specialOffers") });
   if (search) chips.push({ key: "q", label: search });
   if (activeCategoryLabel) chips.push({ key: "category", label: activeCategoryLabel });
-  if (minPrice !== undefined) chips.push({ key: "min", label: `${t("minPrice")}: ${formatCurrency(minPrice, locale)}` });
-  if (maxPrice !== undefined) chips.push({ key: "max", label: `${t("maxPrice")}: ${formatCurrency(maxPrice, locale)}` });
+  if (minPrice !== undefined)
+    chips.push({ key: "min", label: `${t("minPrice")}: ${formatCurrency(minPrice, locale)}` });
+  if (maxPrice !== undefined)
+    chips.push({ key: "max", label: `${t("maxPrice")}: ${formatCurrency(maxPrice, locale)}` });
 
   return (
     <main className="bg-brand-ivory">
       {/* 2 — centred Shop intro */}
-      <header className={`${CONTAINER} flex flex-col items-center gap-2 pb-7 pt-9 text-center sm:pb-8 sm:pt-10`}>
+      <header
+        className={`${CONTAINER} flex flex-col items-center gap-2 pb-7 pt-9 text-center sm:pb-8 sm:pt-10`}
+      >
         <p className="font-body text-[0.6875rem] font-medium uppercase tracking-[0.24em] text-brand-gold-ink rtl:text-[0.8125rem] rtl:normal-case rtl:tracking-normal">
           {t("eyebrow")}
         </p>
         <span aria-hidden="true" className="block h-px w-9 bg-brand-gold/60" />
         <h1 className="font-display text-[clamp(1.875rem,3.3vw,2.875rem)] font-normal leading-tight text-text-primary">
-          {isNewArrivals ? tHome("newArrivals") : activeCategoryLabel ?? t("allTitle")}
+          {isSpecialOffers
+            ? t("specialOffers")
+            : isNewArrivals
+              ? tHome("newArrivals")
+              : (activeCategoryLabel ?? t("allTitle"))}
         </h1>
-        <p className="max-w-[34rem] text-[0.8125rem] leading-relaxed text-text-secondary">{t("allDescription")}</p>
+        <p className="max-w-[34rem] text-[0.8125rem] leading-relaxed text-text-secondary">
+          {t("allDescription")}
+        </p>
       </header>
 
       <div className={CONTAINER}>
@@ -133,7 +177,14 @@ export default async function ShopPage({
           current={sp}
           categories={filterCategories}
           activeCategorySlug={activeCategory?.slug ?? ""}
-          activeCategoryLabel={isNewArrivals ? tHome("newArrivals") : activeCategoryLabel}
+          activeCategoryLabel={
+            isSpecialOffers
+              ? t("specialOffers")
+              : isNewArrivals
+                ? tHome("newArrivals")
+                : activeCategoryLabel
+          }
+          specialOffersActive={isSpecialOffers}
           priceDisabled={priceDisabled}
           sort={sort}
           resultCount={products.length}
@@ -148,6 +199,7 @@ export default async function ShopPage({
               current={sp}
               categories={filterCategories}
               activeCategorySlug={activeCategory?.slug ?? ""}
+              specialOffersActive={isSpecialOffers}
               priceDisabled={priceDisabled}
             />
           </aside>
@@ -156,7 +208,9 @@ export default async function ShopPage({
             <ActiveFilterChips pathname="/shop" current={sp} chips={chips} />
             <ProductGridWithLoadMore
               locale={locale}
-              initialProducts={products.map((product) => toProductCardData(product, wishlistedProductIds))}
+              initialProducts={products.map((product) =>
+                toProductCardData(product, wishlistedProductIds),
+              )}
               initialCursorId={nextCursorId}
               filters={filters}
             />

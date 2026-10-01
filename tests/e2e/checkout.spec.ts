@@ -116,6 +116,7 @@ test.describe("checkout — Cash on Delivery", () => {
     await page.getByLabel("Full Name").fill("Registered Shopper");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill("supersecret123");
+    await page.getByLabel("Mobile Phone Number").fill("+970599123456");
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
 

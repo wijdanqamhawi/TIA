@@ -77,6 +77,7 @@
     "newArrivals": "New Arrivals",
     "bestSellers": "Best Sellers",
     "specialOffers": "Special Offers",
+    "specialOffersEyebrow": "Special Offers",
     "brandTitle": "The TIA Promise",
     "brandBody": "Every TIA piece is selected for lasting quality and understated elegance — made to be worn, and loved, for years to come.",
     "featuredIn": "Featured {category}",
@@ -135,6 +136,7 @@
   "Shop": {
     "title": "Shop",
     "allProducts": "All Products",
+    "specialOffers": "Special Offers",
     "searchPlaceholder": "Search products…",
     "sortBy": "Sort by",
     "sortNewest": "Newest",
@@ -165,6 +167,13 @@
     "priceAbove": "Above {min}",
     "productCount": "{count, plural, =0 {0 products} one {# product} other {# products}}",
     "allCategories": "All Categories"
+  },
+  "Offers": {
+    "title": "Special Offers",
+    "subtitle": "Pieces with a special price right now.",
+    "emptyTitle": "No offers right now",
+    "emptyBody": "There are no active special offers at the moment. Explore the full collection while you wait.",
+    "shopCta": "Shop All"
   },
   "Product": {
     "material": "Material",
@@ -225,6 +234,7 @@
     "registerTitle": "Create Account",
     "nameLabel": "Full Name",
     "emailLabel": "Email",
+    "phoneLabel": "Mobile Phone Number",
     "passwordLabel": "Password",
     "loginButton": "Sign In",
     "registerButton": "Create Account",
@@ -241,11 +251,23 @@
       "weakPassword": "Please choose a stronger password (at least 8 characters).",
       "invalidEmail": "Enter a valid email address.",
       "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "invalidPhone": "Enter a valid phone number.",
+      "phoneRequired": "Phone number is required."
     }
   },
   "Checkout": {
     "title": "Checkout",
+    "subtitle": "Complete your order",
+    "contactHint": "We'll use this information to contact you about your order.",
+    "deliveryHint": "Please provide your delivery address.",
+    "paymentHint": "How you'll pay for this order.",
+    "codHint": "Pay with cash when your order arrives.",
+    "addressPlaceholder": "Enter your full address",
+    "notesPlaceholder": "Add any additional notes (optional)",
+    "secureNote": "Your information is protected.",
+    "whyTitle": "Why Shop with TIA?",
+    "itemCount": "{count, plural, one {# item} other {# items}}",
     "contactInfo": "Contact Information",
     "deliveryInfo": "Delivery Information",
     "fullNameLabel": "Full Name",
@@ -291,6 +313,12 @@
   "OrderConfirmation": {
     "title": "Order Confirmed",
     "thankYou": "Thank you for your order!",
+    "orderRef": "Order",
+    "orderSummary": "Order Summary",
+    "itemsUnits": "{items, plural, one {# item} other {# items}} • {units, plural, one {# unit} other {# units}}",
+    "orderDetails": "Order Details",
+    "orderDetailsHint": "Here are the details of your order.",
+    "address": "Address",
     "orderNumber": "Order Number",
     "items": "Items",
     "quantity": "Qty",
@@ -302,7 +330,9 @@
     "status": "Status",
     "continueShopping": "Continue Shopping",
     "notFoundTitle": "Order not found",
-    "notFoundDescription": "We couldn't find this order, or you don't have access to view it."
+    "notFoundDescription": "We couldn't find this order, or you don't have access to view it.",
+    "editOrder": "Edit Order",
+    "orderUpdated": "Your order has been updated."
   },
   "OrderStatus": {
     "PENDING": "Pending",
@@ -452,7 +482,9 @@
     "categoryDescriptionTemplate": "Shop {category} at TIA — timeless pieces crafted for lasting quality and understated elegance.",
     "productTitleTemplate": "{product} | TIA",
     "aboutDescription": "Learn about the TIA brand — timeless elegance, thoughtfully crafted.",
-    "contactDescription": "Get in touch with TIA via Instagram or WhatsApp."
+    "contactDescription": "Get in touch with TIA via Instagram or WhatsApp.",
+    "offersTitle": "Special Offers | TIA",
+    "offersDescription": "Explore TIA pieces with a special price right now."
   },
   "AdminShell": {
     "brand": "TIA",
@@ -465,14 +497,676 @@
       "showcases": "Showcases",
       "orders": "Orders",
       "customers": "Customers",
-      "locations": "Delivery Locations",
+      "locations": "Locations",
       "exports": "Exports",
-      "team": "Team"
+      "team": "Team",
+      "specialOffers": "Special Offers"
     },
-    "signOut": "Sign out",
-    "signingOut": "Signing out…",
+    "signOut": "Logout",
+    "signingOut": "Logging out…",
     "switchTo": "العربية",
-    "switchToLabel": "Switch the dashboard to Arabic"
+    "switchToLabel": "Switch the dashboard to Arabic",
+    "brandTagline": "Jewellery",
+    "viewStore": "View Store",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
+    "account": "Account menu",
+    "roles": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin"
+    },
+    "search": "Search anything...",
+    "searchLabel": "Search orders by customer name or order number",
+    "languageNames": {
+      "en": "English",
+      "ar": "العربية"
+    },
+    "language": "Dashboard language"
+  },
+  "AdminDashboard": {
+    "welcome": "Welcome back, {name}",
+    "welcomeNoName": "Welcome back",
+    "title": "Your TIA Store at a Glance",
+    "subtitle": "Track your sales, orders, customers and products in real time.",
+    "tagline1": "Elegance",
+    "tagline2": "in Every Detail",
+    "stats": {
+      "totalSales": "Total Sales",
+      "totalOrders": "Total Orders",
+      "totalCustomers": "Total Customers",
+      "totalProducts": "Total Products"
+    },
+    "statNotes": {
+      "totalSales": "Excl. cancelled orders",
+      "totalOrders": "Pending",
+      "totalCustomers": "Registered accounts",
+      "totalProducts": "Sold out"
+    },
+    "statLinks": {
+      "totalSales": "View orders",
+      "totalOrders": "View pending orders",
+      "totalCustomers": "View customers",
+      "totalProducts": "View products"
+    },
+    "recentOrders": {
+      "title": "Recent Orders",
+      "emptyTitle": "No orders yet",
+      "emptyBody": "New orders will appear here once customers place them on your store.",
+      "columns": {
+        "number": "#",
+        "customer": "Customer",
+        "date": "Date",
+        "total": "Total",
+        "status": "Status"
+      },
+      "open": "Open order"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "PREPARING": "Processing",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled"
+    },
+    "bestSellers": {
+      "title": "Best Sellers",
+      "emptyTitle": "No sales yet",
+      "emptyBody": "Best selling products will appear here once you have completed orders.",
+      "sold": "sold"
+    },
+    "viewAll": "View all",
+    "viewAllOrders": "View all orders",
+    "viewAllProducts": "View all products",
+    "collection": {
+      "title": "New Collection",
+      "body": "Add your latest designs and showcase your brand.",
+      "cta": "Add Product"
+    },
+    "actions": {
+      "products": {
+        "title": "Manage Products",
+        "body": "Add, edit or remove products from your store."
+      },
+      "store": {
+        "title": "View Store",
+        "body": "See how your store looks to your customers."
+      },
+      "exports": {
+        "title": "Export Data",
+        "body": "Download orders, customers and products."
+      }
+    }
+  },
+  "AdminProducts": {
+    "title": "Products",
+    "subtitle": "Manage your catalog, inventory, availability and Special Offers.",
+    "newProduct": "New Product",
+    "stats": {
+      "total": "Total Products",
+      "inStock": "In Stock",
+      "soldOut": "Sold Out",
+      "offers": "Special Offers"
+    },
+    "filters": {
+      "label": "Filter products",
+      "search": "Search products by name...",
+      "searchLabel": "Search products by name",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "stock": "Stock",
+      "allStock": "All Stock",
+      "inStock": "In stock",
+      "soldOut": "Sold out",
+      "status": "Status",
+      "allStatus": "All Status",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "newArrival": "New Arrival",
+      "bestSeller": "Best Seller",
+      "onSale": "On Sale",
+      "clear": "Clear Filters",
+      "showing": "{shown} of {total} products"
+    },
+    "columns": {
+      "product": "Product",
+      "category": "Category",
+      "price": "Price",
+      "stock": "Stock",
+      "offer": "Offer",
+      "visible": "Visible",
+      "newArrival": "New Arrival",
+      "bestSeller": "Best Seller",
+      "actions": "Actions"
+    },
+    "offer": {
+      "DISABLED": "No offer",
+      "SCHEDULED": "Scheduled",
+      "ACTIVE": "On Sale",
+      "EXPIRED": "Expired"
+    },
+    "soldOut": "Sold out",
+    "visible": "Visible",
+    "hidden": "Hidden",
+    "yes": "Yes",
+    "no": "No",
+    "toggleVisible": "Toggle storefront visibility for {name}",
+    "toggleNewArrival": "Toggle New Arrival for {name}",
+    "toggleBestSeller": "Toggle Best Seller for {name}",
+    "edit": "Edit",
+    "editProduct": "Edit {name}",
+    "moreActions": "More actions for {name}",
+    "viewInStore": "View in store",
+    "delete": "Delete",
+    "confirmDelete": "Delete \"{name}\"? This cannot be undone.",
+    "empty": "No products yet. Create your first product to get started.",
+    "noMatches": "No products match these filters.",
+    "uncategorized": "—",
+    "bulk": {
+      "button": "Delete All",
+      "title": "Delete all products?",
+      "description": "This will permanently delete all {count, plural, one {# product} other {# products}}. Past orders, customers, categories and showcases are not affected. This action cannot be undone.",
+      "confirm": "Delete All",
+      "cancel": "Cancel",
+      "success": "{count, plural, one {# product} other {# products}} deleted.",
+      "errors": {
+        "generic": "Couldn't delete the products. Nothing was changed — please try again.",
+        "forbidden": "You don't have permission to do this.",
+        "staleCount": "The catalog changed while this dialog was open, so nothing was deleted. Please review and try again.",
+        "partial": "Only some products were deleted: {done} deleted, {remaining} remain. You can run Delete All again.",
+        "imagesNote": "{failed, plural, one {# image file} other {# image files}} couldn't be removed from Storage."
+      },
+      "successImagesFailed": "{count, plural, one {# product} other {# products}} deleted, but {failed, plural, one {# image file} other {# image files}} couldn't be removed from Storage and still remain there."
+    },
+    "imagesFailedNotice": "Product deleted, but {failed, plural, one {# image file} other {# image files}} couldn't be removed from Storage and still remain there."
+  },
+  "AdminProductForm": {
+    "back": "Products",
+    "newTitle": "New Product",
+    "newSubtitle": "Create the product first, then add images on the next screen.",
+    "sections": {
+      "info": "Product Information",
+      "pricing": "Pricing & Inventory",
+      "status": "Product Status",
+      "options": "Options (e.g. Size, Color)",
+      "offer": "Special Offer",
+      "images": "Images"
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "material": "Material",
+      "english": "English",
+      "arabic": "Arabic",
+      "price": "Price",
+      "category": "Category",
+      "selectCategory": "Select a category",
+      "stock": "Stock",
+      "salePrice": "Sale price",
+      "startDate": "Start date (optional)",
+      "endDate": "End date (optional)",
+      "discountPercent": "Discount (%)"
+    },
+    "placeholders": {
+      "nameEn": "Enter product name in English...",
+      "nameAr": "Enter product name in Arabic...",
+      "descriptionEn": "Enter product description in English...",
+      "descriptionAr": "Enter product description in Arabic...",
+      "materialEn": "Enter material in English...",
+      "materialAr": "Enter material in Arabic...",
+      "optionNameEn": "Option name (English)",
+      "optionNameAr": "اسم الخيار (Arabic)",
+      "valueEn": "Value (English)",
+      "valueAr": "القيمة (Arabic)"
+    },
+    "status": {
+      "availability": "Available on storefront",
+      "availabilityHint": "Show this product on your online store.",
+      "newArrival": "New Arrival",
+      "newArrivalHint": "Mark as a new arrival product.",
+      "bestSeller": "Best Seller",
+      "bestSellerHint": "Mark as a best seller product."
+    },
+    "options": {
+      "add": "+ Add Option",
+      "remove": "Remove",
+      "addValue": "+ Value",
+      "removeValue": "Remove value"
+    },
+    "offer": {
+      "enable": "Enable this offer",
+      "discountHelp": "Enter a percentage from 1 to 99. The sale price is calculated for you.",
+      "salePriceCalculated": "Calculated automatically",
+      "errors": {
+        "discountRequired": "Enter a discount percentage.",
+        "discountInvalid": "Enter a discount above 0% and below 100% (up to 2 decimals).",
+        "discountTooLow": "This discount leaves a sale price of zero — use a smaller discount.",
+        "discountNotBelow": "This discount is too small to lower the price — use a larger one.",
+        "noRegularPrice": "Enter the regular price first."
+      }
+    },
+    "images": {
+      "remove": "Remove",
+      "moveEarlier": "Move earlier",
+      "moveLater": "Move later"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "create": "Create Product",
+      "save": "Save Changes",
+      "saving": "Saving…"
+    }
+  },
+  "AdminCategories": {
+    "title": "Categories",
+    "subtitle": "Manage the catalog's category list.",
+    "stats": {
+      "total": "Total Categories",
+      "active": "Active Categories",
+      "inactive": "Inactive Categories",
+      "products": "Total Products"
+    },
+    "list": {
+      "title": "Categories",
+      "subtitle": "View and manage all product categories.",
+      "empty": "No categories found."
+    },
+    "newCategory": "New Category",
+    "columns": {
+      "number": "#",
+      "name": "Name",
+      "products": "Products",
+      "order": "Order",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "edit": "Edit",
+    "drawer": {
+      "addTitle": "Add New Category",
+      "editTitle": "Edit Category",
+      "close": "Close",
+      "nameEn": "Name — English",
+      "nameAr": "Name — Arabic",
+      "nameEnPlaceholder": "Enter category name in English...",
+      "nameArPlaceholder": "Enter category name in Arabic...",
+      "descriptionEn": "Description — English (optional)",
+      "descriptionAr": "Description — Arabic (optional)",
+      "displayOrder": "Display Order",
+      "active": "Active",
+      "activeHint": "Show this category in the store.",
+      "cancel": "Cancel",
+      "create": "Create Category",
+      "save": "Save Changes",
+      "saving": "Saving…"
+    }
+  },
+  "AdminShowcases": {
+    "title": "Homepage Showcases",
+    "subtitle": "Manage each category's large homepage merchandising section.",
+    "stats": {
+      "total": "Total Showcases",
+      "active": "Active Showcases",
+      "inactive": "Inactive Showcases",
+      "categories": "Total Categories"
+    },
+    "list": {
+      "title": "Homepage Showcases",
+      "subtitle": "View and manage the homepage showcases for each category.",
+      "empty": "No homepage showcases yet."
+    },
+    "newShowcase": "New Showcase",
+    "allCategoriesHaveShowcase": "Every active category already has a homepage showcase.",
+    "columns": {
+      "number": "#",
+      "category": "Category",
+      "title": "Title",
+      "order": "Order",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Click to set Active",
+      "deactivate": "Click to set Inactive",
+      "saving": "Saving…",
+      "toggleError": "Couldn't update the showcase status. Please try again."
+    },
+    "edit": "Edit",
+    "drawer": {
+      "addTitle": "Add New Showcase",
+      "addSubtitle": "Create a new homepage showcase for a category.",
+      "editTitle": "Edit Showcase",
+      "editSubtitle": "Update this category's homepage showcase.",
+      "close": "Close",
+      "category": "Category",
+      "selectCategory": "Select category",
+      "titleEn": "Title — English",
+      "titleAr": "Title — Arabic",
+      "titleEnPlaceholder": "Enter showcase title in English...",
+      "titleArPlaceholder": "Enter showcase title in Arabic...",
+      "subtitleEn": "Subtitle — English (optional)",
+      "subtitleAr": "Subtitle — Arabic (optional)",
+      "ctaEn": "Call to action — English",
+      "ctaAr": "Call to action — Arabic",
+      "ctaEnPlaceholder": "e.g. Shop Bracelets",
+      "ctaArPlaceholder": "مثال: تسوّقي الأساور",
+      "displayOrder": "Display Order",
+      "status": "Status",
+      "active": "Active",
+      "activeHint": "Show this showcase section on the homepage.",
+      "desktopImage": "Desktop image",
+      "mobileImage": "Mobile image (optional)",
+      "noImage": "No image yet",
+      "desktopImageRequired": "A desktop image is required.",
+      "oneShowcaseNote": "Each category can have one homepage showcase section.",
+      "cancel": "Cancel",
+      "create": "Create Showcase",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "subtitleEnPlaceholder": "Add a short subtitle…",
+      "subtitleArPlaceholder": "أضف وصفاً مختصراً…",
+      "uploadImage": "Upload Image",
+      "uploading": "Uploading…",
+      "recommendedSize": "Recommended size:"
+    }
+  },
+  "AdminOrders": {
+    "title": "Orders",
+    "subtitle": "Every order placed, guest and registered.",
+    "stats": {
+      "total": "Total Orders",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "inProgressNote": "Confirmed, processing or shipped",
+      "delivered": "Delivered"
+    },
+    "filters": {
+      "label": "Filter orders",
+      "search": "Search by order # or customer…",
+      "searchLabel": "Search by order number or customer name",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "apply": "Filter",
+      "clear": "Clear filters"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "PREPARING": "Processing",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled"
+    },
+    "columns": {
+      "order": "Order #",
+      "customer": "Customer",
+      "date": "Date",
+      "total": "Total",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "guest": "Guest",
+    "view": "View",
+    "viewOrder": "View order {orderNumber}",
+    "footer": {
+      "count": "Showing {shown} of {total} orders",
+      "latest": "Showing the latest {shown} of {total} orders",
+      "matchingLatest": "{shown} matching in the latest {fetched} orders"
+    },
+    "empty": {
+      "title": "No orders found",
+      "filtered": "There are no orders matching your search.",
+      "none": "No orders have been placed yet. They will appear here as soon as customers check out."
+    },
+    "statusMenu": {
+      "change": "Change order status",
+      "menu": "Change status",
+      "current": "Current status",
+      "final": "Final status — no further changes",
+      "saving": "Saving…",
+      "failed": "Couldn't update the order status. Please try again.",
+      "back": "Go back",
+      "confirm": {
+        "CANCELLED": {
+          "title": "Cancel this order?",
+          "body": "The order will be marked Cancelled and its items returned to stock. This can't be undone.",
+          "action": "Cancel Order"
+        },
+        "DELIVERED": {
+          "title": "Mark as delivered?",
+          "body": "The order will be marked Delivered. This can't be undone.",
+          "action": "Mark Delivered"
+        }
+      }
+    },
+    "detail": {
+      "back": "Back to orders",
+      "orderLabel": "Order",
+      "placed": "Placed on {date}",
+      "cards": {
+        "total": "Order Total",
+        "items": "Items",
+        "itemsNote": "{count, plural, one {# unit} other {# units}}",
+        "payment": "Payment Method",
+        "status": "Current Status"
+      },
+      "cashOnDelivery": "Cash on Delivery",
+      "itemsCard": {
+        "title": "Order Items",
+        "hint": "Prices are exactly as paid when the order was placed.",
+        "quantity": "Qty",
+        "option": "Option",
+        "sale": "Sale",
+        "lineTotal": "Total",
+        "product": "Product",
+        "unitPrice": "Unit Price",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "noOption": "None"
+      },
+      "customerCard": {
+        "title": "Customer & Delivery",
+        "customer": "Customer",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "registered": "Registered customer",
+        "guest": "Guest checkout",
+        "delivery": "Delivery",
+        "region": "Region",
+        "city": "City / Area",
+        "address": "Address",
+        "notes": "Notes",
+        "deliveryAddress": "Delivery Address"
+      },
+      "infoCard": {
+        "title": "Order Information",
+        "orderNumber": "Order Number",
+        "payment": "Payment Method",
+        "status": "Status",
+        "placed": "Placed Date",
+        "deliveringTo": "Delivering To"
+      },
+      "timeline": {
+        "title": "Order Timeline",
+        "current": "Current",
+        "note": "Each order records when it was placed. Later steps show progress only — no times are stored for them."
+      }
+    }
+  },
+  "AdminCustomers": {
+    "title": "Customers",
+    "subtitle": "Registered customers only — guest checkouts have no account.",
+    "stats": {
+      "total": "Total Customers",
+      "newThisMonth": "New This Month",
+      "withOrders": "Customers with Orders",
+      "noOrders": "Customers with No Orders",
+      "unavailable": "Not available for large lists"
+    },
+    "filters": {
+      "label": "Filter customers",
+      "search": "Search by name, email or phone…",
+      "searchLabel": "Search customers by name, email or phone",
+      "orders": "Orders",
+      "allCustomers": "All customers",
+      "withOrders": "With orders",
+      "noOrders": "No orders",
+      "joined": "Joined",
+      "allTime": "All time",
+      "thisMonth": "This month",
+      "last30": "Last 30 days",
+      "apply": "Filter",
+      "clear": "Clear filters"
+    },
+    "columns": {
+      "number": "#",
+      "customer": "Customer",
+      "email": "Email",
+      "phone": "Phone",
+      "joined": "Joined",
+      "orders": "Orders",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "withOrders": "Has orders",
+      "noOrders": "No orders"
+    },
+    "view": "View",
+    "viewCustomer": "View {name}",
+    "footer": {
+      "showing": "Showing {from}–{to} of {total} customers",
+      "truncated": "Showing the newest {loaded} of {total} customers"
+    },
+    "pagination": {
+      "label": "Customers pages",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}"
+    },
+    "empty": {
+      "title": "No customers found",
+      "filtered": "There are no customers matching your search.",
+      "none": "No customers have registered yet. Accounts appear here when shoppers sign up."
+    }
+  },
+  "AdminOffers": {
+    "title": "Special Offers",
+    "subtitle": "Products with a promotional price — active, scheduled and expired.",
+    "newOffer": "New Offer",
+    "noProductsAvailable": "Every product already has an offer.",
+    "stats": {
+      "total": "Total Offers",
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "disabled": "Disabled"
+    },
+    "filters": {
+      "label": "Filter offers",
+      "search": "Search offers by product name...",
+      "searchLabel": "Search offers by product name",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "clear": "Clear filters"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "SCHEDULED": "Scheduled",
+      "EXPIRED": "Expired",
+      "DISABLED": "Disabled"
+    },
+    "columns": {
+      "product": "Product",
+      "regularPrice": "Regular price",
+      "salePrice": "Sale price",
+      "discount": "Discount",
+      "starts": "Starts",
+      "ends": "Ends",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "immediately": "Immediately",
+    "noEnd": "No end date",
+    "edit": "Edit",
+    "footer": {
+      "showing": "Showing {shown} of {total} offers"
+    },
+    "empty": {
+      "title": "No offers found",
+      "filtered": "There are no offers matching your search.",
+      "none": "No products are on sale yet. Create your first offer to get started."
+    },
+    "drawer": {
+      "addTitle": "New Offer",
+      "addSubtitle": "Put a product on sale.",
+      "editTitle": "Edit Offer",
+      "editSubtitle": "Update this product's special offer.",
+      "close": "Close",
+      "product": "Product",
+      "selectProduct": "Select a product",
+      "regularPrice": "Regular price",
+      "salePrice": "Sale price",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "optional": "optional",
+      "enabled": "Offer enabled",
+      "enabledHint": "Turn off to take this product off sale. Its offer details are kept.",
+      "note": "Offers are saved on the product itself, the same fields as the product form.",
+      "openProduct": "Open product",
+      "cancel": "Cancel",
+      "create": "Create Offer",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "discount": "Discount (%)",
+      "discountHelp": "Enter a percentage from 1 to 99. The sale price is calculated for you.",
+      "salePriceCalculated": "Calculated automatically"
+    },
+    "errors": {
+      "productRequired": "Select a product.",
+      "generic": "Couldn't save the offer. Please try again.",
+      "discountRequired": "Enter a discount percentage.",
+      "discountInvalid": "Enter a discount above 0% and below 100% (up to 2 decimals).",
+      "discountTooLow": "This discount leaves a sale price of zero — use a smaller discount.",
+      "discountNotBelow": "This discount is too small to lower the price — use a larger one.",
+      "noRegularPrice": "Enter the regular price first."
+    },
+    "toggle": {
+      "stopHint": "Active — click to stop this offer",
+      "startHint": "Disabled — click to start this offer",
+      "stopTitle": "Stop this offer?",
+      "stopBody": "Customers will immediately see the regular product price.",
+      "stopConfirm": "Stop Offer",
+      "startTitle": "Start this offer?",
+      "startBody": "The stored sale price and dates will be used. Customers see the sale price once the offer period is active.",
+      "startConfirm": "Start Offer",
+      "saving": "Saving…",
+      "errors": {
+        "failed": "Couldn't update the offer. Please try again.",
+        "expired": "This offer's period has ended, so it can't be started. Use Edit Offer to set new dates.",
+        "invalidPrice": "This offer's sale price is not below the regular price. Use Edit Offer to fix it."
+      }
+    },
+    "bulk": {
+      "button": "Remove All",
+      "title": "Remove all offers?",
+      "description": "This will remove the Special Offer from all {count, plural, one {# offer} other {# offers}}. The products themselves are kept, and orders already placed keep the price they paid. This action cannot be undone.",
+      "confirm": "Remove All",
+      "cancel": "Cancel",
+      "success": "{count, plural, one {# offer} other {# offers}} removed.",
+      "errors": {
+        "generic": "Couldn't remove the offers. Nothing was changed — please try again.",
+        "forbidden": "You don't have permission to do this.",
+        "staleCount": "The offers changed while this dialog was open, so nothing was removed. Please review and try again.",
+        "partial": "Only some offers were removed: {done} removed, {remaining} remain. You can run Remove All again."
+      }
+    }
   },
   "AdminTeam": {
     "title": "Team",
@@ -551,6 +1245,104 @@
       "CONFIRMATION_MISMATCH": "The email you typed doesn't match this account.",
       "VALIDATION_ERROR": "Please enter a valid email address.",
       "UNKNOWN": "Something went wrong. Please try again."
+    }
+  },
+  "OrderEdit": {
+    "title": "Edit Order",
+    "itemsTitle": "Items",
+    "itemsHint": "Change quantities or remove items from this order.",
+    "remove": "Remove",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "onlyAvailable": "Only {count} available",
+    "lastItem": "An order needs at least one item. To cancel the whole order, please contact us.",
+    "contactUs": "Contact us",
+    "save": "Save Changes",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "backToOrder": "Back to order",
+    "notEditableTitle": "This order can't be edited",
+    "errors": {
+      "notEditable": "This order can no longer be edited because its status has changed.",
+      "notFound": "We couldn't find this order.",
+      "insufficientStock": "One of the items doesn't have enough stock for that quantity.",
+      "notAvailable": "One of the items is no longer available to add more of.",
+      "invalidOption": "The selected option for one of your items is no longer available.",
+      "invalidLine": "Something about the items changed. Please reload and try again.",
+      "rateLimited": "Too many attempts. Please wait a moment and try again.",
+      "signIn": "Please sign in to edit your order.",
+      "offline": "You appear to be offline. Reconnect and try again.",
+      "generic": "We couldn't save your changes. Please try again."
+    }
+  },
+  "AdminExports": {
+    "title": "Exports",
+    "subtitle": "Download real, up-to-the-moment .xlsx reports generated directly from live store data.",
+    "cardsLabel": "Choose a report",
+    "cards": {
+      "orders": "Download orders with customer, payment and shipping details.",
+      "customers": "Download customer accounts and basic details.",
+      "products": "Download product catalog including prices and inventory."
+    },
+    "generate": {
+      "title": "Generate Report",
+      "subtitle": "Select the report type and filters, then download your Excel file."
+    },
+    "reports": {
+      "orders": "Orders",
+      "products": "Products",
+      "inventory": "Inventory / Stock",
+      "sold-out": "SOLD OUT Products",
+      "customers": "Customers",
+      "sales": "Sales",
+      "best-sellers": "Best-Selling Products",
+      "delivery-locations": "Delivery Locations"
+    },
+    "fields": {
+      "reportType": "Report type",
+      "from": "From",
+      "to": "To",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "region": "Region",
+      "allRegions": "All regions",
+      "category": "Category (optional)",
+      "allCategories": "All categories",
+      "lowStock": "Low-stock threshold (optional)",
+      "lowStockPlaceholder": "e.g. 5 — only products at or below this stock",
+      "noFilters": "This report has no filters — it always includes everything."
+    },
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "PREPARING": "Processing",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled"
+    },
+    "regions": {
+      "west-bank": "West Bank",
+      "inside-1948": "Inside / 1948 Areas"
+    },
+    "download": "Download",
+    "downloadReport": "Download {report}",
+    "preparing": "Preparing export…",
+    "generating": "Generating your report — this may take a moment for a large report.",
+    "panel": {
+      "title": "<ext>.XLSX</ext> Report",
+      "live": "Live data from your store",
+      "real": "Generates a real Excel file (.xlsx)",
+      "noImport": "No import path — editing the downloaded file has no effect on TIA",
+      "hint": "Use filters to get exactly the data you need. Large reports may take a few moments to generate."
+    },
+    "other": {
+      "title": "Other reports",
+      "subtitle": "Quick access to different types of exports.",
+      "export": "Export {report}"
+    },
+    "errors": {
+      "failed": "Export failed ({status}).",
+      "generic": "Export failed. Please try again."
     }
   }
 }

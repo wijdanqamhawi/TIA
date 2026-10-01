@@ -1,25 +1,24 @@
-import Link from "next/link";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { ordersCollection } from "@/lib/firebase/firestore";
-import { Badge } from "@/components/ui/Badge";
-import { formatCurrency } from "@/lib/utils/currency";
-import { DataTable } from "@/components/admin/DataTable";
-import { ORDER_STATUSES, type OrderStatus } from "@/types/order";
+import { getAdminTranslator } from "@/lib/i18n/admin";
+import { filterAdminOrders, parseOrderStatus } from "@/lib/domain/admin/order-filters";
+import { getOrderSummaryCounts } from "@/lib/domain/admin/order-summary.service";
+import {
+  AdminOrdersList,
+  type AdminOrderRow,
+  type OrdersTranslate,
+} from "@/components/admin/AdminOrdersList";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_BADGE: Record<OrderStatus, "neutral" | "gold" | "burgundy" | "danger"> = {
-  PENDING: "gold",
-  CONFIRMED: "burgundy",
-  PREPARING: "burgundy",
-  SHIPPED: "burgundy",
-  DELIVERED: "neutral",
-  CANCELLED: "danger",
-};
-
 const ORDERS_LIST_LIMIT = 100;
 
-/** Admin — Orders (T164): every order, newest first, with a customer/order-number search and a status filter. */
+/**
+ * Admin — Orders (T164): the newest orders first, with a customer/order-number
+ * search and a status filter. The summary figures count every order (Firestore
+ * aggregation); the list itself is the newest `ORDERS_LIST_LIMIT`, filtered on
+ * the server, exactly as before.
+ */
 export default async function AdminOrdersPage({
   searchParams,
 }: {
@@ -27,69 +26,47 @@ export default async function AdminOrdersPage({
 }) {
   const { q, status } = await searchParams;
   getAdminFirestore();
-  const snapshot = await ordersCollection().orderBy("createdAt", "desc").limit(ORDERS_LIST_LIMIT).get();
-  let orders = snapshot.docs.map((doc) => doc.data());
+  const [snapshot, counts, { t }] = await Promise.all([
+    ordersCollection().orderBy("createdAt", "desc").limit(ORDERS_LIST_LIMIT).get(),
+    getOrderSummaryCounts(),
+    getAdminTranslator("AdminOrders"),
+  ]);
+  const translate = t as unknown as OrdersTranslate;
 
-  const query = q?.trim().toLowerCase() ?? "";
-  if (query) {
-    orders = orders.filter(
-      (order) =>
-        order.orderNumber.toLowerCase().includes(query) || order.customerSnapshot.fullName.toLowerCase().includes(query),
-    );
-  }
-  const statusFilter = status && ORDER_STATUSES.includes(status as OrderStatus) ? (status as OrderStatus) : null;
-  if (statusFilter) {
-    orders = orders.filter((order) => order.status === statusFilter);
-  }
+  const loaded = snapshot.docs.map((doc) => doc.data());
+  const query = q?.trim() ?? "";
+  const statusFilter = parseOrderStatus(status);
+  const rows: AdminOrderRow[] = filterAdminOrders(loaded, { query, status: statusFilter }).map(
+    (order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.customerSnapshot.fullName,
+      customerEmail: order.customerSnapshot.email,
+      isGuest: order.userId === null,
+      createdAt: order.createdAt.toMillis(),
+      total: order.total,
+      status: order.status,
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-display text-2xl">Orders</h1>
-        <p className="mt-1 text-sm text-text-primary/70">Every order placed, guest and registered.</p>
+      <div className="min-w-0 pt-1">
+        <h1 className="font-display text-[32px] font-normal leading-[1.1] text-brand-burgundy lg:text-[38px] rtl:text-[28px] rtl:leading-[1.4] rtl:lg:text-[32px]">
+          {translate("title")}
+        </h1>
+        <p className="mt-1.5 font-display text-[15px] leading-snug text-text-secondary lg:text-[16px] rtl:font-body rtl:text-[14.5px]">
+          {translate("subtitle")}
+        </p>
       </div>
-      <form method="get" className="flex flex-wrap gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search by order # or customer…"
-          className="min-h-11 w-full max-w-sm rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary"
-        />
-        <select
-          name="status"
-          defaultValue={status ?? ""}
-          className="min-h-11 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary"
-        >
-          <option value="">All statuses</option>
-          {ORDER_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="min-h-11 rounded-md border border-border-luxury px-4 text-sm hover:bg-brand-beige">
-          Filter
-        </button>
-      </form>
-      <DataTable
-        rows={orders}
-        rowKey={(row) => row.id}
-        emptyMessage="No orders match this search."
-        columns={[
-          {
-            header: "Order #",
-            render: (row) => (
-              <Link href={`/admin/orders/${row.id}`} className="font-medium text-brand-burgundy hover:underline">
-                {row.orderNumber}
-              </Link>
-            ),
-          },
-          { header: "Customer", render: (row) => row.customerSnapshot.fullName },
-          { header: "Date", render: (row) => row.createdAt.toDate().toLocaleDateString("en-US") },
-          { header: "Total", render: (row) => formatCurrency(row.total, "en-US") },
-          { header: "Status", render: (row) => <Badge variant={STATUS_BADGE[row.status]}>{row.status}</Badge> },
-        ]}
+
+      <AdminOrdersList
+        counts={counts}
+        orders={rows}
+        fetchedCount={loaded.length}
+        totalCount={counts.total}
+        query={query}
+        status={statusFilter}
       />
     </div>
   );

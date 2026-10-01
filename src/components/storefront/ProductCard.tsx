@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -90,6 +90,15 @@ export function ProductCard({
   // "heart button doesn't respond" report: the add genuinely succeeded
   // server-side, but nothing on screen ever changed to show it).
   const [isWishlisted, setIsWishlisted] = useState(product.isWishlisted);
+  // `useState` reads its initializer only on mount, so a fresh server value
+  // (after `router.refresh()`, or a removal made on the Wishlist page) is
+  // adopted here during render — the same prop-sync pattern
+  // `ProductGridWithLoadMore` uses — keeping the heart on the real state.
+  const [serverWishlisted, setServerWishlisted] = useState(product.isWishlisted);
+  if (product.isWishlisted !== serverWishlisted) {
+    setServerWishlisted(product.isWishlisted);
+    setIsWishlisted(product.isWishlisted);
+  }
 
   const name = resolveLocalizedString(product.name, locale);
   const soldOut = isSoldOut(product);
@@ -113,7 +122,19 @@ export function ProductCard({
   const image = resolveProductImage(primaryImage?.url, product.id);
   const imageAlt = primaryImage?.alt || name;
 
-  function handleToggleWishlist() {
+  // Outline ♡ when not wishlisted; filled Deep Navy ♥ (`text-primary`,
+  // #101C36) when it is. Fill and colour are driven by classes so they
+  // ease over 200ms (an SVG `fill` attribute swap alone cannot transition);
+  // the `fill` attribute is kept for anything reading the glyph's state.
+  const heartGlyphClass = `transition-[fill,color] duration-200 ease-out motion-reduce:transition-none ${
+    isWishlisted ? "fill-current text-text-primary" : "fill-transparent"
+  }`;
+
+  function handleToggleWishlist(event: MouseEvent<HTMLButtonElement>) {
+    // The heart sits over the image link; never let its click reach a link.
+    event.preventDefault();
+    event.stopPropagation();
+
     if (hasOptions) {
       // No option picker fits in a grid card (mirrors Add to Cart's own
       // behavior above) — send the shopper to the full detail page, where
@@ -216,12 +237,12 @@ export function ProductCard({
             aria-pressed={isWishlisted}
             className={`absolute end-1 top-1 z-10 flex min-h-11 min-w-11 items-center justify-center text-text-primary/75 ${heartMotion} hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <Heart aria-hidden="true" size={16} strokeWidth={1.5} fill={isWishlisted ? "currentColor" : "none"} />
+            <Heart aria-hidden="true" size={16} strokeWidth={1.5} fill={isWishlisted ? "currentColor" : "none"} className={heartGlyphClass} />
           </button>
 
           {soldOut || product.offerStatus === "ACTIVE" ? (
             <div className="absolute start-2 top-2 z-10">
-              {soldOut ? <Badge variant="danger">{t("soldOut")}</Badge> : <Badge variant="burgundy">{t("onSale")}</Badge>}
+              {soldOut ? <Badge variant="danger">{t("soldOut")}</Badge> : <Badge variant="gold">{t("onSale")}</Badge>}
             </div>
           ) : null}
 
@@ -315,7 +336,7 @@ export function ProductCard({
           aria-pressed={isWishlisted}
           className="absolute end-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-full text-text-primary/75 transition-all duration-200 ease-luxury hover:scale-110 hover:text-text-primary active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Heart aria-hidden="true" size={16} strokeWidth={1.5} fill={isWishlisted ? "currentColor" : "none"} />
+          <Heart aria-hidden="true" size={16} strokeWidth={1.5} fill={isWishlisted ? "currentColor" : "none"} className={heartGlyphClass} />
         </button>
 
         <button

@@ -3,10 +3,17 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { LogOut } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
-import { Button } from "@/components/ui/Button";
+import { DirectionalIcon } from "@/components/ui/DirectionalIcon";
 
-export function AdminLogoutButton() {
+export function AdminLogoutButton({
+  className,
+  iconClassName,
+}: {
+  className?: string;
+  iconClassName?: string;
+}) {
   const router = useRouter();
   const t = useTranslations("AdminShell");
   const locale = useLocale();
@@ -21,8 +28,9 @@ export function AdminLogoutButton() {
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={handleLogout} disabled={isPending}>
-      {isPending ? t("signingOut") : t("signOut")}
-    </Button>
+    <button type="button" onClick={handleLogout} disabled={isPending} className={className}>
+      <DirectionalIcon icon={LogOut} aria-hidden="true" className={iconClassName} />
+      <span>{isPending ? t("signingOut") : t("signOut")}</span>
+    </button>
   );
 }

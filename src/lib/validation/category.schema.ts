@@ -18,6 +18,19 @@ export const categorySchema = z.object({
 export type CategoryInput = z.infer<typeof categorySchema>;
 
 /**
+ * Admin create input (`createCategoryAction`). Stricter than an update:
+ * a new category must be named in **both** languages up front, since it
+ * appears in the bilingual storefront navigation as soon as it is active.
+ */
+export const createCategorySchema = categorySchema.extend({
+  name: z.object({
+    en: z.string().trim().min(1, "English name is required."),
+    ar: z.string().trim().min(1, "Arabic name is required."),
+  }),
+});
+export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+
+/**
  * Admin update input (spec FR-076, contracts/server-actions.md "Admin —
  * Categories"): `categoryId` is required to target an existing document;
  * every other field is independently optional so a partial update (e.g.

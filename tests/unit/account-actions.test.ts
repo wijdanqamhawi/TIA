@@ -54,6 +54,24 @@ describe("updateProfileAction", () => {
     expect(uid).toBe("user-1");
   });
 
+  it("saves an updated phone to users/{uid}.phone", async () => {
+    const result = await updateProfileAction({ name: "Jane Shopper", phone: "+970 59 123 4567" });
+    expect(result.ok).toBe(true);
+    const [uid, patch] = updateMock.mock.calls[0];
+    expect(uid).toBe("user-1");
+    expect(patch).toMatchObject({ phone: "+970 59 123 4567" });
+  });
+
+  it("clears the phone when it is emptied, and rejects an invalid one", async () => {
+    await updateProfileAction({ name: "Jane Shopper", phone: null });
+    expect(updateMock.mock.calls[0][1]).toMatchObject({ phone: null });
+
+    updateMock.mockReset();
+    const result = await updateProfileAction({ name: "Jane Shopper", phone: "12" });
+    expect(result.ok).toBe(false);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
   it("never writes email or role fields", async () => {
     await updateProfileAction({ name: "Jane Shopper" });
     const [, patch] = updateMock.mock.calls[0];

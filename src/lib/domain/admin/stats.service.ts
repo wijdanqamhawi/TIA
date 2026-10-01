@@ -21,7 +21,7 @@ export type PendingStatsUpdate = {
 export async function reserveStatsUpdate(
   transaction: Transaction,
   totalDelta: number,
-  orderDelta: 1 | -1,
+  orderDelta: 0 | 1 | -1,
 ): Promise<PendingStatsUpdate> {
   const ref = statsSummaryDoc();
   const snapshot = await transaction.get(ref);

@@ -197,6 +197,8 @@ test.describe("responsive — Admin Dashboard", () => {
   test("admin sidebar navigation is fully reachable and touch-friendly on mobile", async ({ page }) => {
     await page.setViewportSize(MOBILE);
     await loginAsAdmin(page);
+    // Below `lg` the sidebar is an off-canvas drawer opened from the top bar's menu button.
+    await page.getByRole("button", { name: "Open navigation" }).click();
     const productsLink = page.getByRole("link", { name: "Products", exact: true });
     await expect(productsLink).toBeVisible();
     const box = await productsLink.boundingBox();

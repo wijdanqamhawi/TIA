@@ -31,6 +31,8 @@ export const phoneSchema = z
 export const registerSchema = z.object({
   name: nameSchema,
   email: emailSchema,
+  /** Required at sign-up; stored on `users/{uid}.phone` (the same field Account > Profile edits). */
+  phone: phoneSchema,
   password: passwordSchema,
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -52,6 +54,13 @@ export type LoginInput = z.infer<typeof loginSchema>;
  */
 export const createSessionInputSchema = z.object({
   idToken: z.string().min(1, "Missing ID token."),
+  /**
+   * The phone number entered on the register form. Optional here because the
+   * same action also serves sign-in; when present it is validated like every
+   * other phone number and stored only when the `users/{uid}` document is
+   * first created — it never overwrites an existing profile phone.
+   */
+  phone: phoneSchema.optional(),
   intent: z.string().trim().min(1).optional(),
 });
 export type CreateSessionInput = z.infer<typeof createSessionInputSchema>;

@@ -27,6 +27,7 @@ export function ShopToolbar({
   categories,
   activeCategorySlug,
   activeCategoryLabel,
+  specialOffersActive = false,
   priceDisabled,
   sort,
   resultCount,
@@ -37,6 +38,7 @@ export function ShopToolbar({
   categories: FilterCategory[];
   activeCategorySlug: string;
   activeCategoryLabel: string | null;
+  specialOffersActive?: boolean;
   priceDisabled: boolean;
   sort: ProductSort;
   resultCount: number;
@@ -75,6 +77,7 @@ export function ShopToolbar({
                   current={current}
                   categories={categories}
                   activeCategorySlug={activeCategorySlug}
+                  specialOffersActive={specialOffersActive}
                   priceDisabled={priceDisabled}
                   onNavigate={() => setOpen(false)}
                 />
@@ -99,7 +102,9 @@ export function ShopToolbar({
 
         <span aria-hidden="true" className="hidden h-5 w-px bg-hairline-strong sm:block" />
 
-        <p className="text-[0.8125rem] text-text-secondary">{activeCategoryLabel ?? t("allCategories")}</p>
+        <p className="text-[0.8125rem] text-text-secondary">
+          {activeCategoryLabel ?? t("allCategories")}
+        </p>
       </div>
 
       <div className="flex items-center justify-between gap-5 sm:justify-end sm:gap-6">
@@ -112,12 +117,17 @@ export function ShopToolbar({
           <span className="relative inline-flex items-center">
             <select
               value={sort}
-              onChange={(e) => router.push(buildShopHref(pathname, current, { sort: e.target.value }))}
+              onChange={(e) =>
+                router.push(buildShopHref(pathname, current, { sort: e.target.value }))
+              }
               className="min-h-9 appearance-none border border-hairline-strong bg-brand-ivory pe-7 ps-3 text-[0.8125rem] text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
             >
               {VALID_SORTS.map((option) => (
                 <option key={option} value={option}>
-                  {t(`sort${option.charAt(0).toUpperCase()}${option.slice(1)}` as "sortNewest" | "sortPrice" | "sortPopularity")}
+                  {t(
+                    `sort${option.charAt(0).toUpperCase()}${option.slice(1)}` as
+                      "sortNewest" | "sortPrice" | "sortPopularity",
+                  )}
                 </option>
               ))}
             </select>

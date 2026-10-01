@@ -14,11 +14,16 @@ export function CategorySelect({
   value,
   onChange,
   id,
+  className,
+  placeholder = "Select a category",
 }: {
   categories: CategoryOption[];
   value: string;
   onChange: (categoryId: string) => void;
   id?: string;
+  /** Replaces the default select styling (the admin product form). */
+  className?: string;
+  placeholder?: string;
 }) {
   return (
     <select
@@ -26,10 +31,13 @@ export function CategorySelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       required
-      className="block w-full min-h-11 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
+      className={
+        className ??
+        "block w-full min-h-11 rounded-md border border-border-luxury bg-brand-ivory px-3 py-2 text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-burgundy"
+      }
     >
       <option value="" disabled>
-        Select a category
+        {placeholder}
       </option>
       {categories.map((category) => (
         <option key={category.id} value={category.id}>

@@ -23,6 +23,7 @@ export default function RegisterPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "creating" | "redirecting">("idle");
@@ -31,15 +32,19 @@ export default function RegisterPage() {
     event.preventDefault();
     setError(null);
 
-    const parsed = registerSchema.safeParse({ name, email, password });
+    const parsed = registerSchema.safeParse({ name, email, phone, password });
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
       const key =
         firstIssue?.path[0] === "email"
           ? "invalidEmail"
-          : firstIssue?.path[0] === "password"
-            ? "weakPassword"
-            : "generic";
+          : firstIssue?.path[0] === "phone"
+            ? phone.trim()
+              ? "invalidPhone"
+              : "phoneRequired"
+            : firstIssue?.path[0] === "password"
+              ? "weakPassword"
+              : "generic";
       setError(t(`errors.${key}`));
       return;
     }
@@ -49,7 +54,7 @@ export default function RegisterPage() {
       const credential = await createUserWithEmailAndPassword(clientAuth, parsed.data.email, parsed.data.password);
       await updateProfile(credential.user, { displayName: parsed.data.name });
       const idToken = await credential.user.getIdToken(true);
-      const result = await createSessionAction({ idToken, intent });
+      const result = await createSessionAction({ idToken, phone: parsed.data.phone, intent });
 
       if (!result.ok) {
         setError(t("errors.generic"));
@@ -104,6 +109,24 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isBusy}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="phone" className="text-xs font-medium tracking-wide text-text-primary/80">
+                {t("phoneLabel")}
+              </label>
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                dir="ltr"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isBusy}
+                className="rtl:text-right"
               />
             </div>
 

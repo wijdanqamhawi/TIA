@@ -89,7 +89,10 @@ export function ProductGridWithLoadMore({
     });
   }
 
-  const visible = pages[page - 1] ?? [];
+  // Page 1 always renders the fresh server prop rather than its mount-time
+  // copy in `pages`, so a `router.refresh()` (e.g. after a wishlist toggle)
+  // or a return visit carries each card's current `isWishlisted` through.
+  const visible = page === 1 ? initialProducts : (pages[page - 1] ?? []);
 
   if (initialProducts.length === 0) {
     return (

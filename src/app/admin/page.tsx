@@ -1,65 +1,42 @@
-import Link from "next/link";
 import { getDashboardStats, getRecentOrders } from "@/lib/domain/admin/dashboard.service";
-import { StatCard } from "@/components/admin/StatCard";
-import { DataTable } from "@/components/admin/DataTable";
-import { Badge } from "@/components/ui/Badge";
-import { formatCurrency } from "@/lib/utils/currency";
+import { requireAdmin } from "@/lib/firebase/guards";
+import { getAdminTranslator } from "@/lib/i18n/admin";
+import { getCustomerById } from "@/lib/domain/admin/customer.service";
+import { AdminDashboardView, type DashboardTranslate } from "@/components/admin/AdminDashboardView";
 
 export const dynamic = "force-dynamic";
 
+/** The signed-in staff member's first name for the greeting — best-effort, never blocks the dashboard. */
+async function getFirstName(uid: string): Promise<string | null> {
+  try {
+    const user = await getCustomerById(uid);
+    return user?.name?.trim().split(/\s+/)[0] || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Admin — Dashboard (T170): store-wide statistics, recent orders, and best sellers. */
 export default async function AdminDashboardPage() {
-  const [{ stats, bestSellers }, recentOrders] = await Promise.all([getDashboardStats(), getRecentOrders()]);
+  // The layout already ran requireAdmin(); this call gives the viewer's verified uid for the greeting.
+  const viewer = await requireAdmin();
+  const [{ stats, bestSellers, thumbnails }, recentOrders, { t, locale }, firstName] =
+    await Promise.all([
+      getDashboardStats(),
+      getRecentOrders(),
+      getAdminTranslator("AdminDashboard"),
+      getFirstName(viewer.uid),
+    ]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl">Dashboard</h1>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Total Sales (excl. cancelled)" value={formatCurrency(stats.totalSales, "en-US")} />
-        <StatCard label="Total Orders (excl. cancelled)" value={stats.totalOrders} />
-        <StatCard label="Pending Orders" value={stats.pendingOrders} />
-        <StatCard label="Total Products" value={stats.totalProducts} />
-        <StatCard label="Total Customers" value={stats.totalCustomers} />
-        <StatCard label="Sold Out Products" value={stats.soldOutProducts} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div>
-          <h2 className="mb-2 font-display text-lg">Recent Orders</h2>
-          <DataTable
-            rows={recentOrders}
-            rowKey={(row) => row.id}
-            emptyMessage="No orders yet."
-            columns={[
-              {
-                header: "Order #",
-                render: (row) => (
-                  <Link href={`/admin/orders/${row.id}`} className="font-medium text-brand-burgundy hover:underline">
-                    {row.orderNumber}
-                  </Link>
-                ),
-              },
-              { header: "Customer", render: (row) => row.customerSnapshot.fullName },
-              { header: "Total", render: (row) => formatCurrency(row.total, "en-US") },
-              { header: "Status", render: (row) => <Badge>{row.status}</Badge> },
-            ]}
-          />
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-display text-lg">Best Sellers (excl. cancelled)</h2>
-          <DataTable
-            rows={bestSellers}
-            rowKey={(row) => row.productId}
-            emptyMessage="No sales yet."
-            columns={[
-              { header: "Product", render: (row) => row.nameEn },
-              { header: "Units Sold", render: (row) => row.quantitySold },
-            ]}
-          />
-        </div>
-      </div>
-    </div>
+    <AdminDashboardView
+      t={t as unknown as DashboardTranslate}
+      locale={locale}
+      firstName={firstName}
+      stats={stats}
+      bestSellers={bestSellers}
+      recentOrders={recentOrders}
+      thumbnails={thumbnails}
+    />
   );
 }

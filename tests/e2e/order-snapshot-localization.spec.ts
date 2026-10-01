@@ -101,6 +101,7 @@ test.describe("order snapshot localization survives a later product edit", () =>
     await page.getByLabel("Full Name").fill("Snapshot Tester");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill("supersecret123");
+    await page.getByLabel("Mobile Phone Number").fill("+970599123456");
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 });
 

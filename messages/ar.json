@@ -76,7 +76,8 @@
     "featuredCategoriesTitle": "تسوقي حسب الفئة",
     "newArrivals": "وصل حديثًا",
     "bestSellers": "الأكثر مبيعًا",
-    "specialOffers": "عروض خاصة",
+    "specialOffers": "العروض الخاصة",
+    "specialOffersEyebrow": "عروض خاصة",
     "brandTitle": "وعد تيا",
     "brandBody": "كل قطعة من تيا تُختار لجودتها الدائمة وأناقتها الهادئة — مصممة لتُرتدى وتُحب لسنوات قادمة.",
     "featuredIn": "مميز من {category}",
@@ -135,6 +136,7 @@
   "Shop": {
     "title": "المتجر",
     "allProducts": "كل المنتجات",
+    "specialOffers": "العروض الخاصة",
     "searchPlaceholder": "ابحثي عن منتجات…",
     "sortBy": "ترتيب حسب",
     "sortNewest": "الأحدث",
@@ -165,6 +167,13 @@
     "priceAbove": "أكثر من {min}",
     "productCount": "{count, plural, =0 {لا توجد منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
     "allCategories": "كل الفئات"
+  },
+  "Offers": {
+    "title": "العروض",
+    "subtitle": "قطع بأسعار خاصة الآن.",
+    "emptyTitle": "لا توجد عروض حاليًا",
+    "emptyBody": "لا توجد عروض خاصة فعّالة في الوقت الحالي. تصفّحي المجموعة الكاملة في هذه الأثناء.",
+    "shopCta": "تسوّقي الآن"
   },
   "Product": {
     "material": "الخامة",
@@ -225,6 +234,7 @@
     "registerTitle": "إنشاء حساب",
     "nameLabel": "الاسم الكامل",
     "emailLabel": "البريد الإلكتروني",
+    "phoneLabel": "رقم الهاتف المحمول",
     "passwordLabel": "كلمة المرور",
     "loginButton": "تسجيل الدخول",
     "registerButton": "إنشاء حساب",
@@ -241,11 +251,23 @@
       "weakPassword": "يرجى اختيار كلمة مرور أقوى (٨ أحرف على الأقل).",
       "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا.",
       "tooManyRequests": "محاولات كثيرة جدًا. يرجى الانتظار قليلاً والمحاولة مرة أخرى.",
-      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+      "invalidPhone": "أدخل رقم هاتف صحيحًا.",
+      "phoneRequired": "رقم الهاتف مطلوب."
     }
   },
   "Checkout": {
     "title": "الدفع",
+    "subtitle": "أكملي طلبك",
+    "contactHint": "سنستخدم هذه المعلومات للتواصل معك بشأن طلبك.",
+    "deliveryHint": "يرجى إدخال عنوان التوصيل.",
+    "paymentHint": "كيف ستدفعين مقابل هذا الطلب.",
+    "codHint": "ادفعي نقدًا عند وصول طلبك.",
+    "addressPlaceholder": "أدخلي عنوانك الكامل",
+    "notesPlaceholder": "أضيفي أي ملاحظات إضافية (اختياري)",
+    "secureNote": "معلوماتكِ محمية.",
+    "whyTitle": "لماذا تتسوقين من تيا؟",
+    "itemCount": "{count, plural, one {# قطعة} two {قطعتان} few {# قطع} many {# قطعة} other {# قطعة}}",
     "contactInfo": "معلومات التواصل",
     "deliveryInfo": "معلومات التوصيل",
     "fullNameLabel": "الاسم الكامل",
@@ -291,6 +313,12 @@
   "OrderConfirmation": {
     "title": "تم تأكيد الطلب",
     "thankYou": "شكرًا لطلبك!",
+    "orderRef": "الطلب",
+    "orderSummary": "ملخص الطلب",
+    "itemsUnits": "{items, plural, one {# منتج} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}} • {units, plural, one {# قطعة} two {قطعتان} few {# قطع} many {# قطعة} other {# قطعة}}",
+    "orderDetails": "تفاصيل الطلب",
+    "orderDetailsHint": "إليكِ تفاصيل طلبك.",
+    "address": "العنوان",
     "orderNumber": "رقم الطلب",
     "items": "المنتجات",
     "quantity": "الكمية",
@@ -302,7 +330,9 @@
     "status": "الحالة",
     "continueShopping": "متابعة التسوق",
     "notFoundTitle": "الطلب غير موجود",
-    "notFoundDescription": "لم نتمكن من العثور على هذا الطلب، أو لا تملكين صلاحية الوصول إليه."
+    "notFoundDescription": "لم نتمكن من العثور على هذا الطلب، أو لا تملكين صلاحية الوصول إليه.",
+    "editOrder": "تعديل الطلب",
+    "orderUpdated": "تم تحديث طلبك."
   },
   "OrderStatus": {
     "PENDING": "قيد الانتظار",
@@ -452,7 +482,9 @@
     "categoryDescriptionTemplate": "تسوقي {category} من تيا — قطع خالدة مصممة لجودة دائمة وأناقة هادئة.",
     "productTitleTemplate": "{product} | تيا",
     "aboutDescription": "تعرفي على علامة تيا — أناقة خالدة، بحرفية متقنة.",
-    "contactDescription": "تواصلي مع تيا عبر إنستغرام أو واتساب."
+    "contactDescription": "تواصلي مع تيا عبر إنستغرام أو واتساب.",
+    "offersTitle": "العروض | TIA",
+    "offersDescription": "اكتشفي قطع TIA بأسعار خاصة الآن."
   },
   "AdminShell": {
     "brand": "TIA",
@@ -467,12 +499,674 @@
       "customers": "العملاء",
       "locations": "مناطق التوصيل",
       "exports": "التصدير",
-      "team": "الفريق"
+      "team": "الفريق",
+      "specialOffers": "العروض الخاصة"
     },
     "signOut": "تسجيل الخروج",
     "signingOut": "جارٍ تسجيل الخروج…",
     "switchTo": "English",
-    "switchToLabel": "Switch the dashboard to English"
+    "switchToLabel": "Switch the dashboard to English",
+    "brandTagline": "Jewellery",
+    "viewStore": "عرض المتجر",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "account": "قائمة الحساب",
+    "roles": {
+      "OWNER": "مالك",
+      "ADMIN": "مسؤول"
+    },
+    "search": "ابحث عن أي شيء...",
+    "searchLabel": "ابحث في الطلبات باسم العميل أو رقم الطلب",
+    "languageNames": {
+      "en": "English",
+      "ar": "العربية"
+    },
+    "language": "لغة لوحة الإدارة"
+  },
+  "AdminDashboard": {
+    "welcome": "أهلًا بعودتك، {name}",
+    "welcomeNoName": "أهلًا بعودتك",
+    "title": "متجر TIA في لمحة",
+    "subtitle": "تابع مبيعاتك وطلباتك وعملاءك ومنتجاتك لحظة بلحظة.",
+    "tagline1": "الأناقة",
+    "tagline2": "في كل تفصيل",
+    "stats": {
+      "totalSales": "إجمالي المبيعات",
+      "totalOrders": "إجمالي الطلبات",
+      "totalCustomers": "إجمالي العملاء",
+      "totalProducts": "إجمالي المنتجات"
+    },
+    "statNotes": {
+      "totalSales": "دون الطلبات الملغاة",
+      "totalOrders": "قيد الانتظار",
+      "totalCustomers": "حسابات مسجّلة",
+      "totalProducts": "نفدت الكمية"
+    },
+    "statLinks": {
+      "totalSales": "عرض الطلبات",
+      "totalOrders": "عرض الطلبات قيد الانتظار",
+      "totalCustomers": "عرض العملاء",
+      "totalProducts": "عرض المنتجات"
+    },
+    "recentOrders": {
+      "title": "أحدث الطلبات",
+      "emptyTitle": "لا توجد طلبات بعد",
+      "emptyBody": "ستظهر الطلبات الجديدة هنا عندما يطلب العملاء من متجرك.",
+      "columns": {
+        "number": "#",
+        "customer": "العميل",
+        "date": "التاريخ",
+        "total": "المجموع",
+        "status": "الحالة"
+      },
+      "open": "فتح الطلب"
+    },
+    "status": {
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكَّد",
+      "PREPARING": "قيد التجهيز",
+      "SHIPPED": "تم الشحن",
+      "DELIVERED": "تم التسليم",
+      "CANCELLED": "ملغى"
+    },
+    "bestSellers": {
+      "title": "الأكثر مبيعًا",
+      "emptyTitle": "لا توجد مبيعات بعد",
+      "emptyBody": "ستظهر المنتجات الأكثر مبيعًا هنا عند اكتمال الطلبات.",
+      "sold": "مُباع"
+    },
+    "viewAll": "عرض الكل",
+    "viewAllOrders": "عرض كل الطلبات",
+    "viewAllProducts": "عرض كل المنتجات",
+    "collection": {
+      "title": "مجموعة جديدة",
+      "body": "أضف أحدث تصاميمك واعرض علامتك التجارية.",
+      "cta": "إضافة منتج"
+    },
+    "actions": {
+      "products": {
+        "title": "إدارة المنتجات",
+        "body": "أضف منتجات متجرك أو عدّلها أو احذفها."
+      },
+      "store": {
+        "title": "عرض المتجر",
+        "body": "شاهد متجرك كما يراه عملاؤك."
+      },
+      "exports": {
+        "title": "تصدير البيانات",
+        "body": "نزّل بيانات الطلبات والعملاء والمنتجات."
+      }
+    }
+  },
+  "AdminProducts": {
+    "title": "المنتجات",
+    "subtitle": "أدِر الكتالوج والمخزون والتوفّر والعروض الخاصة.",
+    "newProduct": "منتج جديد",
+    "stats": {
+      "total": "إجمالي المنتجات",
+      "inStock": "متوفّر",
+      "soldOut": "نفدت الكمية",
+      "offers": "العروض الخاصة"
+    },
+    "filters": {
+      "label": "تصفية المنتجات",
+      "search": "ابحث عن منتج بالاسم...",
+      "searchLabel": "ابحث عن منتج بالاسم",
+      "category": "الفئة",
+      "allCategories": "كل الفئات",
+      "stock": "المخزون",
+      "allStock": "كل المخزون",
+      "inStock": "متوفّر",
+      "soldOut": "نفدت الكمية",
+      "status": "الحالة",
+      "allStatus": "كل الحالات",
+      "visible": "ظاهر",
+      "hidden": "مخفي",
+      "newArrival": "وصل حديثًا",
+      "bestSeller": "الأكثر مبيعًا",
+      "onSale": "عليه عرض",
+      "clear": "مسح الفلاتر",
+      "showing": "{shown} من {total} منتج"
+    },
+    "columns": {
+      "product": "المنتج",
+      "category": "الفئة",
+      "price": "السعر",
+      "stock": "المخزون",
+      "offer": "العرض",
+      "visible": "الظهور",
+      "newArrival": "وصل حديثًا",
+      "bestSeller": "الأكثر مبيعًا",
+      "actions": "الإجراءات"
+    },
+    "offer": {
+      "DISABLED": "لا يوجد عرض",
+      "SCHEDULED": "مجدول",
+      "ACTIVE": "عرض",
+      "EXPIRED": "منتهٍ"
+    },
+    "soldOut": "نفدت الكمية",
+    "visible": "ظاهر",
+    "hidden": "مخفي",
+    "yes": "نعم",
+    "no": "لا",
+    "toggleVisible": "تبديل ظهور {name} في المتجر",
+    "toggleNewArrival": "تبديل «وصل حديثًا» لـ {name}",
+    "toggleBestSeller": "تبديل «الأكثر مبيعًا» لـ {name}",
+    "edit": "تعديل",
+    "editProduct": "تعديل {name}",
+    "moreActions": "إجراءات أخرى لـ {name}",
+    "viewInStore": "عرض في المتجر",
+    "delete": "حذف",
+    "confirmDelete": "حذف «{name}»؟ لا يمكن التراجع عن ذلك.",
+    "empty": "لا توجد منتجات بعد. أنشئ أول منتج للبدء.",
+    "noMatches": "لا توجد منتجات تطابق هذه الفلاتر.",
+    "uncategorized": "—",
+    "bulk": {
+      "button": "حذف الكل",
+      "title": "حذف جميع المنتجات؟",
+      "description": "سيتم حذف {count, plural, one {منتج واحد} two {منتجين} few {# منتجات} many {# منتجًا} other {# منتج}} نهائيًا. لن تتأثر الطلبات السابقة ولا العملاء ولا الفئات ولا أقسام الواجهة. لا يمكن التراجع عن هذا الإجراء.",
+      "confirm": "حذف الكل",
+      "cancel": "إلغاء",
+      "success": "تم حذف {count, plural, one {منتج واحد} two {منتجين} few {# منتجات} many {# منتجًا} other {# منتج}}.",
+      "errors": {
+        "generic": "تعذّر حذف المنتجات. لم يتغيّر شيء — يرجى المحاولة مرة أخرى.",
+        "forbidden": "ليست لديك صلاحية لتنفيذ هذا الإجراء.",
+        "staleCount": "تغيّر الكتالوج أثناء فتح هذه النافذة، لذلك لم يُحذف شيء. يرجى المراجعة والمحاولة مرة أخرى.",
+        "partial": "تم حذف بعض المنتجات فقط: حُذف {done} وتبقّى {remaining}. يمكنك تنفيذ حذف الكل مرة أخرى.",
+        "imagesNote": "تعذّرت إزالة {failed, plural, one {ملف صورة واحد} two {ملفا صورة} few {# ملفات صور} many {# ملف صورة} other {# ملف صورة}} من التخزين."
+      },
+      "successImagesFailed": "تم حذف {count, plural, one {منتج واحد} two {منتجين} few {# منتجات} many {# منتجًا} other {# منتج}}، لكن تعذّرت إزالة {failed, plural, one {ملف صورة واحد} two {ملفا صورة} few {# ملفات صور} many {# ملف صورة} other {# ملف صورة}} من التخزين وما زالت موجودة فيه."
+    },
+    "imagesFailedNotice": "تم حذف المنتج، لكن تعذّرت إزالة {failed, plural, one {ملف صورة واحد} two {ملفا صورة} few {# ملفات صور} many {# ملف صورة} other {# ملف صورة}} من التخزين وما زالت موجودة فيه."
+  },
+  "AdminProductForm": {
+    "back": "المنتجات",
+    "newTitle": "منتج جديد",
+    "newSubtitle": "أنشئ المنتج أولًا، ثم أضف الصور في الشاشة التالية.",
+    "sections": {
+      "info": "معلومات المنتج",
+      "pricing": "التسعير والمخزون",
+      "status": "حالة المنتج",
+      "options": "الخيارات (مثل المقاس واللون)",
+      "offer": "عرض خاص",
+      "images": "الصور"
+    },
+    "fields": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "material": "الخامة",
+      "english": "بالإنجليزية",
+      "arabic": "بالعربية",
+      "price": "السعر",
+      "category": "الفئة",
+      "selectCategory": "اختر فئة",
+      "stock": "المخزون",
+      "salePrice": "سعر العرض",
+      "startDate": "تاريخ البدء (اختياري)",
+      "endDate": "تاريخ الانتهاء (اختياري)",
+      "discountPercent": "الخصم (%)"
+    },
+    "placeholders": {
+      "nameEn": "أدخل اسم المنتج بالإنجليزية...",
+      "nameAr": "أدخل اسم المنتج بالعربية...",
+      "descriptionEn": "أدخل وصف المنتج بالإنجليزية...",
+      "descriptionAr": "أدخل وصف المنتج بالعربية...",
+      "materialEn": "أدخل الخامة بالإنجليزية...",
+      "materialAr": "أدخل الخامة بالعربية...",
+      "optionNameEn": "اسم الخيار (بالإنجليزية)",
+      "optionNameAr": "اسم الخيار (بالعربية)",
+      "valueEn": "القيمة (بالإنجليزية)",
+      "valueAr": "القيمة (بالعربية)"
+    },
+    "status": {
+      "availability": "متاح في المتجر",
+      "availabilityHint": "اعرض هذا المنتج في متجرك الإلكتروني.",
+      "newArrival": "وصل حديثًا",
+      "newArrivalHint": "ميّز المنتج كوصول جديد.",
+      "bestSeller": "الأكثر مبيعًا",
+      "bestSellerHint": "ميّز المنتج كأحد الأكثر مبيعًا."
+    },
+    "options": {
+      "add": "+ إضافة خيار",
+      "remove": "إزالة",
+      "addValue": "+ قيمة",
+      "removeValue": "إزالة القيمة"
+    },
+    "offer": {
+      "enable": "تفعيل هذا العرض",
+      "discountHelp": "أدخل نسبة من 1 إلى 99. يُحسب سعر العرض تلقائيًا.",
+      "salePriceCalculated": "يُحسب تلقائيًا",
+      "errors": {
+        "discountRequired": "أدخل نسبة الخصم.",
+        "discountInvalid": "أدخل خصمًا أكبر من 0% وأقل من 100% (حتى خانتين عشريتين).",
+        "discountTooLow": "هذا الخصم يجعل سعر العرض صفرًا — استخدم خصمًا أصغر.",
+        "discountNotBelow": "هذا الخصم صغير جدًا فلا يخفّض السعر — استخدم خصمًا أكبر.",
+        "noRegularPrice": "أدخل السعر الأصلي أولًا."
+      }
+    },
+    "images": {
+      "remove": "إزالة",
+      "moveEarlier": "نقل للأمام",
+      "moveLater": "نقل للخلف"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "create": "إنشاء المنتج",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ…"
+    }
+  },
+  "AdminCategories": {
+    "title": "الفئات",
+    "subtitle": "أدِر قائمة فئات الكتالوج.",
+    "stats": {
+      "total": "إجمالي الفئات",
+      "active": "الفئات النشطة",
+      "inactive": "الفئات غير النشطة",
+      "products": "إجمالي المنتجات"
+    },
+    "list": {
+      "title": "الفئات",
+      "subtitle": "اعرض جميع فئات المنتجات وأدِرها.",
+      "empty": "لا توجد فئات."
+    },
+    "newCategory": "فئة جديدة",
+    "columns": {
+      "number": "#",
+      "name": "الاسم",
+      "products": "المنتجات",
+      "order": "الترتيب",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "active": "نشطة",
+      "inactive": "غير نشطة"
+    },
+    "edit": "تعديل",
+    "drawer": {
+      "addTitle": "إضافة فئة جديدة",
+      "editTitle": "تعديل الفئة",
+      "close": "إغلاق",
+      "nameEn": "الاسم — بالإنجليزية",
+      "nameAr": "الاسم — بالعربية",
+      "nameEnPlaceholder": "أدخل اسم الفئة بالإنجليزية...",
+      "nameArPlaceholder": "أدخل اسم الفئة بالعربية...",
+      "descriptionEn": "الوصف — بالإنجليزية (اختياري)",
+      "descriptionAr": "الوصف — بالعربية (اختياري)",
+      "displayOrder": "ترتيب العرض",
+      "active": "نشطة",
+      "activeHint": "اعرض هذه الفئة في المتجر.",
+      "cancel": "إلغاء",
+      "create": "إنشاء الفئة",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ…"
+    }
+  },
+  "AdminShowcases": {
+    "title": "واجهات الصفحة الرئيسية",
+    "subtitle": "أدِر قسم العرض الكبير لكل فئة في الصفحة الرئيسية.",
+    "stats": {
+      "total": "إجمالي الواجهات",
+      "active": "الواجهات النشطة",
+      "inactive": "الواجهات غير النشطة",
+      "categories": "إجمالي الفئات"
+    },
+    "list": {
+      "title": "واجهات الصفحة الرئيسية",
+      "subtitle": "اعرض واجهات الصفحة الرئيسية لكل فئة وأدِرها.",
+      "empty": "لا توجد واجهات بعد."
+    },
+    "newShowcase": "واجهة جديدة",
+    "allCategoriesHaveShowcase": "لكل فئة نشطة واجهة في الصفحة الرئيسية بالفعل.",
+    "columns": {
+      "number": "#",
+      "category": "الفئة",
+      "title": "العنوان",
+      "order": "الترتيب",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "active": "نشطة",
+      "inactive": "غير نشطة",
+      "activate": "انقر للتفعيل",
+      "deactivate": "انقر لإلغاء التفعيل",
+      "saving": "جارٍ الحفظ…",
+      "toggleError": "تعذّر تحديث حالة الواجهة. يُرجى المحاولة مرة أخرى."
+    },
+    "edit": "تعديل",
+    "drawer": {
+      "addTitle": "إضافة واجهة جديدة",
+      "addSubtitle": "أنشئ واجهة جديدة لفئة في الصفحة الرئيسية.",
+      "editTitle": "تعديل الواجهة",
+      "editSubtitle": "حدّث واجهة هذه الفئة في الصفحة الرئيسية.",
+      "close": "إغلاق",
+      "category": "الفئة",
+      "selectCategory": "اختر الفئة",
+      "titleEn": "العنوان — بالإنجليزية",
+      "titleAr": "العنوان — بالعربية",
+      "titleEnPlaceholder": "أدخل عنوان الواجهة بالإنجليزية...",
+      "titleArPlaceholder": "أدخل عنوان الواجهة بالعربية...",
+      "subtitleEn": "العنوان الفرعي — بالإنجليزية (اختياري)",
+      "subtitleAr": "العنوان الفرعي — بالعربية (اختياري)",
+      "ctaEn": "نص الزر — بالإنجليزية",
+      "ctaAr": "نص الزر — بالعربية",
+      "ctaEnPlaceholder": "e.g. Shop Bracelets",
+      "ctaArPlaceholder": "مثال: تسوّقي الأساور",
+      "displayOrder": "ترتيب العرض",
+      "status": "الحالة",
+      "active": "نشطة",
+      "activeHint": "اعرض قسم هذه الواجهة في الصفحة الرئيسية.",
+      "desktopImage": "صورة سطح المكتب",
+      "mobileImage": "صورة الجوال (اختياري)",
+      "noImage": "لا توجد صورة بعد",
+      "desktopImageRequired": "صورة سطح المكتب مطلوبة.",
+      "oneShowcaseNote": "يمكن أن يكون لكل فئة قسم واجهة واحد في الصفحة الرئيسية.",
+      "cancel": "إلغاء",
+      "create": "إنشاء الواجهة",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ…",
+      "subtitleEnPlaceholder": "Add a short subtitle…",
+      "subtitleArPlaceholder": "أضف وصفاً مختصراً…",
+      "uploadImage": "رفع صورة",
+      "uploading": "جارٍ الرفع…",
+      "recommendedSize": "المقاس المقترح:"
+    }
+  },
+  "AdminOrders": {
+    "title": "الطلبات",
+    "subtitle": "كل الطلبات المُقدَّمة، من الضيوف والعملاء المسجّلين.",
+    "stats": {
+      "total": "إجمالي الطلبات",
+      "pending": "قيد الانتظار",
+      "inProgress": "قيد التنفيذ",
+      "inProgressNote": "مؤكَّدة أو قيد التجهيز أو تم شحنها",
+      "delivered": "تم التسليم"
+    },
+    "filters": {
+      "label": "تصفية الطلبات",
+      "search": "ابحث برقم الطلب أو اسم العميل…",
+      "searchLabel": "ابحث برقم الطلب أو اسم العميل",
+      "status": "الحالة",
+      "allStatuses": "كل الحالات",
+      "apply": "تصفية",
+      "clear": "مسح التصفية"
+    },
+    "status": {
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكَّد",
+      "PREPARING": "قيد التجهيز",
+      "SHIPPED": "تم الشحن",
+      "DELIVERED": "تم التسليم",
+      "CANCELLED": "ملغى"
+    },
+    "columns": {
+      "order": "رقم الطلب",
+      "customer": "العميل",
+      "date": "التاريخ",
+      "total": "الإجمالي",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "guest": "ضيف",
+    "view": "عرض",
+    "viewOrder": "عرض الطلب {orderNumber}",
+    "footer": {
+      "count": "عرض {shown} من {total} طلب",
+      "latest": "عرض أحدث {shown} من {total} طلب",
+      "matchingLatest": "{shown} مطابقة ضمن أحدث {fetched} طلب"
+    },
+    "empty": {
+      "title": "لا توجد طلبات",
+      "filtered": "لا توجد طلبات مطابقة لبحثك.",
+      "none": "لم يتم تقديم أي طلبات بعد. ستظهر هنا فور إتمام العملاء لطلباتهم."
+    },
+    "statusMenu": {
+      "change": "تغيير حالة الطلب",
+      "menu": "تغيير الحالة",
+      "current": "الحالة الحالية",
+      "final": "حالة نهائية — لا تغييرات أخرى",
+      "saving": "جارٍ الحفظ…",
+      "failed": "تعذّر تحديث حالة الطلب. يُرجى المحاولة مرة أخرى.",
+      "back": "رجوع",
+      "confirm": {
+        "CANCELLED": {
+          "title": "إلغاء هذا الطلب؟",
+          "body": "سيُوسَم الطلب بأنه ملغى وتعود قطعه إلى المخزون. لا يمكن التراجع عن ذلك.",
+          "action": "إلغاء الطلب"
+        },
+        "DELIVERED": {
+          "title": "تأكيد التسليم؟",
+          "body": "سيُوسَم الطلب بأنه تم تسليمه. لا يمكن التراجع عن ذلك.",
+          "action": "تأكيد التسليم"
+        }
+      }
+    },
+    "detail": {
+      "back": "العودة إلى الطلبات",
+      "orderLabel": "الطلب",
+      "placed": "تم الطلب في {date}",
+      "cards": {
+        "total": "إجمالي الطلب",
+        "items": "المنتجات",
+        "itemsNote": "{count, plural, one {قطعة واحدة} two {قطعتان} few {# قطع} many {# قطعة} other {# قطعة}}",
+        "payment": "طريقة الدفع",
+        "status": "الحالة الحالية"
+      },
+      "cashOnDelivery": "الدفع عند الاستلام",
+      "itemsCard": {
+        "title": "منتجات الطلب",
+        "hint": "الأسعار كما دُفعت تمامًا وقت تقديم الطلب.",
+        "quantity": "الكمية",
+        "option": "الخيار",
+        "sale": "تخفيض",
+        "lineTotal": "الإجمالي",
+        "product": "المنتج",
+        "unitPrice": "سعر الوحدة",
+        "subtotal": "المجموع الفرعي",
+        "total": "الإجمالي",
+        "noOption": "لا يوجد"
+      },
+      "customerCard": {
+        "title": "العميل والتوصيل",
+        "customer": "العميل",
+        "name": "الاسم",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "registered": "عميل مسجّل",
+        "guest": "طلب كزائر",
+        "delivery": "التوصيل",
+        "region": "المنطقة",
+        "city": "المدينة / الحي",
+        "address": "العنوان",
+        "notes": "ملاحظات",
+        "deliveryAddress": "عنوان التوصيل"
+      },
+      "infoCard": {
+        "title": "معلومات الطلب",
+        "orderNumber": "رقم الطلب",
+        "payment": "طريقة الدفع",
+        "status": "الحالة",
+        "placed": "تاريخ الطلب",
+        "deliveringTo": "التوصيل إلى"
+      },
+      "timeline": {
+        "title": "مسار الطلب",
+        "current": "الحالية",
+        "note": "يُسجَّل لكل طلب وقت تقديمه فقط. الخطوات اللاحقة تعرض التقدّم فقط — لا تُخزَّن أوقاتها."
+      }
+    }
+  },
+  "AdminCustomers": {
+    "title": "العملاء",
+    "subtitle": "العملاء المسجّلون فقط — لا يملك الضيوف حسابًا عند إتمام الطلب.",
+    "stats": {
+      "total": "إجمالي العملاء",
+      "newThisMonth": "جدد هذا الشهر",
+      "withOrders": "عملاء لديهم طلبات",
+      "noOrders": "عملاء بلا طلبات",
+      "unavailable": "غير متاح للقوائم الكبيرة"
+    },
+    "filters": {
+      "label": "تصفية العملاء",
+      "search": "ابحث بالاسم أو البريد أو الهاتف…",
+      "searchLabel": "ابحث عن العملاء بالاسم أو البريد أو الهاتف",
+      "orders": "الطلبات",
+      "allCustomers": "كل العملاء",
+      "withOrders": "لديهم طلبات",
+      "noOrders": "بلا طلبات",
+      "joined": "تاريخ الانضمام",
+      "allTime": "كل الأوقات",
+      "thisMonth": "هذا الشهر",
+      "last30": "آخر 30 يومًا",
+      "apply": "تصفية",
+      "clear": "مسح التصفية"
+    },
+    "columns": {
+      "number": "#",
+      "customer": "العميل",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "joined": "انضم في",
+      "orders": "الطلبات",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "withOrders": "لديه طلبات",
+      "noOrders": "بلا طلبات"
+    },
+    "view": "عرض",
+    "viewCustomer": "عرض {name}",
+    "footer": {
+      "showing": "عرض {from}–{to} من {total} عميل",
+      "truncated": "عرض أحدث {loaded} من {total} عميل"
+    },
+    "pagination": {
+      "label": "صفحات العملاء",
+      "previous": "الصفحة السابقة",
+      "next": "الصفحة التالية",
+      "page": "الصفحة {page}"
+    },
+    "empty": {
+      "title": "لا يوجد عملاء",
+      "filtered": "لا يوجد عملاء مطابقون لبحثك.",
+      "none": "لم يسجّل أي عميل بعد. تظهر الحسابات هنا عندما يسجّل المتسوقون."
+    }
+  },
+  "AdminOffers": {
+    "title": "العروض الخاصة",
+    "subtitle": "المنتجات ذات السعر الترويجي — النشطة والمجدولة والمنتهية.",
+    "newOffer": "عرض جديد",
+    "noProductsAvailable": "لدى كل منتج عرض بالفعل.",
+    "stats": {
+      "total": "إجمالي العروض",
+      "active": "نشطة",
+      "scheduled": "مجدولة",
+      "expired": "منتهية",
+      "disabled": "معطّلة"
+    },
+    "filters": {
+      "label": "تصفية العروض",
+      "search": "ابحث في العروض باسم المنتج...",
+      "searchLabel": "ابحث في العروض باسم المنتج",
+      "status": "الحالة",
+      "allStatuses": "كل الحالات",
+      "clear": "مسح التصفية"
+    },
+    "status": {
+      "ACTIVE": "نشط",
+      "SCHEDULED": "مجدول",
+      "EXPIRED": "منتهٍ",
+      "DISABLED": "معطّل"
+    },
+    "columns": {
+      "product": "المنتج",
+      "regularPrice": "السعر الأصلي",
+      "salePrice": "سعر العرض",
+      "discount": "الخصم",
+      "starts": "يبدأ",
+      "ends": "ينتهي",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "immediately": "فورًا",
+    "noEnd": "بلا تاريخ انتهاء",
+    "edit": "تعديل",
+    "footer": {
+      "showing": "عرض {shown} من {total} عرض"
+    },
+    "empty": {
+      "title": "لا توجد عروض",
+      "filtered": "لا توجد عروض مطابقة لبحثك.",
+      "none": "لا توجد منتجات معروضة بسعر ترويجي بعد. أنشئ أول عرض للبدء."
+    },
+    "drawer": {
+      "addTitle": "عرض جديد",
+      "addSubtitle": "اعرض منتجًا بسعر ترويجي.",
+      "editTitle": "تعديل العرض",
+      "editSubtitle": "حدّث العرض الخاص بهذا المنتج.",
+      "close": "إغلاق",
+      "product": "المنتج",
+      "selectProduct": "اختر منتجًا",
+      "regularPrice": "السعر الأصلي",
+      "salePrice": "سعر العرض",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "optional": "اختياري",
+      "enabled": "العرض مفعّل",
+      "enabledHint": "أوقفه لإزالة المنتج من العرض. تبقى تفاصيل العرض محفوظة.",
+      "note": "تُحفظ العروض على المنتج نفسه، في الحقول ذاتها الموجودة في نموذج المنتج.",
+      "openProduct": "فتح المنتج",
+      "cancel": "إلغاء",
+      "create": "إنشاء العرض",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ…",
+      "discount": "الخصم (%)",
+      "discountHelp": "أدخل نسبة من 1 إلى 99. يُحسب سعر العرض تلقائيًا.",
+      "salePriceCalculated": "يُحسب تلقائيًا"
+    },
+    "errors": {
+      "productRequired": "اختر منتجًا.",
+      "generic": "تعذّر حفظ العرض. يُرجى المحاولة مرة أخرى.",
+      "discountRequired": "أدخل نسبة الخصم.",
+      "discountInvalid": "أدخل خصمًا أكبر من 0% وأقل من 100% (حتى خانتين عشريتين).",
+      "discountTooLow": "هذا الخصم يجعل سعر العرض صفرًا — استخدم خصمًا أصغر.",
+      "discountNotBelow": "هذا الخصم صغير جدًا فلا يخفّض السعر — استخدم خصمًا أكبر.",
+      "noRegularPrice": "أدخل السعر الأصلي أولًا."
+    },
+    "toggle": {
+      "stopHint": "نشط — انقر لإيقاف هذا العرض",
+      "startHint": "معطّل — انقر لتفعيل هذا العرض",
+      "stopTitle": "إيقاف هذا العرض؟",
+      "stopBody": "سيرى العملاء فورًا السعر الأصلي للمنتج.",
+      "stopConfirm": "إيقاف العرض",
+      "startTitle": "تفعيل هذا العرض؟",
+      "startBody": "سيُستخدم سعر العرض والتواريخ المحفوظة. يرى العملاء سعر العرض عند بدء فترة العرض.",
+      "startConfirm": "تفعيل العرض",
+      "saving": "جارٍ الحفظ…",
+      "errors": {
+        "failed": "تعذّر تحديث العرض. يُرجى المحاولة مرة أخرى.",
+        "expired": "انتهت فترة هذا العرض فلا يمكن تفعيله. استخدم «تعديل العرض» لتحديد تواريخ جديدة.",
+        "invalidPrice": "سعر العرض ليس أقل من السعر الأصلي. استخدم «تعديل العرض» لتصحيحه."
+      }
+    },
+    "bulk": {
+      "button": "إزالة الكل",
+      "title": "إزالة جميع العروض؟",
+      "description": "سيتم إزالة العرض الخاص من {count, plural, one {عرض واحد} two {عرضين} few {# عروض} many {# عرضًا} other {# عرض}}. تبقى المنتجات نفسها كما هي، وتحتفظ الطلبات السابقة بالسعر الذي دُفع. لا يمكن التراجع عن هذا الإجراء.",
+      "confirm": "إزالة الكل",
+      "cancel": "إلغاء",
+      "success": "تمت إزالة {count, plural, one {عرض واحد} two {عرضين} few {# عروض} many {# عرضًا} other {# عرض}}.",
+      "errors": {
+        "generic": "تعذّرت إزالة العروض. لم يتغيّر شيء — يرجى المحاولة مرة أخرى.",
+        "forbidden": "ليست لديك صلاحية لتنفيذ هذا الإجراء.",
+        "staleCount": "تغيّرت العروض أثناء فتح هذه النافذة، لذلك لم تُزل أي عروض. يرجى المراجعة والمحاولة مرة أخرى.",
+        "partial": "تمت إزالة بعض العروض فقط: أُزيل {done} وتبقّى {remaining}. يمكنك تنفيذ إزالة الكل مرة أخرى."
+      }
+    }
   },
   "AdminTeam": {
     "title": "الفريق",
@@ -551,6 +1245,104 @@
       "CONFIRMATION_MISMATCH": "البريد الإلكتروني الذي كتبته لا يطابق هذا الحساب.",
       "VALIDATION_ERROR": "يرجى إدخال بريد إلكتروني صحيح.",
       "UNKNOWN": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "OrderEdit": {
+    "title": "تعديل الطلب",
+    "itemsTitle": "المنتجات",
+    "itemsHint": "غيّر الكميات أو أزل منتجات من هذا الطلب.",
+    "remove": "إزالة",
+    "decrease": "تقليل الكمية",
+    "increase": "زيادة الكمية",
+    "onlyAvailable": "المتوفر {count} فقط",
+    "lastItem": "يجب أن يحتوي الطلب على منتج واحد على الأقل. لإلغاء الطلب بالكامل يرجى التواصل معنا.",
+    "contactUs": "تواصل معنا",
+    "save": "حفظ التعديلات",
+    "saving": "جارٍ الحفظ…",
+    "cancel": "إلغاء",
+    "backToOrder": "العودة إلى الطلب",
+    "notEditableTitle": "لا يمكن تعديل هذا الطلب",
+    "errors": {
+      "notEditable": "لم يعد من الممكن تعديل هذا الطلب لأن حالته قد تغيرت.",
+      "notFound": "تعذّر العثور على هذا الطلب.",
+      "insufficientStock": "أحد المنتجات لا يتوفر منه مخزون كافٍ لهذه الكمية.",
+      "notAvailable": "أحد المنتجات لم يعد متاحًا لزيادة كميته.",
+      "invalidOption": "الخيار المحدد لأحد منتجاتك لم يعد متاحًا.",
+      "invalidLine": "تغيّر شيء في المنتجات. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.",
+      "rateLimited": "محاولات كثيرة. يرجى الانتظار قليلًا ثم المحاولة مجددًا.",
+      "signIn": "يرجى تسجيل الدخول لتعديل طلبك.",
+      "offline": "يبدو أنك غير متصل. أعد الاتصال وحاول مجددًا.",
+      "generic": "تعذّر حفظ التعديلات. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "AdminExports": {
+    "title": "التصدير",
+    "subtitle": "نزّل تقارير .xlsx حقيقية ومحدّثة لحظيًا يتم إنشاؤها مباشرة من بيانات المتجر.",
+    "cardsLabel": "اختر تقريرًا",
+    "cards": {
+      "orders": "نزّل الطلبات مع بيانات العميل والدفع والشحن.",
+      "customers": "نزّل حسابات العملاء وبياناتهم الأساسية.",
+      "products": "نزّل كتالوج المنتجات شاملًا الأسعار والمخزون."
+    },
+    "generate": {
+      "title": "إنشاء تقرير",
+      "subtitle": "اختر نوع التقرير والفلاتر ثم نزّل ملف Excel."
+    },
+    "reports": {
+      "orders": "الطلبات",
+      "products": "المنتجات",
+      "inventory": "المخزون",
+      "sold-out": "المنتجات النافدة",
+      "customers": "العملاء",
+      "sales": "المبيعات",
+      "best-sellers": "المنتجات الأكثر مبيعًا",
+      "delivery-locations": "مواقع التوصيل"
+    },
+    "fields": {
+      "reportType": "نوع التقرير",
+      "from": "من",
+      "to": "إلى",
+      "status": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "region": "المنطقة",
+      "allRegions": "جميع المناطق",
+      "category": "الفئة (اختياري)",
+      "allCategories": "جميع الفئات",
+      "lowStock": "حد المخزون المنخفض (اختياري)",
+      "lowStockPlaceholder": "مثال: 5 — المنتجات التي مخزونها عند هذا الحد أو أقل فقط",
+      "noFilters": "لا توجد فلاتر لهذا التقرير — يشمل دائمًا كل البيانات."
+    },
+    "status": {
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكد",
+      "PREPARING": "قيد التجهيز",
+      "SHIPPED": "تم الشحن",
+      "DELIVERED": "تم التسليم",
+      "CANCELLED": "ملغى"
+    },
+    "regions": {
+      "west-bank": "الضفة الغربية",
+      "inside-1948": "الداخل / مناطق 48"
+    },
+    "download": "تنزيل",
+    "downloadReport": "تنزيل {report}",
+    "preparing": "جارٍ تجهيز التقرير…",
+    "generating": "جارٍ إنشاء تقريرك — قد يستغرق ذلك لحظات للتقارير الكبيرة.",
+    "panel": {
+      "title": "تقرير <ext>.XLSX</ext>",
+      "live": "بيانات حيّة من متجرك",
+      "real": "ينشئ ملف Excel حقيقيًا (.xlsx)",
+      "noImport": "لا يوجد مسار استيراد — تعديل الملف الذي نزّلته لا يؤثر على TIA",
+      "hint": "استخدم الفلاتر للحصول على البيانات التي تحتاجها بالضبط. قد تستغرق التقارير الكبيرة لحظات حتى يتم إنشاؤها."
+    },
+    "other": {
+      "title": "تقارير أخرى",
+      "subtitle": "وصول سريع إلى أنواع التصدير المختلفة.",
+      "export": "تصدير {report}"
+    },
+    "errors": {
+      "failed": "فشل التصدير ({status}).",
+      "generic": "فشل التصدير. يرجى المحاولة مرة أخرى."
     }
   }
 }

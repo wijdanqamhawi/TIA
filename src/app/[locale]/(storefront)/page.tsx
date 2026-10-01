@@ -7,6 +7,7 @@ import { getActiveCategoryShowcases } from "@/lib/domain/catalog/categoryShowcas
 import {
   getBestSellers,
   getNewArrivals,
+  getSpecialOffers,
   listProducts,
   toProductCardData,
 } from "@/lib/domain/catalog/product.service";
@@ -17,6 +18,7 @@ import { Hero } from "@/components/storefront/Hero";
 import { FeaturedCategories } from "@/components/storefront/FeaturedCategories";
 import { ServiceBenefits } from "@/components/storefront/home/ServiceBenefits";
 import { NewArrivalsStrip } from "@/components/storefront/home/NewArrivalsStrip";
+import { SpecialOffersStrip } from "@/components/storefront/home/SpecialOffersStrip";
 import { LessOrdinary } from "@/components/storefront/home/LessOrdinary";
 import { EditorialPair } from "@/components/storefront/home/EditorialPair";
 import { InstagramGallery } from "@/components/storefront/home/InstagramGallery";
@@ -28,6 +30,9 @@ import { resolveHeroImage } from "@/lib/config/demoImages";
 // disagree with the Shop/category/product pages (spec Edge Cases,
 // Constitution Principle 7/10).
 export const dynamic = "force-dynamic";
+
+/** How many active offers the homepage row shows (the row has five columns). */
+const HOME_OFFERS_LIMIT = 5;
 
 /** T218: bilingual title/description, canonical, and hreflang alternates. */
 export async function generateMetadata({
@@ -57,8 +62,11 @@ export async function generateMetadata({
  *   6. Shop by Category          10. Newsletter strip
  *                                11/12. Footer + navy copyright bar (layout)
  *
+ * A Special Offers row sits after Shop by Category. It lists ONLY currently
+ * Active offers and hides itself entirely when there are none.
+ *
  * ── SECTIONS THE REFERENCE DOES NOT INCLUDE ──────────────────────────────
- * Best Sellers, Special Offers, The Collection story, the brand statement
+ * Best Sellers, The Collection story, the brand statement
  * band and the admin-managed Category Showcase grid are not part of the
  * approved composition and no longer render here. Their components, data
  * and services are untouched — offers still derive and still badge
@@ -73,11 +81,14 @@ export async function generateMetadata({
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
 
-  const [categories, showcases, newArrivals, bestSellers, wishlistedProductIds, popular] = await Promise.all([
+  const [categories, showcases, newArrivals, bestSellers, specialOffers, wishlistedProductIds, popular] = await Promise.all([
     getActiveCategories(),
     getActiveCategoryShowcases(),
     getNewArrivals(),
     getBestSellers(),
+    // Only offers that are ACTIVE right now (the same `getSpecialOffers` the /offers page reads); one
+    // bounded query, in parallel with the rest. The section renders nothing when this is empty.
+    getSpecialOffers(HOME_OFFERS_LIMIT),
     getWishlistedProductIds(),
     // The same read the Shop page uses for "Popularity" — only a
     // presentation fallback for the New Arrivals row (below).
@@ -142,6 +153,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <NewArrivalsStrip products={toCards(newArrivalDisplay)} locale={locale} />
       {/* 6 */}
       <FeaturedCategories categories={categories} locale={locale} />
+      {/* 6b — active Special Offers; renders nothing when none is active */}
+      <SpecialOffersStrip products={toCards(specialOffers)} locale={locale} />
       {/* 7 */}
       <LessOrdinary locale={locale} />
       {/* 8 */}

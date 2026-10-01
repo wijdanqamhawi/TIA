@@ -65,8 +65,22 @@ export function computeBestSellers(orders: Order[], products: Product[], limit =
     .slice(0, limit);
 }
 
+/** Each product's first image URL by product id — display-only thumbnails for the dashboard's order and best-seller rows. */
+function productThumbnails(products: Product[]): Record<string, string> {
+  const thumbnails: Record<string, string> = {};
+  for (const product of products) {
+    const first = [...product.images].sort((a, b) => a.position - b.position)[0];
+    if (first) thumbnails[product.id] = first.url;
+  }
+  return thumbnails;
+}
+
 /** Reads recent orders/products/customer count from Firestore and computes dashboard stats (T170's `/admin` page). */
-export async function getDashboardStats(): Promise<{ stats: DashboardStats; bestSellers: BestSellerRow[] }> {
+export async function getDashboardStats(): Promise<{
+  stats: DashboardStats;
+  bestSellers: BestSellerRow[];
+  thumbnails: Record<string, string>;
+}> {
   const [ordersSnapshot, productsSnapshot, customerCountSnapshot] = await Promise.all([
     ordersCollection().orderBy("createdAt", "desc").limit(RECENT_ORDERS_SCAN_LIMIT).get(),
     productsCollection().get(),
@@ -79,6 +93,7 @@ export async function getDashboardStats(): Promise<{ stats: DashboardStats; best
   return {
     stats: computeDashboardStats(orders, products, customerCountSnapshot.data().count),
     bestSellers: computeBestSellers(orders, products),
+    thumbnails: productThumbnails(products),
   };
 }
 

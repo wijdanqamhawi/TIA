@@ -62,16 +62,35 @@ export type ProductOptionInput = z.infer<typeof productOptionSchema>;
  * need no relative-order check (an end date before a start date simply
  * yields an offer that is never `ACTIVE`, which is safe, not invalid).
  */
-const productFieldsSchema = z.object({
+const productFieldsBase = z.object({
   name: localizedStringSchema,
   description: localizedStringSchema,
   material: localizedStringSchema,
   price: priceMinorUnitsSchema,
   categoryId: z.string().trim().min(1, "categoryId is required."),
   images: z.array(productImageSchema),
-  options: z.array(productOptionSchema).default([]),
+  options: z.array(productOptionSchema),
   stock: nonNegativeInt,
   availability: z.boolean(),
+  isNewArrival: z.boolean(),
+  isBestSeller: z.boolean(),
+  isOnSale: z.boolean(),
+  salePrice: priceMinorUnitsSchema.nullable(),
+  saleStartAt: z.date().nullable(),
+  saleEndAt: z.date().nullable(),
+});
+
+/**
+ * Creation fills in the optional fields with their defaults. Kept OFF the base
+ * shape on purpose: `.partial()` on a field that has a `.default()` still applies
+ * that default under Zod 4, which turned every partial admin update (a visibility
+ * toggle, stopping an offer, …) into a silent reset of `options`, the New Arrival /
+ * Best Seller flags and the whole offer. The update schema below is built from the
+ * default-free base, so an omitted field stays `undefined` and the action keeps
+ * the stored value.
+ */
+const productFieldsSchema = productFieldsBase.extend({
+  options: z.array(productOptionSchema).default([]),
   isNewArrival: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
   isOnSale: z.boolean().default(false),
@@ -116,7 +135,7 @@ export type ProductInput = z.infer<typeof productFieldsSchema>;
  * other field is independently optional for partial updates (e.g. only
  * adjusting `stock`), reusing the same field-level rules as `productSchema`.
  */
-const updateProductFieldsSchema = productFieldsSchema.partial().extend({
+const updateProductFieldsSchema = productFieldsBase.partial().extend({
   productId: z.string().trim().min(1, "productId is required."),
 });
 export const updateProductSchema = withOfferRefinement(updateProductFieldsSchema);

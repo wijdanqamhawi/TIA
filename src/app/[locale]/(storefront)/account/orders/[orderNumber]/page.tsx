@@ -4,6 +4,7 @@ import { getSessionClaims } from "@/lib/firebase/guards";
 import { getOrderForCustomer } from "@/lib/domain/orders/order.service";
 import { Link } from "@/lib/i18n/navigation";
 import { Button } from "@/components/ui/Button";
+import { isOrderEditable } from "@/lib/domain/orders/order-edit-rules";
 import { OrderDetailCard } from "@/components/storefront/OrderDetailCard";
 
 // Reads live order data and makes a per-request ownership decision;
@@ -44,7 +45,9 @@ export default async function AccountOrderDetailPage({
   if (!order) {
     return (
       <main className="container-luxury max-w-2xl py-16 text-center">
-        <h1 className="font-display text-2xl text-text-primary">{tConfirmation("notFoundTitle")}</h1>
+        <h1 className="font-display text-2xl text-text-primary">
+          {tConfirmation("notFoundTitle")}
+        </h1>
         <p className="mt-2 text-text-primary/70">{tConfirmation("notFoundDescription")}</p>
         <Link href="/account/orders" className="mt-6 inline-block">
           <Button type="button">{t("backToOrders")}</Button>
@@ -55,11 +58,19 @@ export default async function AccountOrderDetailPage({
 
   return (
     <main className="container-luxury max-w-2xl py-10">
-      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">{t("orderDetailTitle")}</h1>
+      <h1 className="mb-6 text-center font-display text-3xl text-text-primary">
+        {t("orderDetailTitle")}
+      </h1>
 
       <OrderDetailCard order={order} locale={locale} />
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        {/* Only a PENDING order can be edited; the server re-checks on save. */}
+        {isOrderEditable(order.status) ? (
+          <Link href={`/account/orders/${order.orderNumber}/edit`} data-testid="edit-order-link">
+            <Button type="button">{tConfirmation("editOrder")}</Button>
+          </Link>
+        ) : null}
         <Link href="/account/orders">
           <Button type="button" variant="outline">
             {t("backToOrders")}

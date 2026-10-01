@@ -98,7 +98,7 @@ export function WishlistItemCard({ item, locale }: { item: EnrichedWishlistItem;
         <div className="absolute start-3 top-3 flex flex-col items-start gap-1.5">
           {item.product?.isSoldOut ? <Badge variant="danger">{tCommon("soldOut")}</Badge> : null}
           {!item.product?.isSoldOut && item.product?.offerStatus === "ACTIVE" ? (
-            <Badge variant="burgundy">{tCommon("onSale")}</Badge>
+            <Badge variant="gold">{tCommon("onSale")}</Badge>
           ) : null}
           {item.issue === "NOT_FOUND" || item.issue === "INVALID_OPTION" ? (
             <Badge variant="neutral">{item.issue === "NOT_FOUND" ? t("unavailable") : t("invalidOption")}</Badge>

@@ -10,6 +10,8 @@ import { resolvePaymentMethod } from "@/lib/domain/checkout/payment";
 import { checkoutSchema } from "@/lib/validation/checkout.schema";
 import { isDeliveryRegionId, type DeliveryRegionId } from "@/types/deliveryRegion";
 import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
+import { backfillUserPhone } from "@/lib/domain/account/user-phone";
+import { logger } from "@/lib/utils/logger";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { getClientIp } from "@/lib/utils/request-ip";
 
@@ -71,6 +73,14 @@ export async function submitCheckoutAction(input: unknown): Promise<ActionResult
   // scoped to exactly this order number (`guest-order-access.ts`).
   if (!claims) {
     await grantGuestOrderAccess(result.orderNumber);
+  } else {
+    // A signed-in customer with no profile phone gets the one they just gave.
+    // Best effort: it must never fail (or slow the outcome of) a placed order.
+    try {
+      await backfillUserPhone(claims.uid, parsed.data.phone);
+    } catch (err) {
+      logger.error("submitCheckoutAction: phone backfill failed", { uid: claims.uid, error: String(err) });
+    }
   }
 
   return actionOk({ orderNumber: result.orderNumber });

@@ -92,7 +92,8 @@ test.describe("Special Offers end-to-end", () => {
       await checkbox.click();
     }
     if (enabled) {
-      await page.getByLabel("Sale price").fill("99.99");
+      // ₪150.00 at 33.34% → ₪99.99 (the sale price is calculated from the discount)
+      await page.getByLabel("Discount (%)").fill("33.34");
     }
     await expect(async () => {
       await page.getByRole("button", { name: "Save Changes" }).click();

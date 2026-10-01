@@ -5,6 +5,7 @@ import { Link } from "@/lib/i18n/navigation";
 import { resolveLocalizedString } from "@/types/localizedString";
 import type { Product } from "@/types/product";
 import { resolveOfferPricing } from "@/lib/domain/catalog/offer";
+import { OfferPrice } from "@/components/ui/Price";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DEMO_EDITORIAL, resolveEditorialImage } from "@/lib/config/demoImages";
 import { cn } from "@/lib/utils/cn";
@@ -32,10 +33,28 @@ export async function FeaturePiece({
   locale: string;
 }) {
   const t = await getTranslations({ locale, namespace: "Home" });
+  const tCommon = await getTranslations({ locale, namespace: "Common" });
 
   const title = product ? resolveLocalizedString(product.name, locale) : t("pieceDefaultTitle");
   const material = product ? resolveLocalizedString(product.material, locale) : t("pieceDefaultMaterial");
-  const price = product ? formatCurrency(resolveOfferPricing(product).effectivePrice, locale) : null;
+  // While an offer is ACTIVE: the same crossed-out regular price + sale price as every other
+  // surface. Scheduled / Expired / Disabled offers show the plain regular price, exactly as before.
+  const pricing = product ? resolveOfferPricing(product) : null;
+  const price =
+    product && pricing ? (
+      pricing.offerStatus === "ACTIVE" ? (
+        <OfferPrice
+          price={product.price}
+          effectivePrice={pricing.effectivePrice}
+          offerStatus={pricing.offerStatus}
+          locale={locale}
+          originalPriceLabel={tCommon("originalPrice")}
+          salePriceLabel={tCommon("salePrice")}
+        />
+      ) : (
+        formatCurrency(pricing.effectivePrice, locale)
+      )
+    ) : null;
   const href = product ? `/shop/${product.slug}` : "/shop";
   const image = resolveEditorialImage(product?.images[0]?.url, DEMO_EDITORIAL.featurePiece);
 

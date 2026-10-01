@@ -5,7 +5,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, Search } from "lucide-react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
-import { buildShopHref, PRICE_BANDS, type ShopSearchParams } from "./shopQuery";
+import {
+  buildShopHref,
+  PRICE_BANDS,
+  SPECIAL_OFFERS_COLLECTION,
+  type ShopSearchParams,
+} from "./shopQuery";
 
 export type FilterCategory = { slug: string; label: string };
 
@@ -20,11 +25,19 @@ function CheckBox({ checked }: { checked: boolean }) {
     <span
       aria-hidden="true"
       className={`flex size-[13px] shrink-0 items-center justify-center border transition-colors ${
-        checked ? "border-brand-burgundy bg-brand-burgundy" : "border-hairline-strong bg-brand-ivory"
+        checked
+          ? "border-brand-burgundy bg-brand-burgundy"
+          : "border-hairline-strong bg-brand-ivory"
       }`}
     >
       {checked ? (
-        <svg viewBox="0 0 10 8" className="size-2 text-text-on-dark" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 10 8"
+          className="size-2 text-text-on-dark"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <path d="M1 4.2 3.5 6.7 9 1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : null}
@@ -76,10 +89,16 @@ function Section({
  * The other three are deliberately absent rather than drawn as inert
  * checkboxes: Availability cannot be filtered (the query always constrains
  * `availability == true`, and Sold Out is derived live from `stock` so that
- * such products stay browsable — spec FR-015a); there is no `isOnSale`
- * filter on the listing query; and the product model has no Collection
- * field at all. Rendering them would promise filtering the catalogue cannot
- * perform.
+ * such products stay browsable — spec FR-015a); and the product model has no
+ * Collection field at all. Rendering them would promise filtering the
+ * catalogue cannot perform.
+ *
+ * ── SPECIAL OFFERS IS A VIRTUAL OPTION, NOT A CATEGORY ───────────────────
+ * The last row of the Category list is "Special Offers". It is not a
+ * Firestore category: it scopes the listing to products whose offer is
+ * ACTIVE right now (`?collection=special-offers`, served by the shared
+ * `getSpecialOffers`). It is exclusive, like New Arrivals — choosing it
+ * clears the other filters, and choosing a category leaves it.
  *
  * Counts are likewise omitted — the reference's "(8)" figures would each
  * need its own aggregate query, and inventing them is not an option.
@@ -92,6 +111,7 @@ export function ShopFilters({
   current,
   categories,
   activeCategorySlug,
+  specialOffersActive = false,
   priceDisabled,
   onNavigate,
 }: {
@@ -99,6 +119,8 @@ export function ShopFilters({
   current: ShopSearchParams;
   categories: FilterCategory[];
   activeCategorySlug: string;
+  /** The listing is scoped to the Special Offers collection. */
+  specialOffersActive?: boolean;
   priceDisabled: boolean;
   onNavigate?: () => void;
 }) {
@@ -112,13 +134,26 @@ export function ShopFilters({
     onNavigate?.();
   }
 
+  /** Special Offers is an exclusive scope: turning it on starts from a clean URL, so no other filter lingers behind it. */
+  function toggleSpecialOffers() {
+    if (specialOffersActive) {
+      go({ collection: undefined });
+      return;
+    }
+    router.push(buildShopHref(pathname, {}, { collection: SPECIAL_OFFERS_COLLECTION }));
+    onNavigate?.();
+  }
+
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     go({ q: search || undefined });
   }
 
+  const allChecked = activeCategorySlug === "" && !specialOffersActive;
   const activeBand = PRICE_BANDS.find(
-    (band) => String(band.min ?? "") === (current.min ?? "") && String(band.max ?? "") === (current.max ?? ""),
+    (band) =>
+      String(band.min ?? "") === (current.min ?? "") &&
+      String(band.max ?? "") === (current.max ?? ""),
   );
 
   return (
@@ -126,7 +161,11 @@ export function ShopFilters({
       {/* Search lives here rather than in the toolbar: the reference's
           toolbar carries only Filters / category context / count / sort. */}
       <form onSubmit={submitSearch} className="relative flex items-center">
-        <Search aria-hidden="true" size={13} className="pointer-events-none absolute start-3 text-text-secondary" />
+        <Search
+          aria-hidden="true"
+          size={13}
+          className="pointer-events-none absolute start-3 text-text-secondary"
+        />
         <input
           type="search"
           value={search}
@@ -141,9 +180,9 @@ export function ShopFilters({
         <button
           type="button"
           onClick={() => go({ category: undefined })}
-          className={`${CHECK_ROW} ${activeCategorySlug === "" ? "!text-text-primary" : ""}`}
+          className={`${CHECK_ROW} ${allChecked ? "!text-text-primary" : ""}`}
         >
-          <CheckBox checked={activeCategorySlug === ""} />
+          <CheckBox checked={allChecked} />
           {t("allProducts")}
         </button>
         {categories.map((category) => {
@@ -160,6 +199,15 @@ export function ShopFilters({
             </button>
           );
         })}
+        <button
+          type="button"
+          data-filter="special-offers"
+          onClick={toggleSpecialOffers}
+          className={`${CHECK_ROW} ${specialOffersActive ? "!text-text-primary" : ""}`}
+        >
+          <CheckBox checked={specialOffersActive} />
+          {t("specialOffers")}
+        </button>
       </Section>
 
       <Section title={t("price")} last>
@@ -174,7 +222,10 @@ export function ShopFilters({
                 go(
                   active
                     ? { min: undefined, max: undefined }
-                    : { min: band.min ? String(band.min) : undefined, max: band.max ? String(band.max) : undefined },
+                    : {
+                        min: band.min ? String(band.min) : undefined,
+                        max: band.max ? String(band.max) : undefined,
+                      },
                 )
               }
               className={`${CHECK_ROW} disabled:cursor-not-allowed disabled:opacity-45 ${active ? "!text-text-primary" : ""}`}
@@ -193,7 +244,9 @@ export function ShopFilters({
         {priceDisabled ? (
           // Honest, not decorative: the listing query genuinely drops the
           // price range while a search is active.
-          <p className="mt-2 text-[0.6875rem] leading-snug text-text-secondary">{t("priceSearchNote")}</p>
+          <p className="mt-2 text-[0.6875rem] leading-snug text-text-secondary">
+            {t("priceSearchNote")}
+          </p>
         ) : null}
       </Section>
 

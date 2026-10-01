@@ -32,6 +32,8 @@ test("heart toggles add/remove with visual state, and the wishlist page reflects
   await expect(filled).toHaveAttribute("aria-pressed", "true");
   // Heart glyph itself visually fills in (fill="currentColor" instead of "none").
   await expect(filled.locator("svg")).toHaveAttribute("fill", "currentColor");
+  // …in Deep Navy (#101C36).
+  await expect(filled.locator("svg")).toHaveCSS("fill", "rgb(16, 28, 54)");
 
   await page.goto("/en/wishlist");
   await expect(page.getByRole("heading", { name: "My Wishlist" })).toBeVisible();
@@ -49,9 +51,30 @@ test("heart toggles add/remove with visual state, and the wishlist page reflects
   const unfilled = card.getByRole("button", { name: "Add to Wishlist" });
   await expect(unfilled).toBeVisible({ timeout: 10000 });
   await expect(unfilled).toHaveAttribute("aria-pressed", "false");
+  await expect(unfilled.locator("svg")).toHaveCSS("fill", "rgba(0, 0, 0, 0)");
 
   await page.goto("/en/wishlist");
   await expect(page.locator("main")).toContainText("Your wishlist is empty");
+});
+
+test("removing an item on the Wishlist page un-fills its heart on the Shop page", async ({ page }) => {
+  await registerNewCustomer(page, "Heart Sync Tester", `heart-sync-${Date.now()}`);
+  await page.goto("/en/shop");
+  await page.waitForLoadState("networkidle");
+
+  const card = productCard(page.getByRole("main"), PRODUCT_EN);
+  await card.getByRole("button", { name: "Add to Wishlist" }).click();
+  await expect(card.getByRole("button", { name: "Remove from Wishlist" })).toBeVisible({ timeout: 10000 });
+
+  await page.goto("/en/wishlist");
+  await page.getByRole("main").getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(page.locator("main")).toContainText("Your wishlist is empty", { timeout: 10000 });
+
+  await page.goto("/en/shop");
+  await page.waitForLoadState("networkidle");
+  const heart = card.getByRole("button", { name: "Add to Wishlist" });
+  await expect(heart).toBeVisible();
+  await expect(heart).toHaveAttribute("aria-pressed", "false");
 });
 
 test("heart shows filled state and works — AR/RTL", async ({ page }) => {

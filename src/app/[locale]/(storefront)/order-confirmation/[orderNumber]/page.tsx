@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { getOrderByNumber } from "@/lib/domain/orders/order.service";
 import { getSessionClaims } from "@/lib/firebase/guards";
 import { hasGuestOrderAccess } from "@/lib/domain/orders/guest-order-access";
-import { Link } from "@/lib/i18n/navigation";
-import { Button } from "@/components/ui/Button";
-import { OrderDetailCard } from "@/components/storefront/OrderDetailCard";
+import { isOrderEditable } from "@/lib/domain/orders/order-edit-rules";
+import { getProductsByIds } from "@/lib/domain/catalog/product.service";
+import { OrderConfirmationView } from "@/components/storefront/checkout/OrderConfirmationView";
 
 // Reads live order data and makes a per-request access decision — never
 // statically cached.
@@ -25,12 +24,13 @@ export const dynamic = "force-dynamic";
  */
 export default async function OrderConfirmationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; orderNumber: string }>;
+  searchParams: Promise<{ updated?: string }>;
 }) {
   const { locale, orderNumber } = await params;
-  const t = await getTranslations({ locale, namespace: "OrderConfirmation" });
-
+  const { updated } = await searchParams;
   const order = await getOrderByNumber(orderNumber);
   if (!order) {
     notFound();
@@ -44,22 +44,26 @@ export default async function OrderConfirmationPage({
     notFound();
   }
 
+  // Orders store no product image, so the thumbnails are read live — one batched read, photos only;
+  // every price and total shown comes from the stored order.
+  const products = await getProductsByIds(order.items.map((item) => item.productId));
+  const thumbnails = Object.fromEntries(
+    order.items.map((item) => [
+      item.productId,
+      products.get(item.productId)?.images[0]?.url ?? null,
+    ]),
+  );
+
   return (
-    <main className="container-luxury max-w-2xl py-10">
-      <div className="text-center">
-        <h1 className="font-display text-3xl text-text-primary">{t("title")}</h1>
-        <p className="mt-2 text-text-primary/70">{t("thankYou")}</p>
-      </div>
-
-      <div className="mt-8">
-        <OrderDetailCard order={order} locale={locale} />
-      </div>
-
-      <div className="mt-6 text-center">
-        <Link href="/shop">
-          <Button type="button">{t("continueShopping")}</Button>
-        </Link>
-      </div>
+    <main className="bg-brand-ivory">
+      <OrderConfirmationView
+        order={order}
+        locale={locale}
+        thumbnails={thumbnails}
+        // Only the signed-in owner of a still-editable order sees Edit Order; the action re-checks on save.
+        editable={isOwner && isOrderEditable(order.status)}
+        justUpdated={updated === "1"}
+      />
     </main>
   );
 }

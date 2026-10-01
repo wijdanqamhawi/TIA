@@ -35,7 +35,7 @@
  * differently, modified, or migrated, and a genuine uploaded photo (a
  * Firebase Storage URL) is never matched by it.
  */
-function isPlaceholderUrl(url: string | null | undefined): boolean {
+export function isPlaceholderUrl(url: string | null | undefined): boolean {
   return !url || url.includes("/brand/logo.svg") || url.includes("/brand/tia-logo");
 }
 

@@ -24,11 +24,20 @@ export function ImageUploader({
   folder,
   onUploaded,
   disabled,
+  label = "Upload Image",
+  uploadingLabel = "Uploading…",
+  buttonClassName,
+  icon,
 }: {
   /** e.g. `products/{productId}` or `showcases/{showcaseId}`. */
   folder: string;
   onUploaded: (image: UploadedImage) => void;
   disabled?: boolean;
+  label?: string;
+  uploadingLabel?: string;
+  /** Replaces the default outline `Button` with a plain button styled by the caller. */
+  buttonClassName?: string;
+  icon?: React.ReactNode;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -74,14 +83,26 @@ export function ImageUploader({
         className="hidden"
         disabled={disabled || isUploading}
       />
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => inputRef.current?.click()}
-        disabled={disabled || isUploading}
-      >
-        {isUploading ? "Uploading…" : "Upload Image"}
-      </Button>
+      {buttonClassName ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={disabled || isUploading}
+          className={buttonClassName}
+        >
+          {icon}
+          {isUploading ? uploadingLabel : label}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => inputRef.current?.click()}
+          disabled={disabled || isUploading}
+        >
+          {isUploading ? uploadingLabel : label}
+        </Button>
+      )}
       <FormError message={error} />
     </div>
   );
