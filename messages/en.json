@@ -757,6 +757,61 @@
       "saving": "Saving…"
     }
   },
+  "AdminDelivery": {
+    "title": "Delivery Locations",
+    "subtitle": "TIA delivers to exactly two regions — West Bank and Inside/1948 Areas. Relabel or reorder a region, and manage each region's cities/areas below.",
+    "region": {
+      "manage": "Manage the cities and areas included in the {name} region.",
+      "editRegion": "Edit region",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "search": {
+      "placeholder": "Search city/area…",
+      "label": "Search cities and areas in {name}"
+    },
+    "addCity": "Add City / Area",
+    "columns": {
+      "order": "Order",
+      "name": "City / Area",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Click to set Active",
+      "deactivate": "Click to set Inactive",
+      "saving": "Saving…",
+      "toggleError": "Couldn't update the status. Please try again."
+    },
+    "edit": "Edit",
+    "delete": "Delete",
+    "empty": "No cities/areas in this region yet.",
+    "noMatch": "No cities or areas match your search.",
+    "confirmDelete": {
+      "title": "Delete {name}?",
+      "description": "This permanently removes it from the location choices at checkout. Orders already placed keep the delivery details they were created with. To keep it listed but unavailable, deactivate it instead.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "drawer": {
+      "addTitle": "Add a city / area",
+      "editTitle": "Edit — {name}",
+      "regionTitle": "Edit region — {name}",
+      "close": "Close",
+      "nameEn": "Name — English",
+      "nameAr": "Name — Arabic",
+      "nameEnPlaceholder": "Enter the name in English...",
+      "nameArPlaceholder": "أدخل الاسم بالعربية...",
+      "displayOrder": "Display order",
+      "active": "Active",
+      "activeHint": "Inactive items are hidden from checkout.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…"
+    }
+  },
   "AdminCategories": {
     "title": "Categories",
     "subtitle": "Manage the catalog's category list.",

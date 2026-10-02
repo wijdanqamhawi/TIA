@@ -45,6 +45,22 @@ export async function getAllDeliveryLocationsByRegion(regionId: DeliveryRegionId
 // --- Admin management (T265, T266, T282–T283) ---
 
 /**
+ * The `displayOrder` a newly created city/area gets: one more than the
+ * highest order already in its own region (1 for an empty region). Existing
+ * locations are never renumbered. Uses the same `regionId` + `displayOrder`
+ * composite index as `getAllDeliveryLocationsByRegion`, scanned descending.
+ */
+export async function getNextDeliveryLocationOrder(regionId: DeliveryRegionId): Promise<number> {
+  const snapshot = await deliveryLocationsCollection()
+    .where("regionId", "==", regionId)
+    .orderBy("displayOrder", "desc")
+    .limit(1)
+    .get();
+  const highest = snapshot.docs[0]?.data().displayOrder;
+  return typeof highest === "number" ? highest + 1 : 1;
+}
+
+/**
  * The two fixed regions MUST always be `west-bank`/`inside-1948` — never a
  * fresh/auto-generated value (research.md §40). Both the admin
  * region-update action (T282) and any other write path touching a

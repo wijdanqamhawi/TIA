@@ -12,6 +12,7 @@ import {
 import {
   assertValidDeliveryRegionId,
   assertUniqueDeliveryLocationSlug,
+  getNextDeliveryLocationOrder,
   deriveDeliveryLocationSlug,
   buildDeliveryLocationSearchTerms,
 } from "@/lib/domain/delivery/deliveryLocation.service";
@@ -70,7 +71,9 @@ export async function updateDeliveryRegionAction(input: unknown): Promise<Action
  * of a new city/area within one of the two fixed regions. `slug`/
  * `searchTerms` are always server-derived, never client-submitted
  * (mirrors `createProductAction`); uniqueness is checked per-region, not
- * globally (data-model.md).
+ * globally (data-model.md). `displayOrder` is assigned here when the caller
+ * omits it — the next order in the region (highest + 1) — so admins never
+ * manage the number by hand; an explicit value is still honoured.
  */
 export async function createDeliveryLocationAction(input: unknown): Promise<ActionResult<{ locationId: string }>> {
   const guardResult = await guardAdmin();
@@ -88,6 +91,7 @@ export async function createDeliveryLocationAction(input: unknown): Promise<Acti
   }
 
   const searchTerms = buildDeliveryLocationSearchTerms(data.name.en, data.name.ar);
+  const displayOrder = data.displayOrder ?? (await getNextDeliveryLocationOrder(data.regionId));
 
   const ref = deliveryLocationsCollection().doc();
   await ref.set({
@@ -96,7 +100,7 @@ export async function createDeliveryLocationAction(input: unknown): Promise<Acti
     name: data.name,
     slug,
     searchTerms,
-    displayOrder: data.displayOrder,
+    displayOrder,
     isActive: data.isActive,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),

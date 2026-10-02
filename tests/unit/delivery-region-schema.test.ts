@@ -49,6 +49,11 @@ describe("deliveryLocationSchema (T263)", () => {
   it("rejects a negative displayOrder", () => {
     expect(deliveryLocationSchema.safeParse({ ...valid, displayOrder: -1 }).success).toBe(false);
   });
+
+  it("accepts a location without a displayOrder (the server assigns the next one)", () => {
+    const { displayOrder: _omitted, ...withoutOrder } = valid;
+    expect(deliveryLocationSchema.safeParse(withoutOrder).success).toBe(true);
+  });
 });
 
 describe("updateDeliveryLocationSchema", () => {

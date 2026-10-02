@@ -17,7 +17,12 @@ import { DELIVERY_REGION_IDS } from "@/types/deliveryRegion";
 export const deliveryLocationSchema = z.object({
   regionId: z.enum(DELIVERY_REGION_IDS),
   name: localizedStringSchema,
-  displayOrder: nonNegativeInt,
+  /**
+   * Omitted when the admin UI creates a city/area: the server then assigns
+   * the next order in the region (`getNextDeliveryLocationOrder`). An explicit
+   * value is still honoured (and validated) for any other caller.
+   */
+  displayOrder: nonNegativeInt.optional(),
   isActive: z.boolean(),
 });
 export type DeliveryLocationInput = z.infer<typeof deliveryLocationSchema>;

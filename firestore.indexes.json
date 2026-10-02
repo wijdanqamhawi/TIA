@@ -145,6 +145,14 @@
       ]
     },
     {
+      "collectionGroup": "deliveryLocations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "regionId", "order": "ASCENDING" },
+        { "fieldPath": "displayOrder", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "orders",
       "queryScope": "COLLECTION",
       "fields": [

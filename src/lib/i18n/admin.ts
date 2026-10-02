@@ -21,6 +21,7 @@ const ADMIN_NAMESPACES = [
   "AdminProducts",
   "AdminProductForm",
   "AdminCategories",
+  "AdminDelivery",
   "AdminShowcases",
   "AdminOrders",
   "AdminCustomers",

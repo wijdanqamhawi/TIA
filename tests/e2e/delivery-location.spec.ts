@@ -201,7 +201,7 @@ test.describe("delivery location — checkout", () => {
     const westBankSection = page.locator("section", { has: page.getByRole("button", { name: "West Bank" }) });
     await expect(westBankSection).toBeVisible();
 
-    await westBankSection.getByRole("button", { name: "+ Add City / Area" }).click();
+    await westBankSection.getByRole("button", { name: "Add City / Area" }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByLabel("Name — English").fill("Jericho");
     await page.getByLabel("Name — Arabic").fill("أريحا");
@@ -211,6 +211,13 @@ test.describe("delivery location — checkout", () => {
     }).toPass({ timeout: 20000 });
 
     await expect(page.getByRole("button", { name: "Jericho" })).toBeVisible({ timeout: 15000 });
+
+    // Ordering is automatic: no order field was filled in, and the server placed the
+    // new city last in its region — one more than the highest existing West Bank order.
+    const westBankDocs = await db.collection("deliveryLocations").where("regionId", "==", "west-bank").get();
+    const created = westBankDocs.docs.find((doc) => doc.data().slug === "jericho");
+    const othersHighest = Math.max(...westBankDocs.docs.filter((doc) => doc !== created).map((doc) => doc.data().displayOrder as number));
+    expect(created?.data().displayOrder).toBe(othersHighest + 1);
 
     try {
       await goToCheckout(page);
