@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin } from "./admin-helpers";
+import { DASHBOARD_HEADING, loginAsAdmin } from "./admin-helpers";
 
 /**
  * Verifies TIA's first-entry screen: part of the very first paint, shown
@@ -167,7 +167,7 @@ test.describe("welcome splash", () => {
     await loginAsAdmin(page);
     await page.evaluate(() => window.sessionStorage.clear());
     await page.goto("/admin");
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("heading", { name: DASHBOARD_HEADING })).toBeVisible({ timeout: 30000 });
     await expect(page.locator("[data-welcome-splash]")).toHaveCount(0);
     await expect(dialog).toHaveCount(0);
   });

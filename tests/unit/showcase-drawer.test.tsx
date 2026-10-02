@@ -22,7 +22,7 @@ vi.mock("@/actions/admin/category-showcase.actions", () => ({
 const refreshMock = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: refreshMock }) }));
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+  // eslint-disable-next-line @next/next/no-img-element
   default: (props: { src: string; alt: string }) => <img src={props.src} alt={props.alt} />,
 }));
 vi.mock("@/components/admin/ImageUploader", () => ({

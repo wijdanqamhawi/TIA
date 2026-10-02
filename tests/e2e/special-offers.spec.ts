@@ -219,11 +219,17 @@ test.describe("Special Offers end-to-end", () => {
 
     await expect(page.getByRole("heading", { name: "Order Confirmed" })).toBeVisible();
     await expect(page.getByText(uniqueName)).toBeVisible();
-    // The order snapshot is priced at the sale price (₪99.99), not the
-    // regular ₪150.00 — the crossed-out treatment is a live-pricing display
-    // concern (OfferPrice), not applicable to an immutable order snapshot.
+    // The order snapshot is priced at the sale price (₪99.99). The purchase-time
+    // regular price (₪150.00) may still appear, but only as the crossed-out
+    // "was" price (struck through, with a screen-reader label) on the sale line —
+    // never as something the customer was charged (unit price, subtotal, total).
     await expect(page.getByText("₪99.99").first()).toBeVisible();
-    await expect(page.getByText("₪150.00")).toHaveCount(0);
+    const regularPriceNodes = page.getByText("₪150.00");
+    expect(await regularPriceNodes.count()).toBeGreaterThan(0);
+    const unexplained = await regularPriceNodes.evaluateAll(
+      (nodes) => nodes.filter((n) => !n.closest(".line-through, .sr-only")).length,
+    );
+    expect(unexplained).toBe(0);
 
     // Admin disables the offer.
     await setOfferViaAdminForm(page, ref.id, false);

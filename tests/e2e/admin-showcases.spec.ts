@@ -55,8 +55,9 @@ test.describe("admin — homepage showcase management", () => {
     // `admin-row`, not `role=row`: `DataTable` renders a phone card list
     // *and* a table at once (one hidden by a CSS breakpoint), and below
     // `md` there is no table — so there is no row role to find.
-    await adminRow(page, "Original Title").getByRole("button").first().click();
-    await page.getByLabel("Title — English", { exact: true }).fill(newTitle);
+    await adminRow(page, "Original Title").getByRole("button", { name: "Edit" }).click();
+    // Required fields carry a trailing "*" in their label ("Title — English *").
+    await page.getByLabel(/^Title — English/).fill(newTitle);
     await page.getByLabel("Title — Arabic", { exact: true }).fill("عنوان محدث");
 
     const fileInputs = page.locator('input[type="file"]');

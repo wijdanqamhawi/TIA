@@ -12,6 +12,13 @@ export async function getTestFirestore() {
 export const ADMIN_EMAIL = process.env.ADMIN_BOOTSTRAP_EMAIL ?? "admin@elora.local";
 const ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD ?? "DevAdminPass123";
 
+/**
+ * The admin dashboard's page heading (`AdminDashboard.title`, en). The shell's
+ * sidebar also has a "Dashboard" link, but that is a link, not a heading — the
+ * `<h1>` is this hero title, so it is what proves the dashboard itself rendered.
+ */
+export const DASHBOARD_HEADING = "Your TIA Store at a Glance";
+
 /** Signs in as the seeded admin account (`npm run create-admin`) and lands on `/admin`. */
 export async function loginAsAdmin(page: Page): Promise<void> {
   await page.goto("/en/login?next=/admin");
@@ -45,7 +52,7 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   // another `page.goto`, or that next navigation can race the in-flight
   // one and abort with ERR_ABORTED.
   await page.waitForLoadState("load");
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole("heading", { name: DASHBOARD_HEADING })).toBeVisible({ timeout: 30000 });
 }
 
 const CUSTOMER_PASSWORD = "supersecret123";

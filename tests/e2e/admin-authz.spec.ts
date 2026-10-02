@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures/base";
-import { loginAsAdmin, registerNewCustomer } from "./admin-helpers";
+import { DASHBOARD_HEADING, loginAsAdmin, registerNewCustomer } from "./admin-helpers";
 
 /**
  * T179 (quickstart Scenario 7): a normal customer attempting an admin
@@ -20,7 +20,7 @@ test.describe("admin authorization", () => {
 
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/login\?next=/);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: DASHBOARD_HEADING })).toHaveCount(0);
   });
 
   test("a registered non-admin customer is rejected from a nested admin route by direct URL, not just the dashboard root", async ({
@@ -39,6 +39,6 @@ test.describe("admin authorization", () => {
 
   test("the seeded admin account can reach the dashboard", async ({ page }) => {
     await loginAsAdmin(page);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: DASHBOARD_HEADING })).toBeVisible();
   });
 });

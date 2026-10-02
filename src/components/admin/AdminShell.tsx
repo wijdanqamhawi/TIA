@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -57,6 +57,19 @@ const NAV_LINKS: readonly NavLink[] = [
   { href: "/admin/team", key: "team", icon: UserCog },
 ];
 
+const DESKTOP_QUERY = "(min-width: 1024px)";
+
+function subscribeToDesktop(onChange: () => void): () => void {
+  if (typeof window.matchMedia !== "function") return () => {};
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function getIsDesktop(): boolean {
+  return typeof window.matchMedia !== "function" || window.matchMedia(DESKTOP_QUERY).matches;
+}
+
 function isActive(pathname: string, link: NavLink): boolean {
   if (link.href === "/admin") return pathname === "/admin";
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -99,12 +112,17 @@ export function AdminShell({
     return () => document.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
+  const isDesktop = useSyncExternalStore(subscribeToDesktop, getIsDesktop, () => true);
+
   function toggleMenu() {
-    if (window.matchMedia("(min-width: 1024px)").matches) setCollapsed((value) => !value);
+    if (isDesktop) setCollapsed((value) => !value);
     else setDrawerOpen((value) => !value);
   }
 
-  const menuExpanded = drawerOpen || !collapsed;
+  // At `lg` and up the menu button collapses/expands the docked sidebar; below
+  // it, it opens/closes the off-canvas drawer. Each viewport reports its own
+  // state — the docked sidebar's `collapsed` flag says nothing about the drawer.
+  const menuExpanded = isDesktop ? !collapsed : drawerOpen;
 
   return (
     <div className="min-h-screen bg-brand-ivory text-text-primary">

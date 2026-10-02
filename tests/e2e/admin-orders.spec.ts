@@ -61,12 +61,16 @@ test("admin opens an order, changes its status, and the customer sees the update
   await adminPage.getByRole("link", { name: orderNumber }).click();
   await expect(adminPage).toHaveURL(/\/admin\/orders\/.+/, { timeout: 45000 });
 
-  const statusSelect = adminPage.getByRole("main").locator("select");
-  await expect(statusSelect).toHaveValue("PENDING");
+  // The status control is an `OrderStatusMenu` (button -> menu of the allowed
+  // next statuses), not a native <select>.
+  const statusButton = (label: string) =>
+    adminPage.getByRole("main").getByRole("button", { name: `${label} — Change order status` });
+  await expect(statusButton("Pending")).toBeVisible();
 
   await expect(async () => {
-    await statusSelect.selectOption("CONFIRMED");
-    await expect(statusSelect).toHaveValue("CONFIRMED", { timeout: 10000 });
+    await statusButton("Pending").click();
+    await adminPage.getByRole("menuitem", { name: "Confirmed" }).click();
+    await expect(statusButton("Confirmed")).toBeVisible({ timeout: 10000 });
   }).toPass({ timeout: 20000 });
 
   await expect(async () => {
