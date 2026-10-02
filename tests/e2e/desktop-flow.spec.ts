@@ -21,6 +21,15 @@ function hasNoHorizontalOverflow(): Promise<boolean> {
 }
 
 test.describe("desktop commerce flow (English/LTR)", () => {
+  // This flow is specific to the desktop layout (its navigation differs by
+  // breakpoint), so it runs as a genuine desktop browser context whichever
+  // device project executes it: a 1440x900 viewport with no mobile emulation
+  // and no touch. Resizing a touch-emulated phone context (`isMobile` +
+  // `hasTouch`, e.g. the iPhone 14 project) to 1440px instead produces a
+  // hybrid no real device has, and under Linux WebKit in CI the header Shop
+  // link's click never completed its client-side navigation there.
+  test.use({ viewport: { width: 1440, height: 900 }, isMobile: false, hasTouch: false, deviceScaleFactor: 1 });
+
   let productSlug: string;
   let productName: string;
   let productId: string;
@@ -63,10 +72,6 @@ test.describe("desktop commerce flow (English/LTR)", () => {
   });
 
   test("guest browses, adds to cart, and completes COD checkout on a desktop viewport", async ({ page }) => {
-    // This flow is specific to the desktop layout (its navigation differs by
-    // breakpoint), so it sets that viewport itself rather than inheriting
-    // whichever device project runs it.
-    await page.setViewportSize({ width: 1440, height: 900 });
     // 1. Home.
     await page.goto("/en");
     await expect(page.getByRole("heading", { name: "More than accessories", level: 1 })).toBeVisible();
