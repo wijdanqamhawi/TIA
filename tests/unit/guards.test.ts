@@ -134,13 +134,52 @@ describe("separate customer and staff session cookies", () => {
 
   it("a customer cookie alone grants no admin access", async () => {
     cookieJar({ __session: "customer-cookie" });
-    await expect(requireAdmin()).rejects.toBeInstanceOf(UnauthenticatedError);
-    await expect(requireOwner()).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(requireAdmin()).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(requireOwner()).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("an admin cookie alone is not a storefront customer session", async () => {
     cookieJar({ __admin_session: "admin-cookie" });
     await expect(getSessionClaims()).resolves.toBeNull();
+  });
+
+  it.each(["ADMIN", "OWNER"])("a %s staff cookie passes requireAdmin, with or without a customer cookie", async (role) => {
+    verifySessionCookieMock.mockImplementation(async (value: string) =>
+      value === "staff-cookie"
+        ? { uid: "staff1", email: "s@t.com", role }
+        : { uid: "cust1", email: "c@t.com", role: "CUSTOMER" },
+    );
+    cookieJar({ __admin_session: "staff-cookie" });
+    await expect(requireAdmin()).resolves.toMatchObject({ uid: "staff1", role });
+    cookieJar({ __session: "customer-cookie", __admin_session: "staff-cookie" });
+    await expect(requireAdmin()).resolves.toMatchObject({ uid: "staff1", role });
+  });
+
+  it("a signed-in customer with no staff cookie is Forbidden (403), not Unauthenticated", async () => {
+    cookieJar({ __session: "customer-cookie" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(requireOwner()).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("no cookies at all is Unauthenticated (401)", async () => {
+    cookieJar({});
+    await expect(requireAdmin()).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(requireOwner()).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+
+  it("a customer cookie plus a stale/invalid admin cookie never gains admin access", async () => {
+    verifySessionCookieMock.mockImplementation(async (value: string) =>
+      value === "customer-cookie" ? { uid: "cust1", email: "c@t.com", role: "CUSTOMER" } : null,
+    );
+    cookieJar({ __session: "customer-cookie", __admin_session: "stale-or-garbage" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(requireOwner()).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("a stale admin cookie alone is Unauthenticated", async () => {
+    verifySessionCookieMock.mockResolvedValue(null);
+    cookieJar({ __admin_session: "stale-or-garbage" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(UnauthenticatedError);
   });
 
   it("a customer who somehow holds the admin cookie is still rejected by role", async () => {

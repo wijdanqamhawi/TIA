@@ -48,6 +48,21 @@ export async function requireUser(): Promise<SessionClaims> {
 }
 
 /**
+ * The staff session, or a precise rejection: a caller with no valid staff
+ * cookie but a valid customer session is signed in yet not staff (Forbidden,
+ * 403); anyone else is Unauthenticated (401). The customer cookie is only ever
+ * consulted to pick that status — it never grants staff access.
+ */
+async function requireStaffSession(): Promise<SessionClaims> {
+  const staff = await getStaffSessionClaims();
+  if (staff) return staff;
+  if (await getSessionClaims()) {
+    throw new ForbiddenError();
+  }
+  throw new UnauthenticatedError();
+}
+
+/**
  * The authoritative "is this caller an admin" check. Rejects both an
  * unauthenticated caller and an authenticated non-admin caller — this is
  * the real enforcement point that a hidden nav link or client-side check
@@ -58,10 +73,7 @@ export async function requireUser(): Promise<SessionClaims> {
  * role is added — a CUSTOMER (or any unknown claim) is still rejected.
  */
 export async function requireAdmin(): Promise<SessionClaims> {
-  const claims = await getStaffSessionClaims();
-  if (!claims) {
-    throw new UnauthenticatedError();
-  }
+  const claims = await requireStaffSession();
   if (!isStaffRole(claims.role)) {
     throw new ForbiddenError();
   }
@@ -74,10 +86,7 @@ export async function requireAdmin(): Promise<SessionClaims> {
  * rejected here even though `requireAdmin()` admits them.
  */
 export async function requireOwner(): Promise<SessionClaims> {
-  const claims = await getStaffSessionClaims();
-  if (!claims) {
-    throw new UnauthenticatedError();
-  }
+  const claims = await requireStaffSession();
   if (!isOwnerRole(claims.role)) {
     throw new ForbiddenError();
   }

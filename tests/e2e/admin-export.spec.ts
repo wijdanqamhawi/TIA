@@ -92,6 +92,20 @@ test.describe("admin Excel export", () => {
     expect(response.headers()["content-type"]).toContain("application/json");
   });
 
+  test("a customer carrying a stale/invalid admin cookie gains no admin access", async ({ page, context }) => {
+    await registerNewCustomer(page, "Stale Cookie Customer", `export-stale-${Date.now()}`);
+    await context.addCookies([
+      { name: "__admin_session", value: "stale.invalid.cookie", url: new URL(page.url()).origin },
+    ]);
+
+    const response = await page.request.get("/admin/api/export/products");
+    expect(response.status()).toBe(403);
+    expect(response.headers()["content-type"]).toContain("application/json");
+
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/login\?next=/);
+  });
+
   test("an unauthenticated request is rejected with no file produced", async ({ browser }) => {
     // No session cookie at all — `middleware.ts`'s layer-1 cookie-presence
     // pre-filter (shared with every other `/admin/*` route, T179) redirects
