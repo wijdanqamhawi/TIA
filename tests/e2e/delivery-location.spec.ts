@@ -7,9 +7,8 @@ import { LOCATION_COOKIE_NAME, encodeLocationSelection } from "../../src/lib/dom
 
 /**
  * Delivery Location end-to-end coverage (T290, quickstart Scenario 14),
- * against the current UI: the only delivery-location shortcut is the
- * header's announcement bar, from `lg` up (none in the phone/tablet menu);
- * the location is otherwise chosen at checkout, through its Region / City
+ * against the current UI: there is no header delivery-location shortcut;
+ * the location is chosen at checkout, through its Region / City
  * fields and its "Change" dialog with bilingual search. A persisted selection (the location cookie,
  * T271) still prefills checkout; admin-managed list changes are reflected
  * immediately with no code change.
@@ -88,20 +87,11 @@ test.describe("delivery location — checkout", () => {
     await resetSeededStock(["golden-bangle-bracelet"]);
   });
 
-  test("the only delivery-location shortcut is the announcement bar's, from lg up — never in the phone/tablet menu", async ({
-    page,
-  }) => {
+  test("the header has no delivery-location shortcut at any width — location is chosen at checkout", async ({ page }) => {
     await page.goto("/en");
-    const trigger = page.getByRole("button", { name: LOCATION_TRIGGER });
-    // The approved reference's announcement bar (`AnnouncementBar.tsx`)
-    // carries the trigger from `lg` (1024px) up; below that the bar keeps
-    // only its centre statement.
-    if ((page.viewportSize()?.width ?? 0) >= 1024) {
-      await expect(trigger).toHaveCount(1);
-      await expect(page.getByRole("banner").getByRole("button", { name: LOCATION_TRIGGER })).toBeVisible();
-    } else {
-      await expect(trigger).toBeHidden();
-    }
+    await expect(page.getByRole("button", { name: LOCATION_TRIGGER })).toHaveCount(0);
+    await page.goto("/ar");
+    await expect(page.getByRole("button", { name: LOCATION_TRIGGER })).toHaveCount(0);
 
     const openMenu = page.getByRole("button", { name: "Open menu" });
     if (await openMenu.isVisible()) {

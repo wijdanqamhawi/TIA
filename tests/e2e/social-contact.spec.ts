@@ -49,7 +49,7 @@ function menuDrawer(page: Page) {
 }
 
 test.describe("social contact — navbar", () => {
-  test("desktop header carries the main nav, logo and Search/Wishlist/Account/Cart, with location + EN | AR on the announcement bar — no social links", async ({
+  test("desktop header carries the main nav, logo and Search/Wishlist/Account/Cart, with EN | AR on the announcement bar — no social links", async ({
     page,
   }) => {
     await page.setViewportSize(DESKTOP);
@@ -62,11 +62,10 @@ test.describe("social contact — navbar", () => {
       await expect(header.getByRole("link", { name, exact: true })).toBeVisible();
     }
 
-    // The approved reference puts the delivery-location trigger and the
-    // EN | AR switch on the announcement bar above the header, from `lg`
-    // up (`AnnouncementBar.tsx`) — exactly one of each.
-    await expect(header.getByRole("button", { name: "Select delivery location" })).toHaveCount(1);
-    await expect(header.getByRole("button", { name: "Select delivery location" })).toBeVisible();
+    // The EN | AR switch lives on the announcement bar above the header,
+    // from `lg` up (`AnnouncementBar.tsx`); there is no delivery-location
+    // shortcut in the header — location is chosen at checkout.
+    await expect(header.getByRole("button", { name: /Select delivery location/ })).toHaveCount(0);
     await expect(header.getByRole("button", { name: "EN", exact: true })).toBeVisible();
     await expect(header.getByRole("button", { name: "AR", exact: true })).toBeVisible();
 

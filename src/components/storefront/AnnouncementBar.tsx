@@ -1,6 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { getActiveDeliveryRegions, getActiveDeliveryLocationsByRegion } from "@/lib/domain/delivery/deliveryLocation.service";
-import { LocationSelector } from "./LocationSelector";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
@@ -10,15 +8,12 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
  *   start  — a short brand line
  *   centre — the brand statement, with a champagne spark and the italic
  *            champagne clause
- *   end    — the delivery-location trigger and the EN | AR switch
+ *   end    — the EN | AR switch
  *
- * ── A NOTE ON THE END ZONE ───────────────────────────────────────────────
- * The delivery-location trigger and the language switch were previously
- * removed from the header. The approved reference puts them back on this
- * bar, so they return here — reusing the existing `LocationSelector` and
- * `LanguageSwitcher` components unchanged. No delivery or locale logic is
- * modified: the selector still writes the same `elora_location` cookie and
- * checkout still re-validates independently.
+ * The three zones sit on a `1fr auto 1fr` grid so the centre statement stays
+ * truly centred whatever the side zones hold (in LTR and RTL alike). The
+ * delivery-location shortcut is intentionally not on this bar: the location
+ * is chosen at checkout.
  *
  * ── A NOTE ON THE START ZONE ─────────────────────────────────────────────
  * The reference reads "Free shipping on orders over $70". That is a
@@ -31,39 +26,19 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
  * 36px line on a phone without becoming unreadable.
  */
 export async function AnnouncementBar({ locale }: { locale: string }) {
-  const [tHome, tSplash, regions] = await Promise.all([
+  const [tHome, tSplash] = await Promise.all([
     getTranslations({ locale, namespace: "Home" }),
     getTranslations({ locale, namespace: "Splash" }),
-    getActiveDeliveryRegions(),
   ]);
-
-  // Same assembly the checkout page uses, so the dialog receives identical
-  // option shapes wherever it is mounted.
-  const entries = await Promise.all(
-    regions.map(async (region) => {
-      const locations = await getActiveDeliveryLocationsByRegion(region.regionId);
-      return [
-        region.regionId,
-        locations.map((location) => ({
-          id: location.id,
-          name: location.name,
-          slug: location.slug,
-          searchTerms: location.searchTerms,
-        })),
-      ] as const;
-    }),
-  );
-  const locationsByRegion = Object.fromEntries(entries);
-  const regionOptions = regions.map((region) => ({ regionId: region.regionId, name: region.name }));
 
   return (
     <div className="bg-brand-burgundy text-text-on-dark">
-      <div className="container-luxury flex h-9 items-center justify-between gap-4">
-        <p className="hidden shrink-0 text-[0.6875rem] text-text-on-dark/75 lg:block rtl:text-xs">
+      <div className="container-luxury grid h-9 grid-cols-[1fr_auto_1fr] items-center gap-4">
+        <p className="col-start-1 row-start-1 hidden justify-self-start text-[0.6875rem] text-text-on-dark/75 lg:block rtl:text-xs">
           {tSplash("motto")}
         </p>
 
-        <p className="mx-auto flex min-w-0 items-center gap-2 truncate text-[0.6875rem] text-text-on-dark/90 rtl:text-xs">
+        <p className="col-start-2 row-start-1 flex min-w-0 items-center gap-2 truncate text-[0.6875rem] text-text-on-dark/90 rtl:text-xs">
           <span className="truncate">{tHome("statementTitle")}</span>
           <span aria-hidden="true" className="shrink-0 text-brand-gold">
             <svg viewBox="0 0 24 24" className="size-2.5" fill="currentColor">
@@ -73,14 +48,7 @@ export async function AnnouncementBar({ locale }: { locale: string }) {
           <span className="truncate italic text-brand-gold-muted rtl:not-italic">{tHome("statementSubtitle")}</span>
         </p>
 
-        <div className="hidden shrink-0 items-center gap-1 lg:flex">
-          <LocationSelector
-            locale={locale}
-            regions={regionOptions}
-            locationsByRegion={locationsByRegion}
-            className="flex min-h-9 items-center gap-1.5 px-2 text-[0.6875rem] font-medium text-text-on-dark/85 transition-opacity hover:text-text-on-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current rtl:text-xs"
-          />
-          <span aria-hidden="true" className="h-3 w-px bg-text-on-dark/25" />
+        <div className="col-start-3 row-start-1 hidden justify-self-end lg:block">
           <LanguageSwitcher className="text-text-on-dark [&>button]:min-h-9 [&>button]:text-[0.625rem]" />
         </div>
       </div>
