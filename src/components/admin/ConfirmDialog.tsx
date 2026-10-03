@@ -12,6 +12,8 @@ import { FormError } from "@/components/ui/FormError";
  * Cancel — the safe choice — and returns to whichever control opened it.
  * While `pending`, Escape and both buttons are inert. `tone="danger"` (the default) is for
  * destructive confirmations; `tone="default"` uses the navy primary button.
+ * `children` renders extra content under the description (e.g. a type-to-confirm
+ * field) and `confirmDisabled` keeps the confirm button inert until that is satisfied.
  */
 export function ConfirmDialog({
   titleId,
@@ -20,8 +22,10 @@ export function ConfirmDialog({
   cancelLabel,
   confirmLabel,
   pending = false,
+  confirmDisabled = false,
   tone = "danger",
   error,
+  children,
   onCancel,
   onConfirm,
 }: {
@@ -31,8 +35,10 @@ export function ConfirmDialog({
   cancelLabel: string;
   confirmLabel: string;
   pending?: boolean;
+  confirmDisabled?: boolean;
   tone?: "danger" | "default";
   error?: string | null;
+  children?: React.ReactNode;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -69,6 +75,7 @@ export function ConfirmDialog({
         >
           {description}
         </p>
+        {children}
         <FormError message={error} className="mt-1 text-[13px]" />
       </div>
       <div className="grid grid-cols-2 gap-3 border-t border-brand-burgundy/[0.06] px-6 pb-5 pt-4">
@@ -84,7 +91,7 @@ export function ConfirmDialog({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={pending}
+          disabled={pending || confirmDisabled}
           className={cn(
             "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 rtl:text-[13.5px] rtl:normal-case rtl:tracking-normal",
             tone === "danger"

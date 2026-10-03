@@ -1249,6 +1249,17 @@
     "never": "Never",
     "you": "You",
     "lastOwnerHint": "Last owner",
+    "members": {
+      "title": "Team Members",
+      "count": "{count, plural, one {# member} other {# members}}",
+      "searchPlaceholder": "Search members...",
+      "searchLabel": "Search team members",
+      "noMatch": "No team members match your search.",
+      "menuLabel": "Actions for {name}",
+      "menuTitle": "Member actions",
+      "roleChangeLabel": "Change role for {name} — currently {role}",
+      "roleMenuTitle": "Change role"
+    },
     "add": {
       "title": "Add an admin",
       "help": "The person must first create an account on the store with their own email and password. You never see or set their password.",
@@ -1262,8 +1273,8 @@
       "grant": "Make admin"
     },
     "actions": {
-      "promote": "Make owner",
-      "demote": "Make admin",
+      "promote": "Change to Owner",
+      "demote": "Change to Admin",
       "remove": "Remove access"
     },
     "confirm": {

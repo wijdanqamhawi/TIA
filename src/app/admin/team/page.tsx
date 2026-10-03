@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { requireAdmin } from "@/lib/firebase/guards";
 import { isOwnerRole } from "@/lib/auth/roles";
 import { listTeam } from "@/lib/domain/admin/team.service";
@@ -37,10 +38,22 @@ export default async function AdminTeamPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl">{t("title")}</h1>
-        <p className="mt-1 text-sm text-text-primary/70">{t("intro")}</p>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3.5 pt-1">
+        <span
+          aria-hidden="true"
+          className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-gold/[0.12] text-brand-gold"
+        >
+          <Users className="size-[22px] stroke-[1.6]" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-display text-[28px] font-normal leading-[1.1] text-brand-burgundy lg:text-[34px] rtl:text-[26px] rtl:leading-[1.4] rtl:lg:text-[30px]">
+            {t("title")}
+          </h1>
+          <p className="mt-1 max-w-[720px] font-display text-[14.5px] leading-snug text-text-secondary lg:text-[15.5px] rtl:font-body rtl:text-[14px]">
+            {t("intro")}
+          </p>
+        </div>
       </div>
       <TeamManager
         rows={rows}
