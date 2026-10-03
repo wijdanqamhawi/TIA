@@ -1,9 +1,10 @@
 import "server-only";
 import { getAdminAuth } from "./admin";
-import { SESSION_COOKIE_NAME } from "./session-cookie-name";
+import { ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from "./session-cookie-name";
+import { logger } from "@/lib/utils/logger";
 import { toUserRole, type UserRole } from "@/lib/auth/roles";
 
-export { SESSION_COOKIE_NAME };
+export { ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME };
 
 /** Firebase's own maximum session-cookie lifetime is 14 days. */
 export const SESSION_COOKIE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -63,7 +64,15 @@ export async function verifySessionCookie(sessionCookie: string): Promise<Sessio
     const decoded = await getAdminAuth().verifySessionCookie(sessionCookie, true);
     const role = toUserRole(decoded.role);
     return { uid: decoded.uid, email: decoded.email ?? null, role };
-  } catch {
+  } catch (err) {
+    // Expected for an expired/revoked/garbled cookie, but also the only trace of
+    // an infrastructure failure (e.g. the key fetch failing on the host). Log the
+    // error class/code only — never the cookie, token, or error message.
+    const code = (err as { code?: unknown } | null)?.code;
+    logger.warn("verifySessionCookie: rejected", {
+      errorName: err instanceof Error ? err.name : typeof err,
+      errorCode: typeof code === "string" ? code : null,
+    });
     return null;
   }
 }

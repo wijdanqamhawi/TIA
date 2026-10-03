@@ -1,7 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/lib/i18n/routing";
-import { SESSION_COOKIE_NAME } from "@/lib/firebase/session-cookie-name";
+import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/firebase/session-cookie-name";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -28,7 +28,7 @@ export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin")) {
-    const hasSessionCookie = request.cookies.has(SESSION_COOKIE_NAME);
+    const hasSessionCookie = request.cookies.has(ADMIN_SESSION_COOKIE_NAME);
     if (!hasSessionCookie) {
       const loginUrl = new URL("/en/login", request.url);
       loginUrl.searchParams.set("next", pathname);

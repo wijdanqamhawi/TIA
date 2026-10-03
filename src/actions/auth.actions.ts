@@ -7,8 +7,9 @@ import {
   revokeAllSessions,
   SESSION_COOKIE_MAX_AGE_MS,
   SESSION_COOKIE_NAME,
+  ADMIN_SESSION_COOKIE_NAME,
 } from "@/lib/firebase/auth";
-import { getSessionClaims } from "@/lib/firebase/guards";
+import { getSessionClaims, getStaffSessionClaims } from "@/lib/firebase/guards";
 import { usersCollection } from "@/lib/firebase/firestore";
 import { createSessionInputSchema } from "@/lib/validation/auth.schema";
 import { actionError, actionOk, actionValidationError, type ActionResult } from "@/lib/validation/common";
@@ -20,7 +21,7 @@ import { mergeGuestCartIntoUserCart } from "@/lib/domain/cart/cart-merge.service
 import { parseWishlistIntent } from "@/lib/domain/wishlist/wishlist-intent";
 import { addItemToWishlist } from "@/lib/domain/wishlist/wishlist.service";
 import { getProductById, isSelectedOptionValid } from "@/lib/domain/catalog/product.service";
-import { toUserRole, type UserRole } from "@/lib/auth/roles";
+import { isStaffRole, toUserRole, type UserRole } from "@/lib/auth/roles";
 import { cookieSecure } from "@/lib/config/cookies";
 
 export type SessionResult = { uid: string; role: UserRole };
@@ -99,7 +100,12 @@ export async function createSessionAction(input: unknown): Promise<ActionResult<
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, session.sessionCookie, SESSION_COOKIE_OPTIONS);
+  // Staff and customers get different cookies so one never replaces the other in a shared browser.
+  cookieStore.set(
+    isStaffRole(role) ? ADMIN_SESSION_COOKIE_NAME : SESSION_COOKIE_NAME,
+    session.sessionCookie,
+    SESSION_COOKIE_OPTIONS,
+  );
 
   const guestCartId = await readGuestCartId();
   if (guestCartId) {
@@ -133,18 +139,24 @@ export async function createSessionAction(input: unknown): Promise<ActionResult<
 }
 
 /**
- * Clears the session cookie; optionally revokes every refresh token for
- * the signed-in user (full "sign out everywhere") when requested.
+ * Clears one session cookie — the customer's by default, the staff one with
+ * `scope: "admin"` — so signing out of the admin dashboard never ends the
+ * customer session in the same browser (and vice versa). Optionally revokes
+ * every refresh token for that user (full "sign out everywhere").
  */
-export async function logoutAction(options?: { everywhere?: boolean }): Promise<ActionResult<null>> {
-  const claims = await getSessionClaims();
+export async function logoutAction(options?: {
+  everywhere?: boolean;
+  scope?: "customer" | "admin";
+}): Promise<ActionResult<null>> {
+  const isAdminScope = options?.scope === "admin";
+  const claims = isAdminScope ? await getStaffSessionClaims() : await getSessionClaims();
 
   if (options?.everywhere && claims) {
     await revokeAllSessions(claims.uid);
   }
 
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(isAdminScope ? ADMIN_SESSION_COOKIE_NAME : SESSION_COOKIE_NAME);
 
   return actionOk(null);
 }

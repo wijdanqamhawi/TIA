@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME, verifySessionCookie, type SessionClaims } from "./auth";
+import { ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME, verifySessionCookie, type SessionClaims } from "./auth";
 import { isOwnerRole, isStaffRole } from "@/lib/auth/roles";
 
 export class UnauthenticatedError extends Error {
@@ -17,10 +17,18 @@ export class ForbiddenError extends Error {
   }
 }
 
-/** Reads and verifies the session cookie, if any. Never throws. */
+/** Reads and verifies the customer session cookie, if any. Never throws. */
 export async function getSessionClaims(): Promise<SessionClaims | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  if (!sessionCookie) return null;
+  return verifySessionCookie(sessionCookie);
+}
+
+/** Reads and verifies the separate staff (admin) session cookie, if any. Never throws. */
+export async function getStaffSessionClaims(): Promise<SessionClaims | null> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value;
   if (!sessionCookie) return null;
   return verifySessionCookie(sessionCookie);
 }
@@ -50,7 +58,10 @@ export async function requireUser(): Promise<SessionClaims> {
  * role is added — a CUSTOMER (or any unknown claim) is still rejected.
  */
 export async function requireAdmin(): Promise<SessionClaims> {
-  const claims = await requireUser();
+  const claims = await getStaffSessionClaims();
+  if (!claims) {
+    throw new UnauthenticatedError();
+  }
   if (!isStaffRole(claims.role)) {
     throw new ForbiddenError();
   }
@@ -63,7 +74,10 @@ export async function requireAdmin(): Promise<SessionClaims> {
  * rejected here even though `requireAdmin()` admits them.
  */
 export async function requireOwner(): Promise<SessionClaims> {
-  const claims = await requireUser();
+  const claims = await getStaffSessionClaims();
+  if (!claims) {
+    throw new UnauthenticatedError();
+  }
   if (!isOwnerRole(claims.role)) {
     throw new ForbiddenError();
   }

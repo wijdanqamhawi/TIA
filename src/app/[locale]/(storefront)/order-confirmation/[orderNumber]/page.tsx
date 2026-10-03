@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getOrderByNumber } from "@/lib/domain/orders/order.service";
 import { getSessionClaims } from "@/lib/firebase/guards";
 import { hasGuestOrderAccess } from "@/lib/domain/orders/guest-order-access";
+import { decideOrderAccess } from "@/lib/domain/orders/order-access";
+import { logger } from "@/lib/utils/logger";
 import { isOrderEditable } from "@/lib/domain/orders/order-edit-rules";
 import { getProductsByIds } from "@/lib/domain/catalog/product.service";
 import { OrderConfirmationView } from "@/components/storefront/checkout/OrderConfirmationView";
@@ -33,16 +35,26 @@ export default async function OrderConfirmationPage({
   const { updated } = await searchParams;
   const order = await getOrderByNumber(orderNumber);
   if (!order) {
+    logger.warn("order-confirmation: 404", { orderNumber, reason: "order_not_found" });
     notFound();
   }
 
   const claims = await getSessionClaims();
-  const isOwner = Boolean(claims && order.userId === claims.uid);
   const hasGuestAccess = !order.userId && (await hasGuestOrderAccess(orderNumber));
+  const access = decideOrderAccess(order, claims, hasGuestAccess);
 
-  if (!isOwner && !hasGuestAccess) {
+  if (!access.allowed) {
+    // Diagnostics only (no uid/cookie/token): the viewer's role, never their identity.
+    logger.warn("order-confirmation: 404", {
+      orderNumber,
+      reason: access.reason,
+      signedIn: Boolean(claims),
+      viewerRole: claims?.role ?? null,
+      orderIsGuest: !order.userId,
+    });
     notFound();
   }
+  const isOwner = access.isOwner;
 
   // Orders store no product image, so the thumbnails are read live — one batched read, photos only;
   // every price and total shown comes from the stored order.

@@ -21,7 +21,7 @@ export function AdminLogoutButton({
 
   function handleLogout() {
     startTransition(async () => {
-      await logoutAction();
+      await logoutAction({ scope: "admin" });
       router.push(`/${locale === "ar" ? "ar" : "en"}/login`);
       router.refresh();
     });

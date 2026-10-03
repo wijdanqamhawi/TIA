@@ -8,6 +8,7 @@ vi.mock("next/headers", () => ({
 const verifySessionCookieMock = vi.fn();
 vi.mock("@/lib/firebase/auth", () => ({
   SESSION_COOKIE_NAME: "__session",
+  ADMIN_SESSION_COOKIE_NAME: "__admin_session",
   verifySessionCookie: verifySessionCookieMock,
 }));
 
@@ -106,5 +107,44 @@ describe("requireOwner", () => {
     cookiesGetMock.mockReturnValue({ value: "cookie" });
     verifySessionCookieMock.mockResolvedValue({ uid: "owner1", email: "owner@tia.com", role: "OWNER" });
     await expect(requireOwner()).resolves.toMatchObject({ uid: "owner1", role: "OWNER" });
+  });
+});
+
+describe("separate customer and staff session cookies", () => {
+  const cookieJar = (jar: Record<string, string>) =>
+    cookiesGetMock.mockImplementation((name: string) => (jar[name] ? { value: jar[name] } : undefined));
+  const verifyByCookie = () =>
+    verifySessionCookieMock.mockImplementation(async (value: string) =>
+      value === "admin-cookie"
+        ? { uid: "admin1", email: "a@t.com", role: "ADMIN" }
+        : { uid: "cust1", email: "c@t.com", role: "CUSTOMER" },
+    );
+
+  beforeEach(() => {
+    cookiesGetMock.mockReset();
+    verifySessionCookieMock.mockReset();
+    verifyByCookie();
+  });
+
+  it("an admin cookie never replaces the customer's identity in the storefront", async () => {
+    cookieJar({ __session: "customer-cookie", __admin_session: "admin-cookie" });
+    await expect(getSessionClaims()).resolves.toMatchObject({ uid: "cust1", role: "CUSTOMER" });
+    await expect(requireAdmin()).resolves.toMatchObject({ uid: "admin1", role: "ADMIN" });
+  });
+
+  it("a customer cookie alone grants no admin access", async () => {
+    cookieJar({ __session: "customer-cookie" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(requireOwner()).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+
+  it("an admin cookie alone is not a storefront customer session", async () => {
+    cookieJar({ __admin_session: "admin-cookie" });
+    await expect(getSessionClaims()).resolves.toBeNull();
+  });
+
+  it("a customer who somehow holds the admin cookie is still rejected by role", async () => {
+    cookieJar({ __admin_session: "customer-cookie" });
+    await expect(requireAdmin()).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
