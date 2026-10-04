@@ -17,6 +17,10 @@ export default defineConfig({
     },
   },
   test: {
+    // next-intl's ESM build imports `next/server` without an extension, which Node's strict
+    // ESM resolver rejects when Vitest externalizes it. Inlining lets Vite resolve it, so the
+    // real middleware can be exercised in unit tests.
+    server: { deps: { inline: ["next-intl"] } },
     projects: [
       {
         extends: true,

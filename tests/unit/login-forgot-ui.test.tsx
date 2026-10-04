@@ -11,7 +11,8 @@ const signInMock = vi.fn();
 const createSessionMock = vi.fn();
 const sendResetMock = vi.fn();
 
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
+let searchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({ useSearchParams: () => searchParams }));
 vi.mock("@/lib/i18n/navigation", () => ({
   useRouter: () => ({ push: pushMock, refresh: refreshMock }),
   Link: ({ href, children, ...rest }: { href: unknown; children: React.ReactNode }) => (
@@ -42,6 +43,7 @@ function renderPage(Page: () => React.JSX.Element, locale: Locale = "en") {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  searchParams = new URLSearchParams();
   window.localStorage.clear();
   window.sessionStorage.clear();
   signInMock.mockResolvedValue({ user: { getIdToken: async () => "id-token" } });
@@ -102,6 +104,26 @@ describe("login: remember customer email", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
     await screen.findByRole("alert");
     expect(window.localStorage.getItem(REMEMBERED_EMAIL_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe("login: post-login redirect keeps a single locale prefix", () => {
+  // The i18n router prefixes the locale itself, so `next=/en/account` must reach it as `/account`
+  // (otherwise the browser lands on the non-existent /en/en/account -> Next.js 404).
+  it.each([
+    ["/en/account", "/account"],
+    ["/ar/account", "/account"],
+    ["/ar/account/orders", "/account/orders"],
+    ["/account", "/account"],
+    [null, "/"],
+  ])("next=%s navigates the i18n router to %s for a customer", async (next, expected) => {
+    if (next) searchParams = new URLSearchParams({ next });
+    createSessionMock.mockResolvedValue({ ok: true, data: { uid: "u1", role: "CUSTOMER" } });
+    renderPage(LoginPage);
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "supersecret123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith(expected));
   });
 });
 

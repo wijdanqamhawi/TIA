@@ -8,6 +8,7 @@ import { clientAuth } from "@/lib/firebase/client";
 import { createSessionAction } from "@/actions/auth.actions";
 import { mapAuthErrorToKey } from "@/lib/firebase/auth-error";
 import { registerSchema } from "@/lib/validation/auth.schema";
+import { resolvePostLoginPath } from "@/lib/auth/post-login-path";
 import { useRouter, Link } from "@/lib/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -18,7 +19,7 @@ export default function RegisterPage() {
   const t = useTranslations("Auth");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  const next = resolvePostLoginPath(searchParams.get("next"));
   const intent = searchParams.get("intent") ?? undefined;
 
   const [name, setName] = useState("");

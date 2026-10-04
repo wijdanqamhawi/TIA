@@ -46,6 +46,8 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   if (claims) {
     const userDoc = await usersCollection().doc(claims.uid).get();
     if (userDoc.exists) prefill = buildCheckoutPrefill(userDoc.data()!);
+    // The session email is always present for a signed-in customer, even if the profile doc is missing/blank.
+    if (!prefill.email && claims.email) prefill = { ...prefill, email: claims.email };
   }
 
   const regionOptions = regions.map((region) => ({ id: region.regionId, name: region.name }));
