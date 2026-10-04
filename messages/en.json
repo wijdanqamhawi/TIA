@@ -245,6 +245,13 @@
     "haveAccount": "Already have an account?",
     "registerCta": "Create one",
     "loginCta": "Sign in",
+    "forgotPassword": "Forgot password?",
+    "forgotTitle": "Reset Your Password",
+    "forgotIntro": "Enter the email you signed up with and we'll send you a link to choose a new password.",
+    "sendResetLink": "Send Reset Link",
+    "sendingResetLink": "Sending…",
+    "resetSent": "If an account exists for that email, a password reset link is on its way. Please check your inbox and spam folder.",
+    "backToLogin": "Back to sign in",
     "errors": {
       "invalidCredentials": "Incorrect email or password.",
       "emailInUse": "An account with this email already exists.",

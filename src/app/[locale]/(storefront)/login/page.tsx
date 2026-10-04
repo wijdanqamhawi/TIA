@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase/client";
 import { createSessionAction } from "@/actions/auth.actions";
 import { mapAuthErrorToKey } from "@/lib/firebase/auth-error";
+import { readRememberedEmail, rememberEmail } from "@/lib/auth/remembered-email";
+import { isStaffRole } from "@/lib/auth/roles";
 import { loginSchema } from "@/lib/validation/auth.schema";
 import { useRouter, Link } from "@/lib/i18n/navigation";
 import { Button } from "@/components/ui/Button";
@@ -25,6 +27,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "signing-in" | "redirecting">("idle");
+
+  // Prefill the last customer email used on this browser (email only — never the
+  // password). Read after mount so server and client markup match on hydration;
+  // anything the visitor has already typed wins.
+  useEffect(() => {
+    const remembered = readRememberedEmail();
+    if (remembered) setEmail((current) => current || remembered);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,6 +56,12 @@ export default function LoginPage() {
         setError(result.error.code === "RATE_LIMITED" ? result.error.message : t("errors.generic"));
         setStatus("idle");
         return;
+      }
+
+      // Customers only: a staff sign-in through this shared form must not leave an
+      // admin address behind on the customer login page.
+      if (!isStaffRole(result.data.role) && !next.startsWith("/admin")) {
+        rememberEmail(parsed.data.email);
       }
 
       setStatus("redirecting");
@@ -107,6 +123,12 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isBusy}
               />
+              <Link
+                href="/forgot-password"
+                className="self-end text-xs font-medium text-brand-burgundy underline-offset-4 transition-colors hover:text-brand-burgundy-light hover:underline"
+              >
+                {t("forgotPassword")}
+              </Link>
             </div>
 
             <FormError message={error} id="login-error" />
